@@ -67,3 +67,25 @@ test("5-turn search respects 12 PA and returns finite damage",()=>{
  assert.ok(Number.isFinite(result.total));
  for(const t of result.turns)assert.ok(t.spent<=12,"Tour "+t.number);
 });
+
+test("the default is 10 turns, with 1–10 supported and greater values clamped",()=>{
+ assert.equal(cleanSettings().turns,10);
+ assert.equal(cleanSettings({turns:1}).turns,1);
+ assert.equal(cleanSettings({turns:5}).turns,5);
+ assert.equal(cleanSettings({turns:10}).turns,10);
+ assert.equal(cleanSettings({turns:200}).turns,10);
+});
+test("10-turn optimizer returns ordered turns, PA budgets and progress events",()=>{
+ const progress=[];
+ const output=optimize({turns:10,ap:12,beamWidth:8},SIM_SPELLS,p=>progress.push(p));
+ assert.equal(output.turns.length,10);
+ assert.equal(progress.length,10);
+ assert.deepEqual(progress.map(p=>p.turn),[1,2,3,4,5,6,7,8,9,10]);
+ assert.ok(progress.every(p=>p.turns===10&&Number.isFinite(p.explored)));
+ for(const [i,t] of output.turns.entries()){
+  assert.equal(t.number,i+1);
+  assert.ok(t.spent>=0&&t.spent<=12,"PA on turn "+t.number);
+  assert.ok(Number.isFinite(t.total));
+ }
+ assert.ok(Math.abs(output.total-output.turns.reduce((n,t)=>n+t.total,0))<3);
+});
