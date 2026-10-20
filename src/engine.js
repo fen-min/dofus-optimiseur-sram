@@ -5,7 +5,7 @@ import {DEFAULT_SETTINGS} from "./spells.js";
 // Toutes les 44 actions existent, mais des effets de placement nécessitent des hypothèses.
 const round=n=>Math.round(n*10)/10;
 const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
-const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
+const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
  c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,5,5);c.distance=clamp(c.distance,0,30,3);
@@ -137,8 +137,7 @@ export function endTurn(original,input={}){
   for(const [id,p] of Object.entries(s.dots)){
    if(p.phase!==phase)continue;
    let n=p.base;
-   if(id==="12933")n+=s.charges*0; // Toxines updates its value on trap activation.
-   addDamage(s,n,true);poison+=round(n);ticks.push({id,name:p.name,phase,damage:round(n)});
+     addDamage(s,n,true);poison+=round(n);ticks.push({id,name:p.name,phase,damage:round(n)});
    p.left--;
    if(p.left<=0)delete s.dots[id];
   }
@@ -148,7 +147,7 @@ export function endTurn(original,input={}){
   if(summon.kind==="Comploteur"&&s.turn-summon.turn>=2){
    if(c.comploteurContact){
     const x=SIM_SPELLS.find(e=>e.name==="Comploteur");
-    const d=damage(x,s,c,(x.min+x.max)/2+summon.charges*149);
+    const d=damage(x,s,c,x.summonBase+summon.charges*149);
     addDamage(s,d,true);poison+=round(d);ticks.push({name:"Comploteur",phase:"end",damage:round(d)});
    }
   }else if(summon.kind==="Double"&&s.turn-summon.turn>=1){
