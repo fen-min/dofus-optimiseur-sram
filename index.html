@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulateur expérimental de rotations Sram Air DOFUS, cumul 5 tours et 12 PA.">
+  <meta name="theme-color" content="#10101a">
+  <title>OMBRE — Optimiseur de tours Sram Air</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="#" class="brand" aria-label="Retour au tableau de bord"><span class="brand-icon">✺</span><span><strong>OMBRE</strong><small>DOFUS / LAB</small></span></a>
+      <div class="side-section-label">PLAN DE COMBAT</div>
+      <nav class="side-nav" aria-label="Sections">
+        <button class="nav-btn active" data-tab="optimize"><span>◈</span> Optimisation</button>
+        <button class="nav-btn" data-tab="spells"><span>✧</span> Dégâts des sorts</button>
+        <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
+      </nav>
+      <div class="side-bottom"><div class="tiny-dot"></div> <span>Prototype local · v0.1</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><span><span class="breadcrumb">LABORATOIRE</span> <span class="slash">/</span> SRAM AIR</span><a href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer" class="outline-link">↗ Voir le stuff DofusBook</a></header>
+      <div class="content-wrap">
+        <section class="hero">
+          <div class="hero-text"><div class="eyebrow"><span class="pulsedot"></span> MOTEUR DE SIMULATION / EXPÉRIMENTAL</div><h1>Chaque PA <em>compte.</em></h1><p>Compare des rotations de Sram Air sur plusieurs tours. L'outil teste des combinaisons de sorts, buffs, poisons et relances sous des hypothèses explicites.</p><div class="hero-pills"><span>Sram · Niveau 200</span><span>Air / PvM</span><span>DOFUS 3.7</span></div></div>
+          <div class="hero-symbol" aria-hidden="true"><div class="hero-ring ring-1"></div><div class="hero-ring ring-2"></div><span>✵</span></div>
+        </section>
+        <section id="tab-optimize" class="tab-panel">
+          <div class="workspace">
+            <section class="panel params-panel">
+              <div class="panel-heading"><div><div class="panel-eyebrow">01 / CONFIGURATION</div><h2>Paramètres</h2></div><span class="panel-glyph">⚙</span></div>
+              <div class="field"><div class="field-top"><label for="ap">Points d'action par tour</label><strong id="ap-value">12 PA</strong></div><input type="range" id="ap" name="ap" min="6" max="16" value="12"><div class="range-ends"><span>6 PA</span><span>16 PA</span></div></div>
+              <div class="field"><div class="field-top"><label for="turns">Horizon d'optimisation</label><strong id="turns-value">5 tours</strong></div><input type="range" id="turns" name="turns" min="1" max="5" value="5"><div class="range-ends"><span>1 tour</span><span>5 tours</span></div></div>
+              <div class="divider"></div>
+              <div class="field"><label for="resistance">Résistance Air de la cible (%)</label><div class="input-with-unit"><input type="number" name="resistance" id="resistance" min="0" max="80" step="5" value="0"><span>%</span></div></div>
+              <div class="field"><label for="distance">Distance cible (en cases)</label><div class="input-with-unit"><input type="number" name="distance" id="distance" min="0" max="30" value="3"><span>cases</span></div></div>
+              <div class="divider"></div>
+              <div class="checks">
+                <label class="check"><input type="checkbox" name="inLine" checked><span>Cible alignée pour les sorts en ligne</span></label>
+                <label class="check"><input type="checkbox" name="lineOfSight" checked><span>Ligne de vue disponible</span></label>
+                <label class="check"><input type="checkbox" name="criticals" checked><span>Intégrer les coups critiques probables</span></label>
+                <label class="check"><input type="checkbox" name="triggerTraps"><span>Supposer les pièges déclenchés</span></label>
+              </div>
+              <details class="advanced"><summary>Variantes et hypothèses avancées <span>⌄</span></summary><div class="advanced-body"><label class="check"><input name="variantToxines" type="checkbox" checked><span>Toxines (au lieu d'Arsenic)</span></label><label class="check"><input name="variantFourvoiement" type="checkbox" checked><span>Fourvoiement (au lieu de Perfidie)</span></label><label class="check"><input name="variantInsidieux" type="checkbox" checked><span>Piège Insidieux (au lieu de Dérive)</span></label><div class="field"><label for="agiBuffDuration">Durée supposée du vol d'Agilité</label><select id="agiBuffDuration" name="agiBuffDuration"><option value="1">1 tour</option><option value="2" selected>2 tours — à confirmer</option><option value="3">3 tours</option><option value="4">4 tours</option></select></div></div></details>
+              <button id="calculate" class="primary-btn"><span>✦</span> Calculer la rotation <span class="arrow">→</span></button>
+              <p class="microcopy">Recherche heuristique parmi plusieurs enchaînements, pas une garantie du meilleur tour du jeu réel.</p>
+            </section>
+            <section class="results-column">
+              <div id="status" class="notice" role="status"><span class="notice-icon">i</span><span>Mode mono-cible : l'ennemi reste disponible pendant 5 tours. Le placement réel et l'IA ennemie ne sont pas simulés.</span></div>
+              <section class="results-head"><div><div class="panel-eyebrow">02 / RÉSULTATS</div><h2>Plan de combat <span>calculé</span></h2></div><button class="ghost-btn" id="copy-btn" disabled>⧉ Copier</button></section>
+              <section class="stats-grid" id="stats-grid"><div class="stat-card"><span>DÉGÂTS CUMULÉS</span><strong id="total-stat">—</strong><small>Estimation / 5 tours</small></div><div class="stat-card"><span>DIRECTS</span><strong id="direct-stat">—</strong><small>Dégâts immédiats</small></div><div class="stat-card"><span>POISONS</span><strong id="poison-stat">—</strong><small>Dégâts différés</small></div></section>
+              <section class="panel graph-panel"><div class="graph-title"><h3>Répartition par tour</h3><span class="graph-legend"><i class="legend-direct"></i> Direct <i class="legend-poison"></i> Poisons</span></div><div id="bar-chart" class="bar-chart"><p class="empty">Lance le calcul pour afficher les dommages par tour.</p></div></section>
+              <section class="turns-title"><h3>Rotation conseillée</h3><span id="explored-count"></span></section>
+              <div id="turn-results" class="turn-results"><div class="empty-state"><span>✶</span><strong>Prêt à optimiser</strong><p>Choisis tes paramètres puis lance la simulation.</p></div></div>
+            </section>
+          </div>
+        </section>
+        <section id="tab-spells" class="tab-panel hidden"><section class="panel wide-panel"><div class="panel-eyebrow">CALIBRATION / DOMMAGES</div><h2>Dégâts des sorts utilisés</h2><p class="muted">Ces valeurs initiales ont été relevées sur la fiche de sorts DofusBook du build partagé. Tu peux les corriger selon les valeurs affichées sur ton personnage. Les poisons sont appliqués sur une cible à 0 % de résistance avant recalcul.</p><div class="table-scroll"><table><thead><tr><th>Sort</th><th>PA</th><th>Normal min</th><th>Normal max</th><th>CC min</th><th>CC max</th></tr></thead><tbody id="spells-body"></tbody></table></div><div class="form-footer"><button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs</button><button id="save-spells" class="primary-btn compact">Enregistrer et recalculer →</button></div><p class="microcopy">Les valeurs saisies sont conservées localement dans ton navigateur. Aucun import automatique DofusBook n'est implémenté.</p></section></section>
+        <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement la v0.1</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; les 5 tours sont évalués ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Arnaque ajoute 100 Agilité après ses dégâts, avec un maximum de deux charges dans le simulateur. Durée réglable car elle doit être validée contre le jeu.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Toxines, Épidémie et Injection Toxique ont des dégâts différés, avec des hypothèses de durée. Les limites de lancers et la relance d'Injection sont suivies.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges ne font aucun dégât si le déclenchement n'est pas coché. Lorsqu'il l'est, on suppose leur déclenchement à chaque pose, sans grille tactique : scénario optimiste.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte, pas de déplacements, pas de ligne de vue variable, pas de résistances fixes, pas de propagation multi-cible d'Épidémie, ni de survie ou de soins. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — sorts Sram 3.7</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
+        <footer class="footer"><span>OMBRE v0.1 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
