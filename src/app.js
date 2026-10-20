@@ -27,6 +27,7 @@ function variantPicker(){
 function render(){
  if(!result)return;
  $("#total-stat").textContent=fmt(result.total);
+ const horizon=$("#summary-turns");if(horizon)horizon.textContent=String(result.turns.length);
  $("#direct-stat").textContent=fmt(result.immediate);
  $("#poison-stat").textContent=fmt(result.poison);
  $("#explored-count").textContent=result.considered+"/"+result.fullCatalog+" variantes de sorts testables · "+fmt(result.explored)+" actions explorées";
@@ -41,7 +42,62 @@ function render(){
  $("#copy-btn").disabled=false;
 }
 
-function calculate(){const btn=$("#calculate");btn.disabled=true;try{result=optimize(settings(),spells);render();$("#status").textContent="44 sorts modélisés, 22 variantes choisies par combat. Dégâts monocibles théoriques : placement, durées et conditions restent approximatifs.";}catch(e){$("#status").textContent="Erreur de calcul : "+e.message;}finally{btn.disabled=false;}}
+let currentJob=null;
+const calculateLabel=$("#calculate").innerHTML;
+function setCalculationBusy(active){
+ const button=$("#calculate");
+ button.innerHTML=active?"✕ Annuler le calcul":calculateLabel;
+ button.setAttribute("aria-busy",active?"true":"false");
+}
+function calculate(){
+ // Le bouton sert aussi à interrompre une simulation longue.
+ if(currentJob){
+  currentJob.worker?.terminate();
+  currentJob=null;
+  setCalculationBusy(false);
+  $("#status").textContent="Calcul interrompu. Tu peux modifier les paramètres puis relancer.";
+  return;
+ }
+ const cfg=settings();
+ const job={worker:null};currentJob=job;
+ const status=$("#status");
+ setCalculationBusy(true);
+ status.textContent="Calcul en cours : 0 / "+cfg.turns+" tours analysés…";
+ const finish=(error,outcome)=>{
+  if(currentJob!==job)return;
+  job.worker?.terminate();
+  currentJob=null;
+  setCalculationBusy(false);
+  if(error){status.textContent="Erreur de calcul : "+(error.message||String(error));return;}
+  result=outcome;
+  render();
+  status.textContent="Simulation terminée sur "+outcome.turns.length+" tours. Dégâts théoriques monocibles : effets de carte et certaines mécaniques restent approximatifs.";
+ };
+ try{
+  if(typeof Worker==="undefined"){
+   // Repli pour un navigateur ne prenant pas en charge les modules Worker.
+   setTimeout(()=>{
+    if(currentJob!==job)return;
+    try{finish(null,optimize(cfg,spells));}catch(error){finish(error);}
+   },30);
+  }else{
+   job.worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
+   job.worker.onmessage=event=>{
+    if(currentJob!==job)return;
+    const message=event.data||{};
+    if(message.type==="progress"){
+     status.textContent="Calcul du tour "+message.progress.turn+" / "+cfg.turns+"… "+fmt(message.progress.explored)+" actions explorées.";
+    }else if(message.type==="complete"){finish(null,message.result);}
+    else if(message.type==="error"){finish(new Error(message.message||"Erreur du moteur"));}
+   };
+   job.worker.onerror=event=>{
+    event.preventDefault?.();
+    finish(new Error(event.message||"Impossible de démarrer le moteur en arrière-plan."));
+   };
+   job.worker.postMessage({settings:cfg,spells});
+  }
+ }catch(error){finish(error);}
+}
 function tab(name){$$(".nav-btn").forEach(e=>e.classList.toggle("active",e.dataset.tab===name));$$(".tab-panel").forEach(e=>e.classList.toggle("hidden",e.id!=="tab-"+name));}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 function renderSpells(){
@@ -60,7 +116,7 @@ function renderSpells(){
     const summary=sim?.status?.buff?`Buff +${sim.status.buff.value} ${sim.status.buff.stat} · ${sim.status.buff.duration} tours`:sim?.status?.summon?"Explosion différée (si contact)":first?`${first.kind} ${first.element} : ${first.min}${first.max!==first.min?"–"+first.max:""}`:sim?.utility||"Sort de soutien / placement";
     const el=c.elements.length?c.elements.map(e=>`<span class="element-tag element-${e.toLowerCase()}">${escapeHtml(e)}</span>`).join(""):`<span class="element-tag">Sans élément</span>`;
     const effects=c.effects.length?`<div class="effect-lines"><div class="catalog-subhead">Lignes de dégâts et conditions sur DofusBook</div>${c.effects.map(e=>`<div class="effect-row"><span class="effect-label">${escapeHtml(e.kind)} ${escapeHtml(e.element)}${e.cc?' <b>CC</b>':""}</span><strong>${e.min}${e.max!==e.min?" – "+e.max:""}</strong>${e.condition?`<small>${escapeHtml(e.condition)}</small>`:""}</div>`).join("")}</div>`:'<p class="muted">Ce sort n’a pas de dégâts élémentaires chiffrés sur la fiche consultée. Son utilité (buff, placement, invisibilité, invocation, etc.) doit être prise en compte séparément.</p>';
-    const calibration=sim&&!sim.nonDirect?`<div class="calibration-box"><div class="catalog-subhead">Réglage utilisé par le simulateur expérimental</div><p class="microcopy">Ce bloc calibre uniquement la rotation sur 5 tours ; les lignes de dégâts DofusBook ci-dessus restent la référence affichée.</p><div class="calibration-grid">${[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([k,label])=>`<label>${label}<input type="number" min="0" max="20000" value="${sim[k]}" data-spell="${simIndex}" data-field="${k}" aria-label="${escapeHtml(c.name+" "+label)}"></label>`).join("")}</div></div>`:"";
+    const calibration=sim&&!sim.nonDirect?`<div class="calibration-box"><div class="catalog-subhead">Réglage utilisé par le simulateur expérimental</div><p class="microcopy">Ce bloc calibre la rotation sur la durée choisie ; les lignes de dégâts DofusBook ci-dessus restent la référence affichée.</p><div class="calibration-grid">${[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([k,label])=>`<label>${label}<input type="number" min="0" max="20000" value="${sim[k]}" data-spell="${simIndex}" data-field="${k}" aria-label="${escapeHtml(c.name+" "+label)}"></label>`).join("")}</div></div>`:"";
     const info=[`Niv. ${c.level}`,`${c.pa} PA`,`PO ${escapeHtml(c.range)}`,...c.details,c.critChance!==null?`${c.critChance}% CC total`:""].filter(Boolean);
     return `<details class="catalog-entry"><summary><span class="catalog-main"><strong>${escapeHtml(c.name)}</strong><span class="catalog-preview">${escapeHtml(summary)}${c.effects.filter(e=>!e.cc).length>1?" · plusieurs conditions":""}</span></span><span class="catalog-meta">${el}<span class="catalog-pa">${c.pa} PA</span><span class="catalog-tag ${sim?"tag-live":""}">${sim?"Dans le moteur":"Catalogue"}</span><span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts">${info.map(x=>`<span>${x}</span>`).join("")}</div><p class="catalog-note">Type : ${escapeHtml(c.type)} · Les valeurs conditionnelles et les variantes peuvent différer selon la situation.</p>${effects}${calibration}${sim?.status?.buff?`<p class="catalog-note"><strong>Buff dans la simulation :</strong> +${sim.status.buff.value} ${escapeHtml(sim.status.buff.stat)} pendant ${sim.status.buff.duration} tours (cumul maximal : ${sim.status.buff.stacks}).</p>`:""}${sim?.utility?`<p class="catalog-note">Effet suivi : ${escapeHtml(sim.utility)}</p>`:""}</div></details>`;
   }).join("")||'<p class="muted">Aucun sort ne correspond à ces filtres.</p>';
