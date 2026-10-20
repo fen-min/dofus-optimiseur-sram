@@ -1,5 +1,5 @@
 export const SOURCE_URL="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts";
-export const DEFAULT_SETTINGS={ap:12,turns:5,resistance:0,distance:3,inLine:true,lineOfSight:true,criticals:true,triggerTraps:false,agiBuffDuration:2,variantToxines:true,variantFourvoiement:true,variantInsidieux:true,beamWidth:24};
+export const DEFAULT_SETTINGS={ap:12,turns:10,resistance:0,distance:3,inLine:true,lineOfSight:true,criticals:true,triggerTraps:false,agiBuffDuration:2,variantToxines:true,variantFourvoiement:true,variantInsidieux:true,beamWidth:24};
 export const SPELLS=[
 {id:"arnaque",name:"Arnaque",pa:3,minRange:1,range:6,lineOnly:true,los:true,maxPerTurn:2,min:645,max:701,critMin:763,critMax:838,critChance:.26,agiBase:26.5,icon:"✦"},
 {id:"fourvoiement",name:"Fourvoiement",pa:4,minRange:0,range:5,lineOnly:false,los:true,maxPerTurn:2,min:776,max:850,critMin:912,critMax:1006,critChance:.31,agiBase:34,icon:"✸"},
