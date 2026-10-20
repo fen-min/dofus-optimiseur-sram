@@ -8,7 +8,7 @@ const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
 const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
- c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,5,5);c.distance=clamp(c.distance,0,30,3);
+ c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,10,10);c.distance=clamp(c.distance,0,30,3);
  c.beamWidth=clamp(c.beamWidth,8,80,24);c.resistance=clamp(c.resistance,0,90,0);
  c.resistances={Air:c.resistance,Terre:clamp(c.resistanceTerre,0,90,0),Feu:clamp(c.resistanceFeu,0,90,0),Eau:clamp(c.resistanceEau,0,90,0),Neutre:clamp(c.resistanceNeutre,0,90,0)};
  c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
@@ -181,7 +181,7 @@ function prune(states,width,c){
  const seen=new Map();for(const s of states){const k=signature(s);if(!seen.has(k)||s.total>seen.get(k).total)seen.set(k,s);}
  return [...seen.values()].sort((a,b)=>potential(b,c)-potential(a,c)).slice(0,width);
 }
-export function optimize(input={},allSpells=SIM_SPELLS){
+export function optimize(input={},allSpells=SIM_SPELLS,onProgress=null){
  const c=cleanSettings(input);
  const spells=allSpells.filter(x=>selected(x,c));let beam=[initialState(c)],explored=0;
  for(let turn=1;turn<=c.turns;turn++){
@@ -199,6 +199,7 @@ export function optimize(input={},allSpells=SIM_SPELLS){
    }
   }
   beam=prune(finished,c.beamWidth,c);
+  if(typeof onProgress==="function")onProgress({turn,turns:c.turns,explored,bestDamage:round(beam[0]?.total||0)});
  }
  const best=beam.sort((a,b)=>b.total-a.total)[0];
  return {settings:c,explored,total:round(best.total),immediate:round(best.immediate),poison:round(best.delayed),average:round(best.total/c.turns),
