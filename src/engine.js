@@ -124,7 +124,7 @@ export function castSpell(origin,spell,input={}){
  if(name==="Peur"){s.position=Math.min(30,s.position+2);action.notes.push("Distance cible +2 cases (sans obstacle)");if(c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par poussée (hypothèse)");}}
  if(status.move&&name!=="Peur"){s.position=Math.min(30,s.position+status.move);action.notes.push("Distance cible +"+status.move+" cases (sans obstacle)");if(c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par déplacement (hypothèse)");}}
  if(status.spendTrapCharges){s.charges=0;}
- if(spell.nonDirect===false&&spell.isTrap===false&&spell.min>0)s.visible=true; // attaques directes dévoilent
+ if(!spell.nonDirect&&!spell.isTrap&&!status.poison&&spell.min>0)s.visible=true; // attaques directes dévoilent; les poisons conservent l’invisibilité
  if(["Méprise","Marque Mortuaire","Concentration de Chakra"].includes(name))s.visible=true;
  action.immediate=round(s.total-prior);
  if(!action.immediate&&!action.notes.length)action.notes.push(status.utility||"Contrôle / placement : aucun dégât monocible vérifiable");
