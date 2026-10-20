@@ -54,3 +54,10 @@
 .turn-notes span{border-left:2px solid #7966bd;padding-left:9px}
 .advanced-body h3{margin:16px 0 10px;font-size:14px}
 @media(max-width:700px){.variant-grid{grid-template-columns:1fr}.resistance-grid{grid-template-columns:1fr 1fr}}
+
+/* v0.4 : lisibilité des graphiques de combat sur 10 tours */
+#bar-chart{overflow-x:auto;justify-content:space-between;overscroll-behavior-x:contain;padding-bottom:20px}
+#bar-chart .bar-column{flex:1 0 62px}
+#bar-chart .bar-plot{width:clamp(28px,4vw,45px)}
+#bar-chart .bar-label{white-space:nowrap}
+#calculate[aria-busy="true"]{background:#453958;border-color:#8f7ab9;cursor:pointer}
