@@ -57,7 +57,33 @@
             </section>
           </div>
         </section>
-        <section id="tab-spells" class="tab-panel hidden"><section class="panel wide-panel"><div class="panel-eyebrow">CALIBRATION / DOMMAGES</div><h2>Dégâts des sorts utilisés</h2><p class="muted">Ces valeurs initiales ont été relevées sur la fiche de sorts DofusBook du build partagé. Tu peux les corriger selon les valeurs affichées sur ton personnage. Les poisons sont appliqués sur une cible à 0 % de résistance avant recalcul.</p><div class="table-scroll"><table><thead><tr><th>Sort</th><th>PA</th><th>Normal min</th><th>Normal max</th><th>CC min</th><th>CC max</th></tr></thead><tbody id="spells-body"></tbody></table></div><div class="form-footer"><button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs</button><button id="save-spells" class="primary-btn compact">Enregistrer et recalculer →</button></div><p class="microcopy">Les valeurs saisies sont conservées localement dans ton navigateur. Aucun import automatique DofusBook n'est implémenté.</p></section></section>
+        <section id="tab-spells" class="tab-panel hidden">
+          <section class="panel wide-panel">
+            <div class="panel-eyebrow">ENCYCLOPÉDIE SRAM / DOFUSBOOK</div>
+            <h2>Tous les sorts du Sram <span style="color:#beaafb">· 44 sorts</span></h2>
+            <p class="muted">Sorts de classe du Sram relevés sur <a href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer">ton DofusBook</a> : dégâts affichés avec ce stuff, coût en PA, portée, conditions et variantes. Clique sur un sort pour voir ses lignes de dégâts.</p>
+            <div class="catalog-controls">
+              <label class="catalog-control">Rechercher un sort
+                <input id="spell-search" type="search" placeholder="Ex. Arnaque, piège, Toxines…" autocomplete="off">
+              </label>
+              <label class="catalog-control">Élément
+                <select id="spell-element">
+                  <option value="">Tous les éléments</option><option value="Air">Air</option><option value="Terre">Terre</option><option value="Feu">Feu</option><option value="Eau">Eau</option><option value="Neutre">Neutre</option><option value="aucun">Sans dégâts élémentaires</option>
+                </select>
+              </label>
+              <label class="catalog-control">Type
+                <select id="spell-type">
+                  <option value="">Tous les types</option><option value="Attaque">Attaques</option><option value="Poison">Poisons</option><option value="Piège">Pièges</option><option value="Invocation">Invocations</option><option value="Utilitaire">Utilitaires</option>
+                </select>
+              </label>
+            </div>
+            <div class="catalog-key"><span class="catalog-tag tag-live">Pris en compte par le simulateur expérimental</span><span class="catalog-tag">Référence DofusBook (non encore simulée)</span></div>
+            <div id="spell-count" class="catalog-count" role="status"></div>
+            <div id="spells-body" class="spell-catalog"></div>
+            <div class="form-footer"><button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs</button><button id="save-spells" class="primary-btn compact">Enregistrer les valeurs simulées →</button></div>
+            <p class="microcopy">Important : les valeurs de dommages de DofusBook sont propres à ce stuff et certaines lignes correspondent à des conditions alternatives (charges, états, coups critiques). Ne les additionne pas automatiquement. Les sorts non simulés sont visibles dans ce catalogue, mais ne participent pas encore à la recherche de rotation sur 5 tours. Les corrections des 7 sorts simulés sont enregistrées uniquement sur ton navigateur.</p>
+          </section>
+        </section>
         <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement la v0.1</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; les 5 tours sont évalués ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Arnaque ajoute 100 Agilité après ses dégâts, avec un maximum de deux charges dans le simulateur. Durée réglable car elle doit être validée contre le jeu.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Toxines, Épidémie et Injection Toxique ont des dégâts différés, avec des hypothèses de durée. Les limites de lancers et la relance d'Injection sont suivies.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges ne font aucun dégât si le déclenchement n'est pas coché. Lorsqu'il l'est, on suppose leur déclenchement à chaque pose, sans grille tactique : scénario optimiste.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte, pas de déplacements, pas de ligne de vue variable, pas de résistances fixes, pas de propagation multi-cible d'Épidémie, ni de survie ou de soins. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — sorts Sram 3.7</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
         <footer class="footer"><span>OMBRE v0.1 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
       </div>
