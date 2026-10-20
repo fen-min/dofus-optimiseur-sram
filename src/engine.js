@@ -22,8 +22,9 @@ export function initialState(input={}){
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
+function effectivePA(spell,s){return spell.name==="Perfidie"?Math.max(2,spell.pa-Math.min(4,s.charges)):spell.pa;}
 export function eligible(spell,s,c){
- if(!selected(spell,c)||spell.pa>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
+ if(!selected(spell,c)||effectivePA(spell,s)>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
  const dist=spell.target==="self"||spell.target==="tile"?Math.max(spell.minRange,Math.min(s.position,spell.range)):s.position;
  if(dist<spell.minRange||dist>spell.range)return false;
  if(spell.lineOnly&&!c.inLine)return false;
@@ -94,9 +95,10 @@ function trapActivation(s,c){
 export function castSpell(origin,spell,input={}){
  const c=cleanSettings(input);const s=cpy(origin);
  if(!eligible(spell,s,c))throw Error("Lancer impossible : "+spell.name);
- s.pa-=spell.pa;s.used[spell.id]=(s.used[spell.id]||0)+1;
+ const cost=effectivePA(spell,s);
+ s.pa-=cost;s.used[spell.id]=(s.used[spell.id]||0)+1;
  if(spell.cooldown)s.ready[spell.id]=s.turn+spell.cooldown;
- const action={id:spell.id,name:spell.name,pa:spell.pa,immediate:0,notes:[]};
+ const action={id:spell.id,name:spell.name,pa:cost,immediate:0,notes:[]};
  s.actions.push(action);const prior=s.total;
  const {name,status}=spell;
  if(spell.isTrap){
@@ -119,8 +121,8 @@ export function castSpell(origin,spell,input={}){
  if(name==="Concentration de Chakra"){s.concentrationExpires=s.turn;action.notes.push("Vol Air supplémentaire sur piège activé");}
  if(name==="Comploteur"){s.invocations.push({kind:name,turn:s.turn,charges:0});action.notes.push("Explosion différée, si contact supposé");}
  if(name==="Double"){s.invocations.push({kind:name,turn:s.turn});action.notes.push("Placement : effet DPS non chiffré");}
- if(name==="Peur"&&c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par poussée (hypothèse)");}
- if(status.move&&c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par déplacement (hypothèse)");}
+ if(name==="Peur"){s.position=Math.min(30,s.position+2);action.notes.push("Distance cible +2 cases (sans obstacle)");if(c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par poussée (hypothèse)");}}
+ if(status.move&&name!=="Peur"){s.position=Math.min(30,s.position+status.move);action.notes.push("Distance cible +"+status.move+" cases (sans obstacle)");if(c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par déplacement (hypothèse)");}}
  if(status.spendTrapCharges){s.charges=0;}
  if(spell.nonDirect===false&&spell.isTrap===false&&spell.min>0)s.visible=true; // attaques directes dévoilent
  if(["Méprise","Marque Mortuaire","Concentration de Chakra"].includes(name))s.visible=true;
@@ -172,7 +174,7 @@ function signature(s){
  return [s.turn,s.pa,Object.entries(s.used).sort().join(":"),Object.entries(s.ready).sort().join(":"),
  s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
  s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.trapActivatedThisTurn,
- s.concentrationExpires,s.visible,s.enemyDebuff.multiplier,s.enemyDebuff.expires,s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
+ s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
  ].join("|");
 }
 function prune(states,width,c){
