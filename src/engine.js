@@ -1,20 +1,206 @@
-import {SPELLS,DEFAULT_SETTINGS} from "./spells.js";
-const num=(x,d=0)=>Number.isFinite(Number(x))?Number(x):d, round=x=>Math.round(x*10)/10;
-export function cleanSettings(input={}){const v={...DEFAULT_SETTINGS,...input};return {...v,ap:Math.max(6,Math.min(20,Math.floor(num(v.ap,12)))),turns:Math.max(1,Math.min(5,Math.floor(num(v.turns,5)))),resistance:Math.max(0,Math.min(80,num(v.resistance))),distance:Math.max(0,Math.min(30,Math.floor(num(v.distance,3)))),agiBuffDuration:Math.max(1,Math.min(5,Math.floor(num(v.agiBuffDuration,2)))),beamWidth:Math.max(5,Math.min(70,Math.floor(num(v.beamWidth,24))))};}
-export function eligible(spell,s,c){return spell.pa<=s.paLeft&&(s.used[spell.id]||0)<spell.maxPerTurn&&(spell.id!=="injection"||s.readyInjection<=s.turn)&&(spell.id!=="toxines"||c.variantToxines)&&(spell.id!=="fourvoiement"||c.variantFourvoiement)&&(spell.id!=="insidieux"||c.variantInsidieux)&&c.distance>=spell.minRange&&c.distance<=spell.range&&(!spell.lineOnly||c.inLine)&&(!spell.los||c.lineOfSight);}
-export function expectedDamage(spell,buffs,c){const normal=(num(spell.min)+num(spell.max))/2,critical=(num(spell.critMin)+num(spell.critMax))/2,p=c.criticals?num(spell.critChance):0;return Math.max(0,((1-p)*normal+p*critical+buffs*num(spell.agiBase))*(1-c.resistance/100));}
-export function initialState(settings){const c=cleanSettings(settings);return {turn:1,paLeft:c.ap,used:{},readyInjection:1,buffs:[],toxBoost:0,trapAppliedThisTurn:false,poisons:{},total:0,instant:0,delayed:0,turns:[],current:[],currentImmediate:0};}
-const copy=s=>({...s,used:{...s.used},buffs:s.buffs.map(b=>({...b})),poisons:Object.fromEntries(Object.entries(s.poisons).map(([k,v])=>[k,{...v}])),current:s.current.slice()});
-const active=s=>s.buffs.filter(b=>b.expires>=s.turn).length;
-export function castSpell(state,spell,settings){const c=cleanSettings(settings);if(!eligible(spell,state,c))throw Error("Sort impossible : "+spell.name);const s=copy(state),damage=expectedDamage(spell,active(s),c);s.paLeft-=spell.pa;s.used[spell.id]=(s.used[spell.id]||0)+1;s.current.push({id:spell.id,name:spell.name,pa:spell.pa,immediate:0});const item=s.current.at(-1);
-if(["arnaque","fourvoiement"].includes(spell.id)){s.instant+=damage;s.total+=damage;s.currentImmediate+=damage;item.immediate=damage;if(spell.id==="arnaque"){if(s.buffs.length>=2)s.buffs.shift();s.buffs.push({expires:s.turn+c.agiBuffDuration-1});}}
-if(spell.id==="toxines")s.poisons.toxines={phase:"end",remaining:2,damage:damage+s.toxBoost*112*(1-c.resistance/100)};
-if(spell.id==="epidemie")s.poisons.epidemie={phase:"end",remaining:1,damage};
-if(spell.id==="injection"){s.poisons.injection={phase:"start",remaining:3,damage};s.readyInjection=s.turn+5;}
-if(["insidieux","repulsif"].includes(spell.id)&&c.triggerTraps){s.instant+=damage;s.total+=damage;s.currentImmediate+=damage;item.immediate=damage;if(spell.id==="insidieux")s.poisons.insidieux={phase:"end",remaining:1,damage};if(s.poisons.toxines&&!s.trapAppliedThisTurn){s.toxBoost=Math.min(5,s.toxBoost+1);s.poisons.toxines.remaining=2;s.poisons.toxines.damage=expectedDamage({...SPELLS.find(x=>x.id==="toxines"),min:310+s.toxBoost*112,max:347+s.toxBoost*112},active(s),c);s.trapAppliedThisTurn=true;}if(s.readyInjection>s.turn+1)s.readyInjection--;}
-return s;}
-export function endTurn(state,settings){const c=cleanSettings(settings),s=copy(state),ticks=[];let poison=0;for(const phase of ["start","end"])for(const id of ["injection","toxines","epidemie","insidieux"]){const p=s.poisons[id];if(!p||p.phase!==phase||p.remaining<=0)continue;poison+=p.damage;ticks.push({id,damage:round(p.damage),phase});if(--p.remaining===0)delete s.poisons[id];}s.total+=poison;s.delayed+=poison;s.turns=[...s.turns,{number:s.turn,actions:s.current,spent:c.ap-s.paLeft,immediate:round(s.currentImmediate),poison:round(poison),total:round(s.currentImmediate+poison),ticks,activeBuff:active(s)}];s.turn++;s.paLeft=c.ap;s.used={};s.current=[];s.currentImmediate=0;s.trapAppliedThisTurn=false;s.buffs=s.buffs.filter(b=>b.expires>=s.turn);return s;}
-const score=(s,c)=>s.total+Object.values(s.poisons).reduce((x,p)=>x+p.damage*Math.min(p.remaining,Math.max(0,c.turns-s.turn+1)),0)+active(s)*24+s.toxBoost*35;
-const key=s=>[s.turn,s.paLeft,Object.entries(s.used).sort().join(","),s.buffs.map(b=>b.expires).join(","),JSON.stringify(s.poisons),s.toxBoost,s.readyInjection].join("|");
-const prune=(xs,n,c)=>{const seen=new Map();for(const s of xs){const k=key(s);if(!seen.has(k)||score(s,c)>score(seen.get(k),c))seen.set(k,s);}return [...seen.values()].sort((a,b)=>score(b,c)-score(a,c)).slice(0,n);};
-export function optimize(settings={},spells=SPELLS){const c=cleanSettings(settings);let beam=[initialState(c)],explored=0;for(let t=1;t<=c.turns;t++){const completed=[];for(const seed of beam){let frontier=[seed];for(let step=0;step<=Math.ceil(c.ap/2);step++){const next=[];for(const state of frontier){completed.push(endTurn(state,c));for(const spell of spells){if(!eligible(spell,state,c))continue;explored++;next.push(castSpell(state,spell,c));}}if(!next.length)break;frontier=prune(next,Math.max(26,c.beamWidth*3),c);}}beam=prune(completed,c.beamWidth,c);}const best=beam.sort((a,b)=>b.total-a.total)[0];return {settings:c,explored,total:round(best.total),immediate:round(best.instant),poison:round(best.delayed),average:round(best.total/c.turns),turns:best.turns,estimate:true};}
+import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js";
+import {DEFAULT_SETTINGS} from "./spells.js";
+// Monocible, sans carte : estimation paramétrée, PAS simulateur du serveur DOFUS.
+// Un état contient PA, variantes, buffs, altérations, pièges et poisons.
+// Toutes les 44 actions existent, mais des effets de placement nécessitent des hypothèses.
+const round=n=>Math.round(n*10)/10;
+const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
+const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
+export function cleanSettings(input={}){
+ const c={...DEFAULT_SETTINGS,...input};
+ c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,5,5);c.distance=clamp(c.distance,0,30,3);
+ c.beamWidth=clamp(c.beamWidth,8,80,24);c.resistance=clamp(c.resistance,0,90,0);
+ c.resistances={Air:c.resistance,Terre:clamp(c.resistanceTerre,0,90,0),Feu:clamp(c.resistanceFeu,0,90,0),Eau:clamp(c.resistanceEau,0,90,0),Neutre:clamp(c.resistanceNeutre,0,90,0)};
+ c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
+ c.triggerTraps=!!c.triggerTraps;c.triggerOnPush=!!c.triggerOnPush;c.comploteurContact=!!c.comploteurContact;
+ c.variants=Array.isArray(c.variants)&&c.variants.length===VARIANT_PAIRS.length?c.variants.map((n,i)=>VARIANT_PAIRS[i].includes(n)?n:DEFAULT_VARIANTS[i]):DEFAULT_VARIANTS.slice();
+ return c;
+}
+export function initialState(input={}){
+ const c=cleanSettings(input);
+ return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],warnings:[],};
+}
+const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
+function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
+export function eligible(spell,s,c){
+ if(!selected(spell,c)||spell.pa>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
+ const dist=spell.target==="self"||spell.target==="tile"?Math.max(spell.minRange,Math.min(s.position,spell.range)):s.position;
+ if(dist<spell.minRange||dist>spell.range)return false;
+ if(spell.lineOnly&&!c.inLine)return false;
+ if(spell.los&&!c.lineOfSight)return false;
+ // A single enemy is being modeled, so 'per target' limits also apply.
+ if(spell.perTarget&&(s.used[spell.id]||0)>=spell.perTarget)return false;
+ if(spell.name==="Comploteur"&&s.invocations.some(x=>x.kind==="Comploteur"))return false;
+ return true;
+}
+function directRow(spell,c,s){
+ // The DofusBook lines for low HP, charges etc. are exclusive cases.
+ // User-adjusted normal / crit values serve as the default baseline.
+ let norm=(spell.min+spell.max)/2, crit=(spell.critMin+spell.critMax)/2;
+ if(c.enemyLowHp&&["Attaque Mortelle","Piège Mortel"].includes(spell.name)){
+  norm*=1.22;crit*=1.22; // approximated ratio from the conditional DofusBook lines.
+ }
+ if(spell.name==="Chausse-trappe"){norm+=s.charges*29;crit+=s.charges*29;}
+ const p=c.criticals?spell.critChance:0;
+ return (1-p)*norm+p*crit;
+}
+function damage(spell,s,c,override=null){
+ const row=override??directRow(spell,c,s);
+ const element=spell.element||"Air";
+ const buff=buffsNow(s).reduce((tot,b)=>{
+  if(b.stat==="Dommages")return tot+b.amount;
+  if(b.stat==="Puissance"||b.stat===element)return tot+b.amount*spell.baseDamage/100;
+  return tot;
+ },0);
+ const vulner=s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1;
+ return Math.max(0,(row+buff)*(1-(c.resistances[element]||0)/100)*vulner);
+}
+function addDamage(s,n,delayed=false){if(!Number.isFinite(n)||n<=0)return;n=round(n);s.total+=n;s.turnDamage+=n;if(delayed)s.delayed+=n;else{s.immediate+=n;s.turnImmediate=(s.turnImmediate||0)+n;}}
+function addBuff(s,key,stat,amount,duration,maxStacks){
+ const previous=s.buffs.filter(b=>b.key===key);
+ if(previous.length>=maxStacks){const replace=previous.sort((a,b)=>a.until-b.until)[0];s.buffs.splice(s.buffs.indexOf(replace),1);}
+ s.buffs.push({key,stat,amount,until:s.turn+duration-1});
+}
+function dot(s,spell,c){
+ const d=spell.status.poison;
+ s.dots[spell.id]={name:spell.name,element:spell.element,phase:d.phase,left:d.duration,
+  base:damage(spell,s,c),source:spell.name};
+}
+function trapActivation(s,c){
+ const p=s.traps.shift();
+ if(!p)return;
+ const d=damage(p.spell,s,c,p.base);
+ addDamage(s,d);
+ s.charges=Math.min(5,s.charges+1);
+ for(const summon of s.invocations)if(summon.kind==="Comploteur")summon.charges=Math.min(5,summon.charges+1);
+ if(s.dots["12933"]&&!s.trapActivatedThisTurn){
+  const tox=s.dots["12933"];tox.left=2;
+  tox.base+=Math.max(0,112*(1-c.resistances.Air/100));
+  s.trapActivatedThisTurn=true;
+ }
+ if(s.concentrationExpires>=s.turn){
+  // DofusBook shows 403 vol Air in the supplied build. This is a
+  // single-target proxy, not a complete per-trap effect simulator.
+  const concentration=SIM_SPELLS.find(x=>x.name==="Concentration de Chakra");
+  const m=concentration?403*(1-c.resistances.Air/100):0;
+  addDamage(s,m);
+ }
+ if(p.spell.status.poisonOnTrap){
+  const x=p.spell.status.poisonOnTrap;
+  s.dots["trap-"+p.spell.id]={name:p.spell.name,phase:x.phase,left:x.duration,base:d,element:p.spell.element};
+ }
+ if(s.ready["12940"]>s.turn+1)s.ready["12940"]--;
+}
+export function castSpell(origin,spell,input={}){
+ const c=cleanSettings(input);const s=cpy(origin);
+ if(!eligible(spell,s,c))throw Error("Lancer impossible : "+spell.name);
+ s.pa-=spell.pa;s.used[spell.id]=(s.used[spell.id]||0)+1;
+ if(spell.cooldown)s.ready[spell.id]=s.turn+spell.cooldown;
+ const action={id:spell.id,name:spell.name,pa:spell.pa,immediate:0,notes:[]};
+ s.actions.push(action);const prior=s.total;
+ const {name,status}=spell;
+ if(spell.isTrap){
+  s.traps.push({spell,base:directRow(spell,c,s)});
+  action.notes.push("Piège posé");
+  if(c.triggerTraps){trapActivation(s,c);action.notes.push("Déclenchement supposé");}
+ }else if(status.poison){dot(s,spell,c);action.notes.push("Poison différé");}
+ else if(!spell.nonDirect&&spell.min>0){addDamage(s,damage(spell,s,c));}
+ if(status.buff){
+  const b=status.buff;
+  addBuff(s,name,b.stat,b.value,b.duration,b.stacks);
+  action.notes.push("Buff +"+b.value+" "+b.stat+" ("+b.duration+" tours)");
+ }
+ if(status.vulnerability){
+  const rate=name==="Marque Mortuaire"?1.02+0.02*Math.min(4,s.charges):status.vulnerability;
+  s.enemyDebuff={multiplier:Math.max(s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1,rate),expires:s.turn+(status.vulnerabilityTurns||1)-1};
+  action.notes.push("Cible : dommages reçus ×"+rate.toFixed(2));
+ }
+ if(status.invisible){s.visible=false;action.notes.push("Invisibilité (protection non chiffrée)");}
+ if(name==="Concentration de Chakra"){s.concentrationExpires=s.turn;action.notes.push("Vol Air supplémentaire sur piège activé");}
+ if(name==="Comploteur"){s.invocations.push({kind:name,turn:s.turn,charges:0});action.notes.push("Explosion différée, si contact supposé");}
+ if(name==="Double"){s.invocations.push({kind:name,turn:s.turn});action.notes.push("Placement : effet DPS non chiffré");}
+ if(name==="Peur"&&c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par poussée (hypothèse)");}
+ if(status.move&&c.triggerOnPush&&s.traps.length){trapActivation(s,c);action.notes.push("Un piège déclenché par déplacement (hypothèse)");}
+ if(status.spendTrapCharges){s.charges=0;}
+ if(spell.nonDirect===false&&spell.isTrap===false&&spell.min>0)s.visible=true; // attaques directes dévoilent
+ if(["Méprise","Marque Mortuaire","Concentration de Chakra"].includes(name))s.visible=true;
+ action.immediate=round(s.total-prior);
+ if(!action.immediate&&!action.notes.length)action.notes.push(status.utility||"Contrôle / placement : aucun dégât monocible vérifiable");
+ return s;
+}
+export function endTurn(original,input={}){
+ const c=cleanSettings(input);const s=cpy(original);s.turnImmediate=s.turnImmediate||0;
+ const ticks=[];let poison=0;
+ // We place both start- and end-of-enemy-turn events in the same
+ // simulation round: their exact initiative timing is not modeled.
+ for(const phase of ["start","end"]){
+  for(const [id,p] of Object.entries(s.dots)){
+   if(p.phase!==phase)continue;
+   let n=p.base;
+   if(id==="12933")n+=s.charges*0; // Toxines updates its value on trap activation.
+   addDamage(s,n,true);poison+=round(n);ticks.push({id,name:p.name,phase,damage:round(n)});
+   p.left--;
+   if(p.left<=0)delete s.dots[id];
+  }
+ }
+ const summons=[];
+ for(const summon of s.invocations){
+  if(summon.kind==="Comploteur"&&s.turn-summon.turn>=2){
+   if(c.comploteurContact){
+    const x=SIM_SPELLS.find(e=>e.name==="Comploteur");
+    const d=damage(x,s,c,(x.min+x.max)/2+summon.charges*149);
+    addDamage(s,d,true);poison+=round(d);ticks.push({name:"Comploteur",phase:"end",damage:round(d)});
+   }
+  }else if(summon.kind==="Double"&&s.turn-summon.turn>=1){
+   // Exchange + PM affects positioning but not an automatic hit.
+  }else summons.push(summon);
+ }
+ s.invocations=summons;
+ s.turns.push({number:s.turn,actions:s.actions,spent:c.ap-s.pa,immediate:round(s.turnImmediate),poison:round(poison),total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key)});
+ s.turn++;s.pa=c.ap;s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
+ s.buffs=s.buffs.filter(b=>b.until>=s.turn);s.traps=s.traps.slice(-12);
+ if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
+ return s;
+}
+function potential(s,c){
+ let a=s.total;const remaining=c.turns-s.turn+1;
+ if(remaining>0)for(const p of Object.values(s.dots))a+=p.base*Math.min(remaining,p.left);
+ if(remaining>0){a+=buffsNow(s).reduce((v,b)=>v+(b.stat==="Dommages"?b.amount*2:b.amount*.15)*Math.min(remaining,b.until-s.turn+1),0);}
+ if(c.triggerOnPush)a+=s.traps.reduce((sum,t)=>sum+Math.max(0,t.base)*.15,0);
+ return a;
+}
+function signature(s){
+ return [s.turn,s.pa,Object.entries(s.used).sort().join(":"),Object.entries(s.ready).sort().join(":"),
+ s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
+ s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.trapActivatedThisTurn,
+ s.concentrationExpires,s.visible,s.enemyDebuff.multiplier,s.enemyDebuff.expires,s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
+ ].join("|");
+}
+function prune(states,width,c){
+ const seen=new Map();for(const s of states){const k=signature(s);if(!seen.has(k)||s.total>seen.get(k).total)seen.set(k,s);}
+ return [...seen.values()].sort((a,b)=>potential(b,c)-potential(a,c)).slice(0,width);
+}
+export function optimize(input={},allSpells=SIM_SPELLS){
+ const c=cleanSettings(input);
+ const spells=allSpells.filter(x=>selected(x,c));let beam=[initialState(c)],explored=0;
+ for(let turn=1;turn<=c.turns;turn++){
+  const finished=[];
+  for(const seed of beam){
+   let frontier=[seed];
+   for(let step=0;step<Math.ceil(c.ap/2)+1;step++){
+    const grown=[];
+    for(const current of frontier){
+     finished.push(endTurn(current,c)); // unused PA are allowed
+     for(const spell of spells){if(!eligible(spell,current,c))continue;explored++;grown.push(castSpell(current,spell,c));}
+    }
+    if(!grown.length)break;
+    frontier=prune(grown,Math.max(c.beamWidth*3,35),c);
+   }
+  }
+  beam=prune(finished,c.beamWidth,c);
+ }
+ const best=beam.sort((a,b)=>b.total-a.total)[0];
+ return {settings:c,explored,total:round(best.total),immediate:round(best.immediate),poison:round(best.delayed),average:round(best.total/c.turns),
+ turns:best.turns,considered:spells.length,fullCatalog:allSpells.length,
+ assumptions:["Modèle monocible sans carte ni obstacles","DofusBook : dégâts du stuff fourni, buff/stat scaling approximatif","Déclenchement des pièges et contact Comploteur seulement si options activées","Les effets purement défensifs/placement ne donnent aucun DPS automatiquement"],estimate:true};
+}
