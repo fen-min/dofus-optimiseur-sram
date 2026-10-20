@@ -37,7 +37,7 @@ const EXTRA={
 "Perfidie":{spendTrapCharges:true},
 "Chausse-trappe":{spendTrapCharges:true}
 };
-const SELF_NO_DAMAGE=new Set(["Invisibilité","Brume","Double","Dérobade","Manigance","Piège d'Immobilisation","Fosse Commune","Peur","Méprise","Marque Mortuaire","Concentration de Chakra"]);
+const SELF_NO_DAMAGE=new Set(["Comploteur","Invisibilité","Brume","Double","Dérobade","Manigance","Piège d'Immobilisation","Fosse Commune","Peur","Méprise","Marque Mortuaire","Concentration de Chakra"]);
 const DAMAGE_RATIO={Air:25,Terre:4.5,Eau:4.5,Feu:4.5,Neutre:4.5};
 function firstDamageRows(cat){
  const raw=cat.effects.filter(e=>!e.cc);
@@ -63,7 +63,7 @@ export const SIM_SPELLS=SRAM_CATALOG.map((cat,index)=>{
  maxPerTurn,perTarget:parseLimit(cat.details,/(\d+) lancer\/cible/,maxPerTurn),
  cooldown:parseLimit(cat.details,/(\d+) tour\(s\) de relance/,0),
  element:row?.element||cat.elements[0]||null,
- min,max,critMin:nonDirect?0:critical?.min??min,critMax:nonDirect?0:critical?.max??max,
+ min,max,summonBase:cat.name==="Comploteur"&&row?(row.min+row.max)/2:0,critMin:nonDirect?0:(critical?.min??min),critMax:nonDirect?0:(critical?.max??max),
  critChance,baseDamage:row?Math.max(1,((row.min+row.max)/2)/(DAMAGE_RATIO[row.element]||5)):0,
  isTrap,nonDirect,target:isTrap?"tile":(x.target||"enemy"),variantGroup:Math.floor(index/2),icon:isTrap?"◇":cat.type==="Poison"?"☣":cat.type==="Utilitaire"?"✦":"⚔",
  status:x,utility:x.utility||"",damagePrecision:nonDirect?"non-direct":(row&&cat.effects.filter(e=>!e.cc).length>1?"conditionnel":"direct"),
