@@ -18,7 +18,7 @@
         <button class="nav-btn" data-tab="spells"><span>✧</span> Dégâts des sorts</button>
         <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
       </nav>
-      <div class="side-bottom"><div class="tiny-dot"></div> <span>Catalogue Sram · v0.2</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
+      <div class="side-bottom"><div class="tiny-dot"></div> <span>Toutes les actions · v0.3</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
     </aside>
     <main class="main-content">
       <header class="topbar"><span><span class="breadcrumb">LABORATOIRE</span> <span class="slash">/</span> SRAM AIR</span><a href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer" class="outline-link">↗ Voir le stuff DofusBook</a></header>
@@ -41,9 +41,28 @@
                 <label class="check"><input type="checkbox" name="inLine" checked><span>Cible alignée pour les sorts en ligne</span></label>
                 <label class="check"><input type="checkbox" name="lineOfSight" checked><span>Ligne de vue disponible</span></label>
                 <label class="check"><input type="checkbox" name="criticals" checked><span>Intégrer les coups critiques probables</span></label>
-                <label class="check"><input type="checkbox" name="triggerTraps"><span>Supposer les pièges déclenchés</span></label>
+                <label class="check"><input type="checkbox" name="triggerTraps"><span>Déclencher immédiatement chaque piège posé (hypothèse simplifiée)</span></label>
               </div>
-              <details class="advanced"><summary>Variantes et hypothèses avancées <span>⌄</span></summary><div class="advanced-body"><label class="check"><input name="variantToxines" type="checkbox" checked><span>Toxines (au lieu d'Arsenic)</span></label><label class="check"><input name="variantFourvoiement" type="checkbox" checked><span>Fourvoiement (au lieu de Perfidie)</span></label><label class="check"><input name="variantInsidieux" type="checkbox" checked><span>Piège Insidieux (au lieu de Dérive)</span></label><div class="field"><label for="agiBuffDuration">Durée supposée du vol d'Agilité</label><select id="agiBuffDuration" name="agiBuffDuration"><option value="1">1 tour</option><option value="2" selected>2 tours — à confirmer</option><option value="3">3 tours</option><option value="4">4 tours</option></select></div></div></details>
+
+              <details class="advanced"><summary>Sorts, variantes et hypothèses <span>⌄</span></summary>
+                <div class="advanced-body">
+                  <p class="microcopy">Choisis un seul sort par paire : c’est obligatoire en combat. La sélection ci-dessous est proposée pour un Sram Air, mais elle n'est pas importée depuis ton personnage.</p>
+                  <div id="variant-picker" class="variant-grid"></div>
+                  <div class="divider"></div>
+                  <h3>Scénarios tactiques</h3>
+                  <label class="check"><input type="checkbox" name="triggerOnPush"><span>Supposer qu'un déplacement pousse la cible dans un piège déjà posé (sans grille)</span></label>
+                  <label class="check"><input type="checkbox" name="comploteurContact"><span>Supposer que le Comploteur finit sa vie au contact de la cible</span></label>
+                  <label class="check"><input type="checkbox" name="enemyLowHp"><span>Cible à moins de 50% de ses PV pour les sorts conditionnels</span></label>
+                  <div class="divider"></div>
+                  <h3>Résistances des autres éléments</h3>
+                  <div class="resistance-grid">
+                    <label>Terre (%)<input type="number" name="resistanceTerre" min="0" max="90" value="0"></label>
+                    <label>Feu (%)<input type="number" name="resistanceFeu" min="0" max="90" value="0"></label>
+                    <label>Eau (%)<input type="number" name="resistanceEau" min="0" max="90" value="0"></label>
+                    <label>Neutre (%)<input type="number" name="resistanceNeutre" min="0" max="90" value="0"></label>
+                  </div>
+                </div>
+              </details>
               <button id="calculate" class="primary-btn"><span>✦</span> Calculer la rotation <span class="arrow">→</span></button>
               <p class="microcopy">Recherche heuristique parmi plusieurs enchaînements, pas une garantie du meilleur tour du jeu réel.</p>
             </section>
@@ -81,11 +100,11 @@
             <div id="spell-count" class="catalog-count" role="status"></div>
             <div id="spells-body" class="spell-catalog"></div>
             <div class="form-footer"><button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs</button><button id="save-spells" class="primary-btn compact">Enregistrer les valeurs simulées →</button></div>
-            <p class="microcopy">Important : les valeurs de dommages de DofusBook sont propres à ce stuff et certaines lignes correspondent à des conditions alternatives (charges, états, coups critiques). Ne les additionne pas automatiquement. Les sorts non simulés sont visibles dans ce catalogue, mais ne participent pas encore à la recherche de rotation sur 5 tours. Les corrections des 7 sorts simulés sont enregistrées uniquement sur ton navigateur.</p>
+            <p class="microcopy">Important : les valeurs de dommages de DofusBook sont propres à ce stuff et certaines lignes correspondent à des conditions alternatives (charges, états, coups critiques). Ne les additionne pas automatiquement. Tous les sorts sont proposés comme actions, mais leurs effets de placement, de zone ou de défense ne peuvent pas être chiffrés en dégâts sans carte tactique. Les corrections des sorts simulés sont enregistrées uniquement sur ton navigateur.</p>
           </section>
         </section>
-        <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement la v0.1</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; les 5 tours sont évalués ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Arnaque ajoute 100 Agilité après ses dégâts, avec un maximum de deux charges dans le simulateur. Durée réglable car elle doit être validée contre le jeu.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Toxines, Épidémie et Injection Toxique ont des dégâts différés, avec des hypothèses de durée. Les limites de lancers et la relance d'Injection sont suivies.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges ne font aucun dégât si le déclenchement n'est pas coché. Lorsqu'il l'est, on suppose leur déclenchement à chaque pose, sans grille tactique : scénario optimiste.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte, pas de déplacements, pas de ligne de vue variable, pas de résistances fixes, pas de propagation multi-cible d'Épidémie, ni de survie ou de soins. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — sorts Sram 3.7</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
-        <footer class="footer"><span>OMBRE v0.2 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
+        <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement la v0.3</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; les 5 tours sont évalués ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Arnaque vole 40 Agilité pendant 3 tours ; Manigance ajoute 20 dommages pendant 3 tours. Les buffs sont suivis sur plusieurs tours, avec une approximation des dégâts supplémentaires.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Toxines, Épidémie et Injection Toxique ont des dégâts différés, avec des hypothèses de durée. Les limites de lancers et la relance d'Injection sont suivies.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges ne font aucun dégât si le déclenchement n'est pas coché. Lorsqu'il l'est, on suppose leur déclenchement à chaque pose, sans grille tactique : scénario optimiste.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte, pas de déplacements, pas de ligne de vue variable, pas de résistances fixes, pas de propagation multi-cible d'Épidémie, ni de survie ou de soins. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — sorts Sram 3.7</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
+        <footer class="footer"><span>OMBRE v0.3 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
       </div>
     </main>
   </div>
