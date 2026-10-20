@@ -51,3 +51,11 @@ Sur le dépôt GitHub, utiliser Settings → Pages → Deploy from a branch → 
 - Changements de classe 3.7 : https://backfromafk.com/classes/sram/
 
 Projet communautaire non affilié à Ankama.
+
+## v0.4 — Combats longs (10 tours)
+
+La durée de simulation est désormais **10 tours par défaut**, réglable de **1 à 10 tours**. Les mêmes règles de PA, effets persistants, poisons, relances, buffs et variantes sont conservées pendant la simulation complète.
+
+Pour ne pas bloquer l'interface pendant une recherche longue, le calcul tourne dans un **Web Worker**. L'utilisateur voit la progression tour par tour et peut appuyer sur **Annuler le calcul**. En l'absence de Web Worker, un mode de repli calcule sur le fil principal.
+
+Le graphique, les résultats tour par tour, les dégâts cumulés, les dégâts directs et les dégâts différés sont adaptés à la durée choisie. Attention : une simulation plus longue peut exiger davantage de calcul et **n'améliore pas automatiquement la précision** des mécaniques approximées ou de la recherche heuristique. La cible est supposée rester présente pendant 10 tours, sans IA ni vraie carte.
