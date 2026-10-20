@@ -69,3 +69,10 @@ node --test
 5. Importer des données via une source fiable et consentie ou via un fichier JSON exporté par l'utilisateur.
 
 Projet de fan, non affilié à Ankama. Aucune illustration ni ressource propriétaire incluse.
+## Catalogue complet des sorts (v0.2)
+
+L'onglet **Dégâts des sorts** recense les **44 sorts de classe Sram** figurant dans la page DofusBook liée : leurs PA, niveaux, portées, éléments, limitations de lancer et lignes de dégâts chiffrées, y compris les effets conditionnels (charges, états, etc.). On peut rechercher par nom, filtrer par élément et par type (attaque, poison, piège, invocation, utilitaire).
+
+**Distinction importante :** 44 sorts sont affichés comme **référence**, mais seuls les **7 sorts explicitement modélisés** participent actuellement à l'optimiseur expérimental. Les corrections de dégâts de ces 7 sorts sont conservées localement. Aucun autre sort ne doit être considéré comme pris en charge par le moteur jusqu'à modélisation et tests.
+
+Les chiffres affichés sont ceux calculés dans le contexte de cette fiche DofusBook, **pas des dommages de base universels**. Les effets de différentes charges, états, coups critiques ou zones peuvent être alternatifs et ne doivent pas être additionnés. L'application n'importe pas automatiquement de futures mises à jour du site.
