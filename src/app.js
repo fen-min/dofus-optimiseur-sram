@@ -155,7 +155,7 @@ function calculate(){
   cancelCalculation();
   if(error){$("#status").textContent="Erreur : "+(error.message||String(error));return;}
   result=outcome;render();
-  $("#status").textContent="Simulation "+model.name+" sur "+outcome.turns.length+" tours terminée. Dégâts approximatifs"+(model.id==="sacrieur":"").toString().replace("true"," — Souffrance et PV non modélisés").replace("false","")+".";
+  $("#status").textContent="Simulation "+model.name+" sur "+outcome.turns.length+" tours terminée. Dégâts approximatifs"+(model.id==="sacrieur"?" — Souffrance et PV non modélisés":"")+".";
  }
  try{
   if(typeof Worker==="undefined"){setTimeout(()=>{if(currentJob!==job)return;try{finish(null,optimize(cfg,spells))}catch(e){finish(e)}},30);}
@@ -231,6 +231,6 @@ for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
 });
 $("#calculate").addEventListener("click",calculate);
 $("#copy-btn").addEventListener("click",copyRotation);
-$("#save-spells").addEventListener("click",()=>{saveCalibration();tab("optimize");calculate();});
+$("#save-spells").addEventListener("click",()=>{saveCalibration();tab("optimize");if(currentJob)cancelCalculation();calculate();});
 $("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
