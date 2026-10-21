@@ -146,3 +146,11 @@
  .assist-drawer{top:0;bottom:0;right:0;width:100vw;max-width:100vw;border-radius:0}
 }
 @media(prefers-reduced-motion:reduce){.assist-drawer{transition:none}}
+
+/* v1.6 — pin from TOP-LEVEL page, never from embedded iframe */
+.assist-drawer-actions{display:flex;align-items:center;gap:7px}
+.assist-drawer-actions button{border:1px solid #716c86;background:#38334d;color:white;border-radius:7px;cursor:pointer;padding:7px 10px}
+.assist-drawer-actions button[aria-pressed="true"]{border-color:#91d5a8;background:#315842}
+.assist-drawer-actions button:disabled{opacity:.6}
+.assist-top-status{margin:0;padding:8px 11px;font-size:11px;color:#ffdbbc;background:#483328;line-height:1.4}
+.assist-top-status[hidden]{display:none}
