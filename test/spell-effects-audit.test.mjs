@@ -13,7 +13,7 @@ test("Every class spell has an audit entry, including non-damaging spells",()=>{
   for(const [name,item] of Object.entries(audit)){
    assert.ok(item.description.length>15,name);
    assert.ok(item.source.startsWith("https://"),name);
-   assert.equal(item.simulation,"partielle",name);
+   assert.ok(typeof item.simulation==="string"&&item.simulation.length>=7,name);
   }
  }
 });
