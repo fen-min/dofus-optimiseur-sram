@@ -221,3 +221,18 @@ Deux problèmes de la v1.5 sont corrigés :
 Compatibilité : Chrome/Edge de bureau sur HTTPS avec Document Picture-in-Picture. Une page web ne peut pas forcer une fenêtre Chrome classique à rester toujours devant ; le PiP est géré par le navigateur. Le jeu en plein écran exclusif peut masquer l'overlay.
 
 Fichiers : `src/assist-pin.js`, `src/assist.js`, `src/app.js`, `index.html`, `combat-assiste.html`, `combat.css`. Tests de non-régression : `test/assist-pin.test.mjs`.
+
+## v1.7 — Régler les PA disponibles pour chaque tour (Combat assisté)
+
+Dans **⚡ Combat assisté**, juste sous le compteur du tour, le champ **PA disponibles au total pour ce tour** accepte de **1 à 30 PA**, avec deux boutons `−` et `+` et un bouton `↺` pour revenir aux PA habituels du build.
+
+- Il s'agit des **PA totaux du tour**, pas des PA restants. Si tu as dépensé 4 PA sur un tour initialement à 12 PA et que tu passes le total à 14 PA, le compteur devient **10 / 14 PA**.
+- Les sorts déjà joués restent enregistrés et leurs contraintes de relance/lancer restent appliquées. Le moteur relance immédiatement son optimisation à partir du tour actuel avec le nouveau budget.
+- Les autres tours conservent les PA du build (par exemple 12 PA), sauf si tu définis une valeur différente pour eux.
+- Le réglage du tour est sauvegardé dans l'historique local du combat (`turnPA`) avec les sorts joués : il reste disponible après rechargement et dans les fenêtres compactes / épinglées du même build.
+- Un nombre inférieur aux PA **déjà dépensés** est refusé pour éviter d'invalider l'historique. Valeurs permises : nombres entiers de 1 à 30.
+- Le bouton `↺` annule seulement la modification de PA de ce tour ; il ne modifie ni les PA du build ni les autres tours.
+
+**Technique :** `turnActionPoints(settings,turn)` contrôle les PA au début de chaque tour, le comptage des PA dépensés et la recherche. `setAssistTurnPA()` valide et sauvegarde la modification, et `replayAssist()` rejoue l'historique avec les budgets spécifiques. Le nouveau champ de l'historique n'affecte pas l'identité du build ni la migration des anciennes sessions.
+
+Test ajouté : `test/assist-pa.test.mjs`. Les limites de simulation des mécaniques DOFUS restent inchangées.
