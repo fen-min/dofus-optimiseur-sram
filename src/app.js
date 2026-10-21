@@ -113,10 +113,12 @@ function spellbookOption(name,index){
  const chosen=current.variants[index]===name;
  const other=model.pairs[index].find(n=>n!==name);
  const first=cat.effects.find(e=>!e.cc);
+ const buff=spell.status?.buff;
  const tooltip=[
   cat.name,cat.pa+" PA",cat.range==="Non précisée"?"Portée variable":"PO "+cat.range,
   cat.type,
-  first?first.kind+" "+first.element+" "+first.min+" à "+first.max:spell.utility||"Sort de soutien"
+  first?first.kind+" "+first.element+" "+first.min+" à "+first.max:spell.utility||"Sort de soutien",
+  buff?"+"+buff.value+(buff.unit||"")+" "+buff.stat+" ("+buff.duration+" tours, "+buff.stacks+" cumuls)":""
  ].filter(Boolean).join(" · ");
  return '<button type="button" class="spellbook-option '+(chosen?'is-equipped':'is-alternative')+
   '" data-spell-variant="'+escapeHtml(name)+'" data-spell-pair="'+index+'" aria-pressed="'+chosen+
@@ -124,7 +126,8 @@ function spellbookOption(name,index){
   '" title="'+escapeHtml(tooltip)+'">'+
   '<span class="spellbook-level">Niv. '+cat.level+'</span>'+
   '<span class="spellbook-icon element-'+spellbookElement(cat)+'" aria-hidden="true">'+spellbookIcon(cat)+'</span>'+
-  '<span class="spellbook-option-name">'+escapeHtml(name)+'</span>'+
+  '<span class="spellbook-option-copy"><span class="spellbook-option-name">'+escapeHtml(name)+'</span>'+
+  (buff?'<span class="spellbook-option-effect">+'+buff.value+(buff.unit||"")+' '+escapeHtml(buff.stat)+'</span>':'')+'</span>'+
   '<span class="spellbook-option-pa">'+cat.pa+' PA</span>'+
   (chosen?'<span class="spellbook-option-check" aria-hidden="true">✓</span>':'')+
   '</button>';
@@ -196,13 +199,13 @@ function renderSpells(){
  $("#spells-body").innerHTML=items.map(cat=>{
   const ix=spells.findIndex(s=>s.name===cat.name),s=spells[ix],first=cat.effects.find(e=>!e.cc);
   const selected=current.variants[s.variantGroup]===s.name;
-  const summary=s.status?.buff?"Buff : +"+s.status.buff.value+" "+s.status.buff.stat+" · "+s.status.buff.duration+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
+  const summary=s.status?.buff?"Buff : +"+s.status.buff.value+(s.status.buff.unit||"")+" "+s.status.buff.stat+" · "+s.status.buff.duration+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
   const elements=cat.elements.length?cat.elements.map(e=>'<span class="element-tag element-'+e.toLowerCase()+'">'+escapeHtml(e)+'</span>').join(""):'<span class="element-tag">Soutien</span>';
   const effects=cat.effects.length?'<div class="effect-lines">'+cat.effects.map(e=>'<div class="effect-row"><span>'+e.kind+" "+e.element+(e.cc?" CC":"")+'</span><strong>'+e.min+(e.max===e.min?"":" – "+e.max)+'</strong>'+(e.condition?'<small>'+escapeHtml(e.condition)+'</small>':'')+'</div>').join("")+'</div>':'<p class="muted">Aucune ligne de dégâts directs chiffrée sur DofusBook.</p>';
   const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts utilisés par le calculateur</div><div class="calibration-grid">'+[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([key,label])=>'<label>'+label+'<input type="number" min="0" max="20000" data-spell="'+ix+'" data-field="'+key+'" value="'+s[key]+'"></label>').join("")+'</div></div>':'';
-  const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Buff du modèle (approximatif)</div><div class="calibration-grid"><label>Bonus <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
+  const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Bonus de sort pris en compte par le moteur</div><div class="calibration-grid"><label>Bonus '+(s.status.buff.unit||"")+' <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
   const isActiveClassVariant=selected?'<span class="catalog-tag tag-live">Variante équipée</span>':'<span class="catalog-tag">Variante non équipée</span>';
-  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">Une seule variante par paire. Sélectionne le sort dans le grimoire ci-dessus. Les conditions et zones restent simplifiées.</p>'+effects+editable+boost+'</div></details>';
+  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">Une seule variante par paire. Les dégâts et certains effets secondaires ne sont pas encore intégralement vérifiés. Furie : bonus final confirmé par capture, mais zone non simulée.</p>'+effects+editable+boost+'</div></details>';
  }).join("")||'<p class="muted">Aucun sort pour ces filtres.</p>';
 }
 function activateBuild(id){
