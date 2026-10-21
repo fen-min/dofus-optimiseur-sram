@@ -3,7 +3,7 @@ import {
  getAssistContext,readAssistHistory,writeAssistHistory,resetAssistHistory,
  replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,
  contextFingerprint,escaped
-} from "./assist-core.js";
+} from "./assist-core.js?v=1.5";
 import {canPinCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
 
 const root=document.getElementById("assist-root");
