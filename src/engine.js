@@ -20,7 +20,7 @@ export function cleanSettings(input={}){
 }
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],warnings:[],};
+ return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],warnings:[],};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
@@ -44,7 +44,8 @@ function directRow(spell,c,s){
   norm*=1.22;crit*=1.22; // approximated ratio from the conditional DofusBook lines.
  }
  if(spell.name==="Chausse-trappe"){norm+=s.charges*29;crit+=s.charges*29;}
- const p=c.criticals?spell.critChance:0;
+ const extraCritical=buffsNow(s).reduce((v,b)=>v+(b.stat==="Critique"?b.amount:0),0);
+ const p=c.criticals?Math.min(1,Math.max(0,spell.critChance+extraCritical/100)):0;
  return (1-p)*norm+p*crit;
 }
 function damage(spell,s,c,override=null){
@@ -116,12 +117,28 @@ export function castSpell(origin,spell,input={}){
  // Un sort peut accorder plusieurs bonus indépendants, par exemple
  // Pacte de Sang : Puissance ET Vitalité. La Vitalité est enregistrée
  // comme état, mais les PV ne sont pas encore simulés.
- const bonuses=[...(status.buff?[status.buff]:[]),...(status.extraBuffs||[])];
+ const coagulation=!!status.mutilation&&s.mutilationStage>0;
+ if(status.mutilation){
+  if(coagulation){
+   const stage=s.mutilationStage;
+   s.buffs=s.buffs.filter(b=>b.key!==name);
+   s.mutilationStage=0;
+   action.notes.push("Coagulation : bouclier dépendant de Mutilation "+stage+"/3 (PV non calculés)");
+  }else{
+   s.mutilationStage=1;
+   action.notes.push("Mutilation I/III : -10% PV (non déduits), +150 Puissance");
+  }
+ }
+ const bonuses=coagulation?[]:[...(status.buff?[status.buff]:[]),...(status.extraBuffs||[])];
  for(const b of bonuses){
   const key=bonuses.length===1?name:name+":"+b.stat;
   addBuff(s,key,b.stat,b.value,b.duration,b.stacks);
   action.notes.push("Buff +"+b.value+(b.unit||"")+" "+b.stat+" ("+b.duration+" tours, "+b.stacks+" cumul(s) max)");
  }
+ if(status.hpCostPercent&&!status.mutilation)
+  action.notes.push("Coût en PV : -"+status.hpCostPercent+"% (non déduit — Souffrance non simulée)");
+ if(status.conditionalBonus)
+  action.notes.push("Effet conditionnel non simulé : +"+status.conditionalBonus.value+"% "+status.conditionalBonus.stat+" si "+status.conditionalBonus.condition);
  if(status.vulnerability){
   const rate=name==="Marque Mortuaire"?1.02+0.02*Math.min(4,s.charges):status.vulnerability;
   s.enemyDebuff={multiplier:Math.max(s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1,rate),expires:s.turn+(status.vulnerabilityTurns||1)-1};
@@ -170,8 +187,9 @@ export function endTurn(original,input={}){
  s.turns.push({number:s.turn,actions:s.actions,spent:c.ap-s.pa,immediate:round(s.turnImmediate),poison:round(poison),total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key)});
  s.turn++;s.pa=c.ap;s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
  s.buffs=s.buffs.filter(b=>b.until>=s.turn);
- // Sacrieur Mutilation: progressive Power approximation (+50 to +150).
- for(const buff of s.buffs){if(buff.key==="Mutilation")buff.amount=Math.min(150,buff.amount+50);}
+ // Seule la progression de l'état Mutilation est incrémentée ;
+ // la Puissance reste à +150 au rang 3.
+ if(s.mutilationStage>0)s.mutilationStage=Math.min(3,s.mutilationStage+1);
  s.traps=s.traps.slice(-12);
  if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
  return s;
@@ -179,14 +197,21 @@ export function endTurn(original,input={}){
 function potential(s,c){
  let a=s.total;const remaining=c.turns-s.turn+1;
  if(remaining>0)for(const p of Object.values(s.dots))a+=p.base*Math.min(remaining,p.left);
- if(remaining>0){a+=buffsNow(s).reduce((v,b)=>v+(b.stat==="Dommages"?b.amount*2:b.amount*.15)*Math.min(remaining,b.until-s.turn+1),0);}
+ if(remaining>0){
+  a+=buffsNow(s).reduce((v,b)=>{
+   let benefit=0;
+   if(b.stat==="Dommages")benefit=b.amount*2;
+   else if(["Puissance","Air","Terre","Feu","Eau","Critique","Dommages finaux"].includes(b.stat))benefit=b.amount*.15;
+   return v+benefit*Math.min(remaining,b.until-s.turn+1);
+  },0);
+ }
  if(c.triggerOnPush)a+=s.traps.reduce((sum,t)=>sum+Math.max(0,t.base)*.15,0);
  return a;
 }
 function signature(s){
  return [s.turn,s.pa,Object.entries(s.used).sort().join(":"),Object.entries(s.ready).sort().join(":"),
  s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
- s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.trapActivatedThisTurn,
+ s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.trapActivatedThisTurn,
  s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
  ].join("|");
 }
