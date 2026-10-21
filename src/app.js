@@ -4,7 +4,8 @@ import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.2";
 import {optimize} from "./engine.js?v=1.3";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
-import {saveAssistContext} from "./assist-core.js?v=1.5";
+import {saveAssistContext} from "./assist-core.js?v=1.6";
+import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 
@@ -71,6 +72,37 @@ function renderProfileSelect(){
 
 let pinnedCombat=null,pinOpening=false;
 
+let pinnedAssist=null,assistPinOpening=false;
+function assistTopStatus(message=""){
+ const status=$("#assist-top-status");
+ status.textContent=message;status.hidden=!message;
+}
+function updateAssistTopPin(){
+ const button=$("#assist-pin-top");
+ const active=!!pinnedAssist&&!pinnedAssist.window.closed;
+ button.disabled=assistPinOpening;
+ button.setAttribute("aria-pressed",String(active));
+ button.title=active?"Retirer l'épingle":"Garder le combat assisté au premier plan";
+ button.textContent=active?"📌":"📌";
+}
+async function toggleAssistTopPin(){
+ if(pinnedAssist&&!pinnedAssist.window.closed){pinnedAssist.close();return;}
+ if(!current)return;
+ if(!canPinAssist(window)){assistTopStatus(pinAssistUnsupported);return;}
+ if(assistPinOpening)return;
+ // Snapshot before launching so the independent PiP iframe can replay actions.
+ refreshAssistContext();
+ const id=current.id;
+ assistPinOpening=true;updateAssistTopPin();assistTopStatus("");
+ try{
+  const pin=await openAssistPin(window,id,()=>{
+   pinnedAssist=null;updateAssistTopPin();
+  });
+  pinnedAssist=pin;
+  closeAssistDrawer();
+ }catch(e){assistTopStatus("Impossible d’épingler : "+(e.message||String(e)));}
+ finally{assistPinOpening=false;updateAssistTopPin();}
+}
 function assistIsOpen(){return $("#assist-drawer").classList.contains("is-open");}
 function refreshAssistContext(){
  if(!current||!model)return;
@@ -374,7 +406,7 @@ function renderSpells(){
 }
 function activateBuild(id){
  const next=builds.find(b=>b.id===id);if(!next)return;
- cancelCalculation();closeCombatDrawer();closeAssistDrawer();pinnedCombat?.close();activeId=id;current=next;model=CLASSES[current.classId];
+ cancelCalculation();closeCombatDrawer();closeAssistDrawer();pinnedCombat?.close();pinnedAssist?.close();activeId=id;current=next;model=CLASSES[current.classId];
  applyCalibration();result=null;
  store(ACTIVE,id);
  document.documentElement.style.setProperty("--class-accent",model.color);
@@ -514,7 +546,13 @@ function copyRotation(){
  navigator.clipboard?.writeText(output).then(()=>{$("#copy-btn").textContent="✓ Copié";setTimeout(()=>$("#copy-btn").textContent="⧉ Copier",1500)}).catch(()=>prompt("Copier",output));
 }
 $("#assist-open").addEventListener("click",openAssistDrawer);
+$("#assist-pin-top").addEventListener("click",toggleAssistTopPin);
 $("#assist-close").addEventListener("click",closeAssistDrawer);
+window.addEventListener("message",event=>{
+ if(event.origin!==window.location.origin)return;
+ if(event.source!==$("#assist-frame").contentWindow)return;
+ if(event.data?.type==="ombre:assist-popout-opened")closeAssistDrawer();
+});
 $("#combat-open").addEventListener("click",openCombatDrawer);
 $("#combat-fab").addEventListener("click",openCombatDrawer);
 $("#combat-close").addEventListener("click",closeCombatDrawer);
@@ -612,3 +650,4 @@ $("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateComb
 $("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
 updatePinButton();
+updateAssistTopPin();
