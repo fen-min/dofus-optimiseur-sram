@@ -1,7 +1,7 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js";
-import {optimize} from "./engine.js";
-import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js";
+import {optimize} from "./engine.js?v=1.1";
+import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 
 const $=selector=>document.querySelector(selector);
@@ -322,7 +322,7 @@ function calculate(){
  try{
   if(typeof Worker==="undefined"){setTimeout(()=>{if(currentJob!==job)return;try{finish(null,optimize(cfg,spells))}catch(e){finish(e)}},30);}
   else {
-   job.worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
+   job.worker=new Worker(new URL("./worker.js?v=1.1",import.meta.url),{type:"module"});
    job.worker.onmessage=e=>{if(currentJob!==job)return;const m=e.data||{};if(m.type==="progress")$("#status").textContent="Tour "+m.progress.turn+"/"+cfg.turns+" · "+fmt(m.progress.explored)+" actions testées";else if(m.type==="complete")finish(null,m.result);else if(m.type==="error")finish(new Error(m.message));};
    job.worker.onerror=e=>{e.preventDefault?.();finish(new Error(e.message||"Erreur du calcul en arrière-plan"))};
    job.worker.postMessage({settings:cfg,spells});
