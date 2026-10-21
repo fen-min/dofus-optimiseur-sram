@@ -189,6 +189,11 @@ async function togglePin(){
 if(window.self!==window.top){
  $("assist-pin").hidden=true;
  $("assist-pin").disabled=true;
+ // PiP already *is* the floating window. Avoid offering a button that
+ // would create an additional popup while the user is playing.
+ if(new URLSearchParams(window.location.search).get("embedded")==="pip"){
+  $("assist-popout").hidden=true;
+ }
 }
 root.addEventListener("click",event=>{
  const pick=event.target.closest("button[data-pick]");
