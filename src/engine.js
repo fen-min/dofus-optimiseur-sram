@@ -113,9 +113,13 @@ export function castSpell(origin,spell,input={}){
   if(c.triggerTraps){trapActivation(s,c);action.notes.push("Déclenchement supposé");}
  }else if(status.poison){dot(s,spell,c);action.notes.push("Poison différé");}
  else if(!spell.nonDirect&&spell.min>0){addDamage(s,damage(spell,s,c));}
- if(status.buff){
-  const b=status.buff;
-  addBuff(s,name,b.stat,b.value,b.duration,b.stacks);
+ // Un sort peut accorder plusieurs bonus indépendants, par exemple
+ // Pacte de Sang : Puissance ET Vitalité. La Vitalité est enregistrée
+ // comme état, mais les PV ne sont pas encore simulés.
+ const bonuses=[...(status.buff?[status.buff]:[]),...(status.extraBuffs||[])];
+ for(const b of bonuses){
+  const key=bonuses.length===1?name:name+":"+b.stat;
+  addBuff(s,key,b.stat,b.value,b.duration,b.stacks);
   action.notes.push("Buff +"+b.value+(b.unit||"")+" "+b.stat+" ("+b.duration+" tours, "+b.stacks+" cumul(s) max)");
  }
  if(status.vulnerability){
