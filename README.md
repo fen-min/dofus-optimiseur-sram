@@ -103,3 +103,17 @@ Un inventaire des **44 sorts Sram** et **44 sorts Sacrieur** se trouve dans [SPE
 **Pacte de Sang rang 2**, d'après la capture du jeu fournie le 21 octobre 2026 : **2 PA, portée 0, relance 2 tours, cumul 1, +100 Puissance pendant 3 tours et +25 % Vitalité pendant 3 tours**. L'optimiseur suit deux bonus indépendants ; la Puissance est utilisée dans ses estimations de dégâts, tandis que le bonus de Vitalité est suivi mais **n'ajuste pas encore les PV** (et donc ne corrige pas encore les dégâts conditionnés par la Souffrance). Les deux bonus s'affichent dans le grimoire et les détails du sort.
 
 Les autres effets secondaires des 88 sorts sont recensés dans l'audit, mais **ne sont pas tous reproduits dans le calculateur**. Les résultats restent approximatifs. Les tests `test/pacte-de-sang.test.mjs` valident les deux buffs, leur expiration et la relance.
+
+## v1.0 — Relecture Sacrieur avec OpenDofusDB (21 octobre 2026)
+
+Une fiche de référence pour chacun des **44 sorts Sacrieur** figure dans [SACRIEUR_OPENDB_AUDIT_2026-10-21.md](./SACRIEUR_OPENDB_AUDIT_2026-10-21.md).
+
+Les descriptions et liens OpenDofusDB sont dans `src/spell-effects-audit.js`. 40 sorts sont liés à leur page individuelle ; les 4 autres pointent vers la page générale de la classe pour éviter les liens inventés. Dans le grimoire, **Sorts & variantes → Afficher les dégâts et les effets détaillés** présente chaque effet et précise ce que le moteur ne sait pas calculer.
+
+Corrections de simulation : **Nervosité rang 2 (+7 % de critique, 3 tours)**, **Douleur Cuisante rang 2 (+60 Puissance, 3 tours)** et **Mutilation rang 3 (+150 Puissance dès le premier lancer, état Mutilation de 1/3 à 3/3 et conversion en Coagulation au second lancer)**. Furie et Pacte de Sang restent intégrés. La conversion en Coagulation retire bien le bonus de Puissance, mais ne calcule pas encore le bouclier.
+
+Les sorts à coût en PV (Carnage, Déchaînement, Entaille, Immolation, Libation, Berserk, Châtiment) sont désormais signalés dans les actions et la documentation du moteur. **Leurs pertes de PV ne sont pas encore déduites**, donc la Souffrance et les dommages conditionnels associés ne sont pas calculés. Les bonus de Berserk restent conditionnels et ne sont pas attribués artificiellement.
+
+La recherche sur 10 tours, les variantes exclusives et les builds individuels sont préservés. La simulation demeure **heuristique, monocible, sans carte de combat**, et ses résultats ne doivent pas être présentés comme un maximum de DPS exact en jeu.
+
+Un fichier de tests `test/sacrier-openddb.test.mjs` contrôle la couverture des 44 sorts, les buffs et la progression de Mutilation.
