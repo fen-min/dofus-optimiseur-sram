@@ -256,10 +256,12 @@ function prune(states,width,c){
  const seen=new Map();for(const s of states){const k=signature(s);if(!seen.has(k)||s.total>seen.get(k).total)seen.set(k,s);}
  return [...seen.values()].sort((a,b)=>potential(b,c)-potential(a,c)).slice(0,width);
 }
-export function optimize(input={},allSpells=SIM_SPELLS,onProgress=null){
+export function optimizeFromState(input={},allSpells=SIM_SPELLS,seed=null,onProgress=null){
  const c=cleanSettings(input);
- const spells=allSpells.filter(x=>selected(x,c));let beam=[initialState(c)],explored=0;
- for(let turn=1;turn<=c.turns;turn++){
+ const spells=allSpells.filter(x=>selected(x,c));
+ if(!seed || !Number.isInteger(seed.turn) || seed.turn<1 || seed.turn>c.turns+1)throw Error("État de combat non valide");
+ let beam=[cpy(seed)],explored=0;
+ for(let turn=seed.turn;turn<=c.turns;turn++){
   const finished=[];
   for(const seed of beam){
    let frontier=[seed];
@@ -280,4 +282,9 @@ export function optimize(input={},allSpells=SIM_SPELLS,onProgress=null){
  return {settings:c,explored,total:round(best.total),immediate:round(best.immediate),poison:round(best.delayed),average:round(best.total/c.turns),
  turns:best.turns,considered:spells.length,fullCatalog:allSpells.length,
  assumptions:["Modèle monocible sans carte ni obstacles","DofusBook : dégâts du stuff fourni, buff/stat scaling approximatif","Déclenchement des pièges et contact Comploteur seulement si options activées","Les effets purement défensifs/placement ne donnent aucun DPS automatiquement"],estimate:true};
+}
+
+export function optimize(input={},allSpells=SIM_SPELLS,onProgress=null){
+ const c=cleanSettings(input);
+ return optimizeFromState(c,allSpells,initialState(c),onProgress);
 }
