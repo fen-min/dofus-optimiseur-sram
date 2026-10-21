@@ -177,3 +177,32 @@ Cliquer sur **✕** dans la fenêtre épinglée la ferme ; le panneau ou la peti
 
 **Fichiers :** `src/combat-pin.js` (API de mise au premier plan), `combat.html` / `src/combat.js` et panneau latéral `index.html` / `src/app.js`. Tests : `test/combat-pin.test.mjs` (fonctionnalité disponible ou non, affichage et navigation des tours, libération des événements après fermeture).
 
+
+
+## v1.5 — Deuxième mode : Combat assisté (choix libre + meilleure suite)
+
+**Le mode « Rotation rapide » existant reste inchangé.** Dans Optimisation, utiliser **⚡ Combat assisté** pour ouvrir un panneau latéral compact ; le bouton ↗ ouvre la même interface en petite fenêtre redimensionnable. Le bouton 📌 tente l'épinglage au premier plan avec Document Picture-in-Picture (navigateur compatible).
+
+### Utilisation
+
+1. Sélectionner ton build, ses variantes, les PA et le nombre de tours.
+2. Ouvrir **⚡ Combat assisté** ; OMBRE affiche le tour 1 et estime la meilleure suite pour les PA disponibles et jusqu'à 10 tours.
+3. Cliquer sur les sorts réellement joués, dans l'ordre. Le moteur déduit les PA et filtre les sorts selon les relances, limites de lancer, portée et variantes. Il recalcule une proposition **sans effacer tes actions**.
+4. Cliquer sur **Tour suivant** pour conserver les buffs, poisons, relances, états et autres mécanismes suivis puis renouveler les PA.
+5. Utiliser **Annuler** pour revenir sur les choix, **Recommencer** pour réinitialiser le combat ; cliquer sur un sort conseillé l'ajoute à tes actions comme un sort joué.
+
+L'historique des tours et des sorts joués est sauvegardé par build dans localStorage. Si les paramètres ou variantes changent, une nouvelle session est initialisée pour éviter les combinaisons obsolètes.
+
+### Architecture technique
+
+- src/engine.js : optimizeFromState() reprend la recherche à partir d'un état reconstruit depuis les actions choisies, au lieu de recommencer le combat.
+- src/assist-core.js : sauvegardes, rejeu des sorts avec eligible/castSpell, changement de tour via endTurn et calcul des sorts actuellement légaux.
+- src/assist-worker.js : calcul en arrière-plan, faisceau rapide de 16 états maximum pour conserver un bon délai en combat ; horizon restant conservé.
+- combat-assiste.html / src/assist.js / assist.css : interface compacte responsive, propositions, mini-fenêtre et épingle optionnelle.
+- La page principale ouvre ce même mode dans une colonne latérale via iframe, sans maintenir deux implémentations.
+
+### Limites
+
+Le modèle reste **expérimental** : PV et Souffrance Sacrieur, obstacles, placement des pièges, soins, boucliers, zones et lignes de vue réelles incomplets. Aucune lecture de l'état du jeu en direct ni action automatique. Le joueur doit choisir manuellement les sorts vraiment lancés. Les rotations conseillées sont des estimations, pas une garantie de DPS optimal.
+
+Tests : test/assist-core.test.mjs.
