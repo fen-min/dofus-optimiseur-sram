@@ -68,7 +68,7 @@ export const SPELL_EFFECTS_AUDIT = {
       "simulation": "partielle"
     },
     "Pacte de Sang": {
-      "description": "Augmente temporairement les PV maximaux et la Puissance.",
+      "description": "Rang 2 confirmé par la capture en jeu : +25 % Vitalité et +100 Puissance pendant 3 tours, pour 2 PA, 0 PO, relance 2 tours, cumul 1. Les PV ne sont pas encore recalculés dans OMBRE.",
       "checked": true,
       "source": "https://dofus-grimoire.fr/classes/sacrieur/",
       "simulation": "partielle"
