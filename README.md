@@ -95,3 +95,11 @@ Remarque : une base communautaire peut afficher un pourcentage différent selon 
 Un inventaire des **44 sorts Sram** et **44 sorts Sacrieur** se trouve dans [SPELLS_EFFECTS_AUDIT.md](./SPELLS_EFFECTS_AUDIT.md). Le registre `src/spell-effects-audit.js` documente un résumé des effets secondaires par sort, les pistes de vérification et l'état de l'audit. Dans l'application, ouvrir **Sorts & variantes → Afficher les dégâts et les effets détaillés** pour lire les effets recensés sous chaque sort et accéder à une source de comparaison.
 
 **Attention :** cet audit n'est pas une extraction structurée exhaustive de chaque rang depuis DofusDB. Les données DofusDB, OpenDofusDB, Dofus Grimoire et la capture du jeu peuvent porter sur des versions/rangs distincts. Les 88 résumés identifient les mécaniques importantes ; ils **ne certifient pas** leurs chiffres, cibles ou limites exacts à tous les rangs. Le moteur de combat n'a **pas** été modifié pour attribuer des valeurs conjecturales. En particulier, les PV/Souffrance du Sacrieur et la géométrie des pièges du Sram restent absents : les rotations de 10 tours ne sont donc pas garanties exactes.
+
+## v0.9 — Version visible et Pacte de Sang (Sacrieur)
+
+**Affichage de version :** une ancienne étiquette « Toutes les actions · v0.3 » restait codée en dur dans la barre latérale alors que le pied de page et les fichiers étaient en v0.8. Les deux étiquettes ont été synchronisées sur **v0.9** et le HTML charge les fichiers JS/CSS avec le paramètre `?v=0.9` pour limiter l'effet du cache.
+
+**Pacte de Sang rang 2**, d'après la capture du jeu fournie le 21 octobre 2026 : **2 PA, portée 0, relance 2 tours, cumul 1, +100 Puissance pendant 3 tours et +25 % Vitalité pendant 3 tours**. L'optimiseur suit deux bonus indépendants ; la Puissance est utilisée dans ses estimations de dégâts, tandis que le bonus de Vitalité est suivi mais **n'ajuste pas encore les PV** (et donc ne corrige pas encore les dégâts conditionnés par la Souffrance). Les deux bonus s'affichent dans le grimoire et les détails du sort.
+
+Les autres effets secondaires des 88 sorts sont recensés dans l'audit, mais **ne sont pas tous reproduits dans le calculateur**. Les résultats restent approximatifs. Les tests `test/pacte-de-sang.test.mjs` valident les deux buffs, leur expiration et la relance.
