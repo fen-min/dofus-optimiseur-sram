@@ -1,61 +1,61 @@
-# OMBRE — Optimiseur Sram DOFUS 3.7 (prototype v0.3)
+# OMBRE v0.5 — Atelier de builds DOFUS
 
-Application web pour un Sram Air 200, avec 12 PA et 5 tours par défaut.
+Application web expérimentale, gratuite et sans serveur, pour organiser ses personnages, leurs builds et leurs rotations.
 
-- Site : https://fen-min.github.io/dofus-optimiseur-sram/
-- Stuff source : https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts
+**Site** : https://fen-min.github.io/dofus-optimiseur-sram/
+**Dépôt** : https://github.com/fen-min/dofus-optimiseur-sram
 
-## Ce qui a changé en v0.3
+## Personnages intégrés
 
-- Les 44 sorts de classe figurent désormais dans le moteur (22 paires de variantes exclusives).
-- Chaque paire a un sélecteur dans Paramètres → Sorts, variantes et hypothèses. Un seul des deux sorts est retenu dans une simulation.
-- Attaques et dégâts conditionnels, poisons et pièges avec scénarios de déclenchement.
-- Buffs persistants simulés : Manigance (+20 dommages pendant 3 tours), Arnaque (+40 Agilité pendant 3 tours), Extorsion, Pillage, Fourberie, Truanderie.
-- Vulnérabilités simplifiées : Coupe-gorge et Marque Mortuaire.
-- Concentration de Chakra réagit aux pièges sur la cible, sous hypothèse de déclenchement.
-- Comploteur peut exploser au troisième tour si l'option de contact est activée ; il ne frappe pas immédiatement.
-- Le coût de Perfidie peut baisser avec les charges de pièges.
-- Les sorts sans dégâts directs (Invisibilité, Brume, Double, Dérobade, etc.) sont des actions candidates, mais ne se voient jamais attribuer de dégâts fictifs.
-- La rotation affiche les dommages directs, les dommages différés et les buffs ou états appliqués.
+| Personnage | Build de départ | Référence DofusBook | Sorts | Variantes |
+|---|---|---|---:|---:|
+| Sram | Air PvM 200 Low Cost | https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts | 44 | 22 paires |
+| Sacrieur | Air PvM 200 Low Cost | https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts | 44 | 22 paires |
 
-## Limites importantes
+Les 22 paires Sacrieur ont été recoupées avec la capture du menu de sorts fournie, ce qui permet de sélectionner **exactement une variante par paire**. Les choix de départ sont des suggestions Air, et non une importation certaine de la configuration en jeu.
 
-Le modèle est MONOCIBLE, sans carte réelle, sans obstacle ni IA de monstres. Les dégâts des sorts sont relevés sur le contexte du stuff DofusBook, pas recalculés à partir des caractéristiques complètes.
-Les contributions des buffs de caractéristiques et de la Puissance sont approximatives. Les changements de position sont simplifiés, et les pièges ne font des dégâts que selon des hypothèses ACTIVÉES par l'utilisateur.
-Une recherche par faisceaux (beam search) échantillonne de nombreuses rotations mais ne garantit pas un optimum global.
-Épidémie ne propage pas de dégâts sur d'autres ennemis en monocible. Les effets utilitaires ou défensifs ne reçoivent pas de valeur DPS artificielle et peuvent ne pas figurer dans une rotation purement offensive.
-La réduction de dégâts des ennemis, les résistances fixes, la survie, l'initiative, les zones exactes et toutes les subtilités des buffs ne sont pas encore modélisées.
-Ce n'est PAS un outil déterminant le tour parfait en jeu : comparer les sorties avec les dégâts du journal de combat.
+## Gestion des personnages / builds
 
-## Utilisation
+- Sélecteur de build accessible dans la barre latérale.
+- Onglet **Personnages & builds** : lister, ajouter, dupliquer, renommer et supprimer les builds.
+- Chaque build sauvegarde séparément : classe, personnage, nom, élément, lien DofusBook, 22 variantes, PA, nombre de tours, calibrations de dégâts.
+- Les sauvegardes utilisent localStorage sur cet appareil : elles ne sont pas synchronisées avec GitHub ni entre navigateurs.
+- Les nouveaux builds peuvent choisir les classes actuellement intégrées, Sram ou Sacrieur. L'architecture `src/classes.js` permet d'en ajouter d'autres ensuite.
+- **Attention :** coller un nouveau lien DofusBook ne suffit pas à importer automatiquement son équipement ou ses caractéristiques. Les valeurs disponibles proviennent des deux builds de référence ; elles doivent être recalibrées si l'équipement change.
 
-1. Ouvrir le site ou lancer un serveur HTTP local avec python -m http.server 8000.
-2. Choisir le nombre de PA et de tours.
-3. Dans les options avancées, choisir tes 22 variantes et les hypothèses (résistances, distance, pièges et Comploteur).
-4. Calculer la rotation, puis consulter le détail des 5 tours et des effets.
-5. Dans Dégâts des sorts, consulter tous les sorts et calibrer les dommages calculés pour le personnage.
+## Optimisation sur 10 tours
 
-## Tests
+La recherche heuristique teste les sorts de la classe choisie, une seule variante par paire, avec les PA, portées simplifiées, temps de relance et buffs explicitement modélisés. Les calculs s'exécutent dans un Web Worker annulable afin de conserver une interface réactive.
 
-Commande : npm test (Node.js requis). Les tests dans test/engine.test.mjs vérifient 44 sorts, variantes, PA, Manigance, poison, Comploteur, invisibilité et 5 tours.
+Pour le **Sram**, le moteur expérimental conserve attaques, poisons, pièges, buff Arnaque, Manigance, etc. Pour le **Sacrieur**, les dommages directs des sorts du build DofusBook sont catalogués et une approximation du bonus progressif de **Mutilation** (+50 puis jusqu'à +150 Puissance) est testable.
 
-## Déploiement
+## Limites cruciales
 
-Sur le dépôt GitHub, utiliser Settings → Pages → Deploy from a branch → main / (root). Aucun serveur ni dépendance npm requis pour le site.
+**Ce n'est pas encore un calculateur de rotations exactes de DOFUS.**
 
-## Sources
+- **Sacrieur : Souffrance, PV, sacrifices, soins, boucliers, bonus conditionnels, Châtiment/Punition et invocation** ne sont pas entièrement simulés. Les dégâts et les buffs conditionnés par les PV peuvent donc être très éloignés de la réalité. Les sorts purement utilitaires ne reçoivent pas de dégâts fictifs.
+- **Sram :** cartes, zones, obstacles, IA des ennemis et placement des pièges restent des hypothèses.
+- Un build cloné avec un nouvel équipement ne récupère **pas** automatiquement ses nouvelles caractéristiques DofusBook. Les chiffres de départ proviennent du build d'origine.
+- Le moteur part d'une cible unique stable pendant 10 tours. Il ne calcule ni les conditions réelles de déplacement ni la survie.
+- Les effets de buffs et les dégâts sont des estimations. La recherche par faisceaux ne garantit pas le meilleur tour global.
 
-- DofusBook : https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts
-- OpenDofusDB : https://openddb.dev/classes/4-sram
-- Dofus Grimoire : https://dofus-grimoire.fr/classes/sram/
-- Changements de classe 3.7 : https://backfromafk.com/classes/sram/
+## Utiliser
 
-Projet communautaire non affilié à Ankama.
+1. Ouvrir le site et sélectionner un build.
+2. Choisir le nombre de PA (12 par défaut) et la durée (10 tours par défaut).
+3. Ouvrir **Sorts, variantes et hypothèses** : cliquer sur **un seul** des deux choix de chaque paire.
+4. Lancer la simulation puis consulter les dégâts et les buffs tour par tour.
+5. Dupliquer un build pour tester d'autres variantes sans effacer l'original.
 
-## v0.4 — Combats longs (10 tours)
+## Développer / tester
 
-La durée de simulation est désormais **10 tours par défaut**, réglable de **1 à 10 tours**. Les mêmes règles de PA, effets persistants, poisons, relances, buffs et variantes sont conservées pendant la simulation complète.
+Ce projet utilise HTML/CSS et JavaScript ES Modules. Servir le dossier en HTTP local, par exemple `python -m http.server 8000`, ou activer GitHub Pages (main / root). Les tests Node.js s'exécutent via `npm test`.
 
-Pour ne pas bloquer l'interface pendant une recherche longue, le calcul tourne dans un **Web Worker**. L'utilisateur voit la progression tour par tour et peut appuyer sur **Annuler le calcul**. En l'absence de Web Worker, un mode de repli calcule sur le fil principal.
+## Références
 
-Le graphique, les résultats tour par tour, les dégâts cumulés, les dégâts directs et les dégâts différés sont adaptés à la durée choisie. Attention : une simulation plus longue peut exiger davantage de calcul et **n'améliore pas automatiquement la précision** des mécaniques approximées ou de la recherche heuristique. La cible est supposée rester présente pendant 10 tours, sans IA ni vraie carte.
+- DofusBook Sram : https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts
+- DofusBook Sacrieur : https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts
+- Dofus Grimoire Sacrieur : https://dofus-grimoire.fr/classes/sacrieur/
+- Changements Sacrieur 3.7 : https://backfromafk.com/classes/sacrieur/
+
+Projet de fan sans affiliation avec Ankama.
