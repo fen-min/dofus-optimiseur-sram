@@ -150,3 +150,18 @@ Capture de statistiques reçue le **21 octobre 2026**. Fiche du personnage EN JE
 Les statistiques secondaires (tacle, fuite, retraits, esquives, initiative, soins, invocations, prospection et résistances critiques/de poussée) sont également enregistrées. **Personnages & builds → Statistiques du build actif** permet de les consulter ou modifier. Les builds Sram et les nouveaux builds Sacrieur n'héritent pas automatiquement de cette capture ; une duplication conserve une copie indépendante des stats du build d'origine.
 
 **ATTENTION — calcul des dégâts :** le moteur ne recalcule PAS encore automatiquement tous les sorts en appliquant ces statistiques à leurs dégâts de base. Les chiffres de DofusBook sont déjà calculés pour un équipement qui peut différer de la capture. Additionner une seconde fois 1 267 Agilité, 160 Puissance ou 144 dommages Air produirait un double comptage. Le −44 Critique du personnage est conservé ; pour recalculer correctement les critiques, il faut repartir des chances de base de chaque sort, pas soustraire 44 à un taux déjà calculé/clampé par DofusBook. Les PA utilisés pour une rotation personnalisée (ex. 16) restent distincts des 12 PA effectivement affichés sur la capture.
+
+
+## v1.3 — Mode Combat compact (10 tours)
+
+Après **Calculer la rotation**, le bouton **⚔ Vue combat** apparaît dans les résultats et un raccourci flottant **⚔ Rotation rapide** reste disponible. Il ouvre une colonne compacte à droite, avec **uniquement les sorts à lancer dans leur ordre et les PA utilisés pour chacun des 10 tours** (ou moins selon l'horizon choisi). Aucun nombre de dégâts, poison ou note n'est ajouté dans ce mode.
+
+- **Tour en cours** encadré ; cliquer sur un tour ou utiliser les flèches gauche/droite pour avancer pendant le combat.
+- **↗ Ouvrir en petite fenêtre** ouvre `combat.html` dans une fenêtre détachable redimensionnable (largeur demandée 420 px), à placer à côté du jeu. Les navigateurs peuvent bloquer les pop-ups : il faut alors autoriser la fenêtre sur ce site. Le mode plein écran exclusif d'un jeu peut masquer les autres fenêtres ; le mode fenêtré/sans bordures est plus pratique.
+- La dernière rotation et le numéro de tour sélectionné sont **sauvegardés par build dans le navigateur** et accessibles après rechargement. Les deux vues synchronisent les changements de tour grâce au stockage local partagé de la même origine.
+- Si le build, les variantes ou les paramètres de simulation changent, le résumé devient caduc ; OMBRE masque le raccourci jusqu'au prochain calcul. Les tours provenant d'un autre personnage ne sont jamais affichés comme ceux du build actif.
+- Les boutons et les noms des sorts sont affichés en mode tactile et clavier ; l'affichage reste réactif sur petit écran.
+
+Le mode Combat n'apporte **aucune nouvelle mécanique de dégâts** : il simplifie seulement la lecture des rotations théoriques déjà calculées. Les PV, la Souffrance, les cases et les autres limites du moteur restent applicables.
+
+Tests : `test/combat-view.test.mjs` (ordre des sorts, 10 tours, PA, séparation entre builds et protection du HTML).
