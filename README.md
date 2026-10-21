@@ -130,3 +130,23 @@ Dans **Optimisation → Rotation conseillée**, chaque tour affiche désormais u
 - Affichage en deux colonnes sur ordinateur, une seule colonne sur écrans étroits.
 
 L'affichage est un **résumé de l'état du simulateur**, pas une validation supplémentaire de ses mécaniques. Les coûts de PV, la Souffrance et le placement des pièges restent limités. Tests de régression : `test/turn-effects.test.mjs`.
+
+
+## v1.2 — Fiche de statistiques du Sacrieur Air
+
+Capture de statistiques reçue le **21 octobre 2026**. Fiche du personnage EN JEU sauvegardée dans `src/character-stats.js` et automatiquement associée au build de référence `sacri-air-pvm` sans supprimer ses variantes/paramètres déjà enregistrés en local.
+
+| Caractéristique | Valeur | Caractéristique | Valeur |
+|---|---:|---|---:|
+| PV | 4 952 | PA réels | 12 |
+| PM | 5 | Portée | 5 |
+| Agilité | 1 267 | Puissance | 160 |
+| Chance | 405 | Force / Intelligence | 100 / 100 |
+| Critique | −44 | Dommages critiques | 24 |
+| Dommages Air | 144 | Dommages Eau | 56 |
+| Dommages aux sorts | 1 % | Sagesse | 386 |
+| Résistances Air / Eau | 20 % / 27 % | Résistances Terre / Feu / Neutre | 37 % / 37 % / 29 % |
+
+Les statistiques secondaires (tacle, fuite, retraits, esquives, initiative, soins, invocations, prospection et résistances critiques/de poussée) sont également enregistrées. **Personnages & builds → Statistiques du build actif** permet de les consulter ou modifier. Les builds Sram et les nouveaux builds Sacrieur n'héritent pas automatiquement de cette capture ; une duplication conserve une copie indépendante des stats du build d'origine.
+
+**ATTENTION — calcul des dégâts :** le moteur ne recalcule PAS encore automatiquement tous les sorts en appliquant ces statistiques à leurs dégâts de base. Les chiffres de DofusBook sont déjà calculés pour un équipement qui peut différer de la capture. Additionner une seconde fois 1 267 Agilité, 160 Puissance ou 144 dommages Air produirait un double comptage. Le −44 Critique du personnage est conservé ; pour recalculer correctement les critiques, il faut repartir des chances de base de chaque sort, pas soustraire 44 à un taux déjà calculé/clampé par DofusBook. Les PA utilisés pour une rotation personnalisée (ex. 16) restent distincts des 12 PA effectivement affichés sur la capture.
