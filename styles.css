@@ -218,3 +218,8 @@ a{color:var(--class-accent)}
 .spellbook-option.is-equipped .spellbook-option-effect{color:#4d602e}
 .spellbook-option:has(.spellbook-option-effect){min-height:58px}
 @media(max-width:510px){.spellbook-option-effect{font-size:9px;letter-spacing:0}}
+/* Grimoire : effets secondaires recensés et provenance des données */
+.spell-audit-box{background:#222b37;border:1px solid #526176;border-radius:10px;padding:13px 15px;margin:14px 0;color:#e4ebee}
+.spell-audit-box p{font-size:13px;line-height:1.6;color:#d9e0eb;margin:7px 0}
+.spell-audit-box .microcopy{color:#aab6c5;font-size:11px}
+.spell-audit-box a{color:#c5b9ff}
