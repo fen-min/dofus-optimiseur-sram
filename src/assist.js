@@ -4,7 +4,7 @@ import {
  replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,
  contextFingerprint,escaped
 } from "./assist-core.js?v=1.5";
-import {canPinCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
+import {canPinAssist,openAssistPin,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 
 const root=document.getElementById("assist-root");
 const $=id=>root.querySelector("#"+id);
@@ -120,7 +120,7 @@ function plan(){
   return;
  }
  try{
-  worker=new Worker(new URL("./assist-worker.js?v=1.5",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./assist-worker.js?v=1.6",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==request)return;
    const data=e.data||{};
@@ -152,38 +152,43 @@ function reset(){
 function openSmallWindow(){
  const url=new URL(window.location.href);
  url.searchParams.set("build",buildId);
+ url.searchParams.delete("embedded");
  const pop=window.open(url.href,"_blank","popup=yes,width=470,height=790,resizable=yes,scrollbars=yes");
- if(!pop)message("La petite fenêtre a été bloquée : autorise les pop-ups pour OMBRE.");
+ if(!pop){message("La petite fenêtre a été bloquée. Autorise les pop-ups pour OMBRE.");return;}
+ // Avoid showing the embedded sidebar and a second separate window together.
+ if(window.self!==window.top){
+  window.parent.postMessage({type:"ombre:assist-popout-opened"} ,window.location.origin);
+ }
 }
 function updatePin(){
  const button=$("assist-pin");
- button.setAttribute("aria-pressed",String(!!pinned&&!pinned.closed));
- button.title=pinned&&!pinned.closed?"Retirer l'épingle":"Garder au premier plan";
+ if(!button)return;
+ const active=!!pinned&&!pinned.closed;
+ button.setAttribute("aria-pressed",String(active));
+ button.title=active?"Retirer l'épingle":"Garder au premier plan";
  button.disabled=pinOpening;
 }
 async function togglePin(){
  if(pinned&&!pinned.closed){pinned.close();return;}
- if(!canPinCombat(window)){message(unsupportedPinText);return;}
- if(pinOpening)return;
- pinOpening=true;updatePin();
+ // Picture-in-Picture cannot be requested from an iframe.
+ if(!canPinAssist(window)){message(pinAssistUnsupported);return;}
+ if(pinOpening||!buildId)return;
+ pinOpening=true;updatePin();message("");
  try{
-  // The actual DOM moves into Picture-in-Picture, preserving all click handlers,
-  // the live suggestions and the worker session.
-  const pip=await window.documentPictureInPicture.requestWindow({width:450,height:780,disallowReturnToOpener:true});
-  const css1=pip.document.createElement("link");css1.rel="stylesheet";css1.href=new URL("../combat.css?v=1.5",import.meta.url).href;
-  const css2=pip.document.createElement("link");css2.rel="stylesheet";css2.href=new URL("../assist.css?v=1.5",import.meta.url).href;
-  pip.document.head.append(css1,css2);
-  pip.document.title="OMBRE — Combat assisté épinglé";
-  pip.document.body.className="assist-body";
-  pip.document.body.append(root);
-  pinned=pip;
-  pip.addEventListener("pagehide",()=>{
-   pinned=null;
-   if(!document.body.contains(root))document.body.append(root);
-   updatePin();
-  },{once:true});
+  const pop=await openAssistPin(window,buildId,()=>{
+   pinned=null;updatePin();message("");
+  });
+  pinned=pop;
+  message("Épinglée au premier plan. La fenêtre d’origine doit rester ouverte.");
  }catch(e){message("Impossible d’épingler : "+(e.message||String(e)));}
  finally{pinOpening=false;updatePin();}
+}
+// Within the main site's iframe, only the TOP-LEVEL parent page can
+// request Document PiP. Hide the unavailable pin here; its visible equivalent
+// is placed in the parent drawer's header.
+if(window.self!==window.top){
+ $("assist-pin").hidden=true;
+ $("assist-pin").disabled=true;
 }
 root.addEventListener("click",event=>{
  const pick=event.target.closest("button[data-pick]");
