@@ -84,11 +84,115 @@ function renderVariantPicker(){
    }).join("")+'</div></div>';
  }).join("");
 }
+
+/** Vue en paires inspirée du menu de sorts DOFUS : les deux variantes
+ * restent visibles, mais une seule est toujours sélectionnée. */
+function spellbookSearchMatches(cat){
+ const query=$("#spell-search").value.trim().toLocaleLowerCase("fr");
+ const element=$("#spell-element").value, type=$("#spell-type").value;
+ return (!query||[cat.name,cat.type,...cat.elements].join(" ").toLocaleLowerCase("fr").includes(query))&&
+        (!element||(element==="aucun"?cat.elements.length===0:cat.elements.includes(element)))&&
+        (!type||cat.type===type);
+}
+function spellbookElement(cat){
+ const e=cat.elements?.[0]||"aucun";
+ return ["Air","Terre","Feu","Eau","Neutre"].includes(e)?e.toLowerCase():"support";
+}
+function spellbookIcon(cat){
+ const e=cat.elements?.[0]||"";
+ if(cat.type==="Piège")return "◇";
+ if(cat.type==="Poison")return "☣";
+ if(cat.type==="Invocation")return "♟";
+ if(cat.type==="Utilitaire"||!e)return "✦";
+ return {"Air":"❯","Terre":"◆","Feu":"✹","Eau":"≈","Neutre":"✶"}[e]||"✧";
+}
+function spellbookOption(name,index){
+ const cat=model.catalog.find(x=>x.name===name);
+ const spell=spells.find(x=>x.name===name);
+ if(!cat||!spell)return "";
+ const chosen=current.variants[index]===name;
+ const other=model.pairs[index].find(n=>n!==name);
+ const first=cat.effects.find(e=>!e.cc);
+ const tooltip=[
+  cat.name,cat.pa+" PA",cat.range==="Non précisée"?"Portée variable":"PO "+cat.range,
+  cat.type,
+  first?first.kind+" "+first.element+" "+first.min+" à "+first.max:spell.utility||"Sort de soutien"
+ ].filter(Boolean).join(" · ");
+ return '<button type="button" class="spellbook-option '+(chosen?'is-equipped':'is-alternative')+
+  '" data-spell-variant="'+escapeHtml(name)+'" data-spell-pair="'+index+'" aria-pressed="'+chosen+
+  '" aria-label="'+escapeHtml("Équiper "+name+" à la place de "+other)+
+  '" title="'+escapeHtml(tooltip)+'">'+
+  '<span class="spellbook-level">Niv. '+cat.level+'</span>'+
+  '<span class="spellbook-icon element-'+spellbookElement(cat)+'" aria-hidden="true">'+spellbookIcon(cat)+'</span>'+
+  '<span class="spellbook-option-name">'+escapeHtml(name)+'</span>'+
+  '<span class="spellbook-option-pa">'+cat.pa+' PA</span>'+
+  (chosen?'<span class="spellbook-option-check" aria-hidden="true">✓</span>':'')+
+  '</button>';
+}
+function renderSpellbook(){
+ if(!current||!model)return;
+ const available=model.pairs.map((pair,index)=>({pair,index}))
+  .filter(({pair})=>pair.some(name=>{
+   const cat=model.catalog.find(x=>x.name===name);
+   return cat&&spellbookSearchMatches(cat);
+  }));
+ const columns=[available.slice(0,Math.ceil(available.length/2)),available.slice(Math.ceil(available.length/2))];
+ $("#spell-pair-grid").innerHTML=columns.map((column,i)=>
+  '<div class="spellbook-column" aria-label="Colonne '+(i+1)+'">'+
+  column.map(({pair,index})=>
+    '<div class="spellbook-pair" role="group" aria-label="Paire de variantes '+(index+1)+'">'+
+    spellbookOption(pair[0],index)+spellbookOption(pair[1],index)+'</div>'
+   ).join("")+
+  '</div>'
+ ).join("");
+ $("#spellbook-empty").hidden=available.length!==0;
+ $("#spell-count").textContent=available.length+" paire"+(available.length>1?"s":"")+" affichée"+(available.length>1?"s":"")+" / "+model.pairs.length;
+ const selected=model.pairs.filter((pair,i)=>pair.includes(current.variants[i])).length;
+ $("#spellbook-selected-count").textContent=selected+" / "+model.pairs.length+" variantes";
+ $("#spellbook-class-name").textContent=model.name.toLocaleUpperCase("fr");
+ $("#spell-catalog-heading").textContent="SORTS DU "+model.name.toLocaleUpperCase("fr");
+ $("#spellbook-title").textContent="Sorts";
+}
+function invalidateRotationForVariant(){
+ if(currentJob)cancelCalculation();
+ result=null;
+ $("#total-stat").textContent="—";
+ $("#direct-stat").textContent="—";
+ $("#poison-stat").textContent="—";
+ $("#explored-count").textContent="";
+ $("#bar-chart").innerHTML='<p class="empty">Les variantes ont changé. Relance le calcul.</p>';
+ $("#turn-results").innerHTML='<p class="muted">Le build a changé : recalcule sa rotation pour utiliser les nouveaux sorts.</p>';
+ $("#copy-btn").disabled=true;
+ $("#status").textContent="Variantes modifiées. Relance le calcul pour obtenir les meilleures rotations avec cette sélection.";
+}
+function selectSpellVariant(index,name){
+ if(!model.pairs[index]?.includes(name))return false;
+ if(current.variants[index]===name)return false;
+ const replaced=current.variants[index];
+ current.variants[index]=name;
+ saveBuilds();
+ invalidateRotationForVariant();
+ renderVariantPicker();
+ renderSpellbook();
+ renderSpells();
+ $("#spellbook-selection-message").textContent=name+" équipé · "+replaced+" remplacé · build enregistré";
+ return true;
+}
+function toggleSpellDetails(){
+ const details=$("#spell-details");
+ const opening=details.classList.contains("hidden");
+ details.classList.toggle("hidden",!opening);
+ const button=$("#spellbook-show-details");
+ button.setAttribute("aria-expanded",String(opening));
+ button.innerHTML=opening?'Masquer les dégâts et effets détaillés <span>⌃</span>':'Afficher les dégâts et les effets détaillés <span>⌄</span>';
+ if(opening)renderSpells();
+}
+
 function renderSpells(){
  const query=$("#spell-search").value.trim().toLocaleLowerCase("fr");
  const element=$("#spell-element").value,type=$("#spell-type").value;
  const items=model.catalog.filter(c=>(!query||[c.name,c.type,...c.elements].join(" ").toLocaleLowerCase("fr").includes(query))&&(!element||(element==="aucun"?c.elements.length===0:c.elements.includes(element)))&&(!type||c.type===type));
- $("#spell-count").textContent=items.length+" sorts affichés sur "+model.catalog.length;
+ 
  $("#spells-body").innerHTML=items.map(cat=>{
   const ix=spells.findIndex(s=>s.name===cat.name),s=spells[ix],first=cat.effects.find(e=>!e.cc);
   const selected=current.variants[s.variantGroup]===s.name;
@@ -98,7 +202,7 @@ function renderSpells(){
   const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts utilisés par le calculateur</div><div class="calibration-grid">'+[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([key,label])=>'<label>'+label+'<input type="number" min="0" max="20000" data-spell="'+ix+'" data-field="'+key+'" value="'+s[key]+'"></label>').join("")+'</div></div>':'';
   const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Buff du modèle (approximatif)</div><div class="calibration-grid"><label>Bonus <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
   const isActiveClassVariant=selected?'<span class="catalog-tag tag-live">Variante équipée</span>':'<span class="catalog-tag">Variante non équipée</span>';
-  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">La sélection se règle dans Paramètres → Sorts et variantes. Les conditions et zones sont simplifiées.</p>'+effects+editable+boost+'</div></details>';
+  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">Une seule variante par paire. Sélectionne le sort dans le grimoire ci-dessus. Les conditions et zones restent simplifiées.</p>'+effects+editable+boost+'</div></details>';
  }).join("")||'<p class="muted">Aucun sort pour ces filtres.</p>';
 }
 function activateBuild(id){
@@ -115,7 +219,7 @@ function activateBuild(id){
  $("#hero-class").textContent=model.name+" · Niveau "+current.level;
  $("#hero-build").textContent=current.element+" / "+current.name;
  $("#hero-model").textContent="Modèle "+model.name;
- $("#spell-catalog-heading").textContent="Tous les sorts du "+model.name+" · "+model.catalog.length+" sorts";
+ $("#spell-catalog-heading").textContent="SORTS DU "+model.name.toLocaleUpperCase("fr");
  const url=/^https:\/\/www\.dofusbook\.net\/desktop\/fr\/equipement\//.test(current.source)?current.source:model.source;
  $("#dofus-link").href=url;$("#catalog-dofus-link").href=url;
  $("#ap").value=current.ap;$("#ap-value").textContent=current.ap+" PA";
@@ -127,7 +231,8 @@ function activateBuild(id){
  $("#turn-results").innerHTML='<p class="muted">Aucune simulation pour ce build. Lance le calcul pour commencer.</p>';
  $("#explored-count").textContent="";
  $("#status").textContent=model.id==="sacrieur"?"Mode Sacrieur expérimental : Souffrance, pertes de PV, soins et certains effets sont incomplets. Les dégâts sont uniquement indicatifs.":"Mode Sram expérimental : la carte, les placements et certaines interactions de pièges ne sont pas simulés.";
- renderProfileSelect();renderBuilds();renderVariantPicker();renderSpells();
+ renderProfileSelect();renderBuilds();renderVariantPicker();renderSpellbook();renderSpells();
+ $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
 }
 function saveCalibration(){
  current.calibration={};
@@ -211,11 +316,21 @@ $("#variant-picker").addEventListener("click",e=>{
  const button=e.target.closest("[data-pair]");if(!button)return;
  const i=Number(button.dataset.pair),choice=button.dataset.choice;
  if(!model.pairs[i]?.includes(choice))return;
- current.variants[i]=choice;saveBuilds();renderVariantPicker();renderSpells();
+ selectSpellVariant(i,choice);
 });
-$("#spell-search").addEventListener("input",renderSpells);
-$("#spell-element").addEventListener("change",renderSpells);
-$("#spell-type").addEventListener("change",renderSpells);
+$("#spell-pair-grid").addEventListener("click",e=>{
+ const choice=e.target.closest("button[data-spell-variant]");
+ if(!choice)return;
+ selectSpellVariant(Number(choice.dataset.spellPair),choice.dataset.spellVariant);
+});
+$("#spellbook-reset-filters").addEventListener("click",()=>{
+ $("#spell-search").value="";$("#spell-element").value="";$("#spell-type").value="";
+ renderSpellbook();renderSpells();
+});
+$("#spellbook-show-details").addEventListener("click",toggleSpellDetails);
+$("#spell-search").addEventListener("input",()=>{renderSpellbook();renderSpells();});
+$("#spell-element").addEventListener("change",()=>{renderSpellbook();renderSpells();});
+$("#spell-type").addEventListener("change",()=>{renderSpellbook();renderSpells();});
 $("#spells-body").addEventListener("input",e=>{
  const input=e.target;if(!input.matches("input[data-spell]"))return;
  const s=spells[Number(input.dataset.spell)],field=input.dataset.field,val=Math.max(0,Number(input.value)||0);
