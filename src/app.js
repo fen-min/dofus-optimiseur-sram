@@ -151,7 +151,7 @@ function renderSpellbook(){
  $("#spellbook-selected-count").textContent=selected+" / "+model.pairs.length+" variantes";
  $("#spellbook-class-name").textContent=model.name.toLocaleUpperCase("fr");
  $("#spell-catalog-heading").textContent="SORTS DU "+model.name.toLocaleUpperCase("fr");
- $("#spellbook-title").textContent="Sorts";
+
 }
 function invalidateRotationForVariant(){
  if(currentJob)cancelCalculation();
