@@ -47,7 +47,7 @@ function appliedSettings(){
 function saveActiveSettings(){
  if(!current||!model)return;
  const state=appliedSettings();
- current.ap=state.ap;current.turns=state.turns;current.variants=state.variants;
+ current.ap=state.ap;current.turns=state.turns;current.distance=state.distance;current.variants=state.variants;
  saveBuilds();
 }
 function applyCalibration(){
@@ -227,6 +227,7 @@ function activateBuild(id){
  $("#dofus-link").href=url;$("#catalog-dofus-link").href=url;
  $("#ap").value=current.ap;$("#ap-value").textContent=current.ap+" PA";
  $("#turns").value=current.turns;$("#turns-value").textContent=current.turns+" tours";
+ $("#distance").value=current.distance;
  $("#summary-turns").textContent=current.turns;
  $("#calculate").innerHTML=calculateLabel;
  $("#total-stat").textContent="—";$("#direct-stat").textContent="—";$("#poison-stat").textContent="—";
@@ -343,6 +344,7 @@ $("#spells-body").addEventListener("input",e=>{
  if(field==="buffDuration"&&s.status.buff)s.status.buff.duration=Math.max(1,val);
 });
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
+$("#distance").addEventListener("change",e=>{if(current){current.distance=Number(e.target.value);saveBuilds();}});
 for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
  $("#"+id+"-value").textContent=e.target.value+" "+(id==="ap"?"PA":"tours");
  if(current){current[id]=Number(e.target.value);saveBuilds();}
