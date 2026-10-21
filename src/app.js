@@ -1,7 +1,8 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.2";
-import {optimize} from "./engine.js?v=1.1";
+import {optimize} from "./engine.js?v=1.3";
+import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.3";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 
@@ -65,6 +66,66 @@ function renderProfileSelect(){
  const el=$("#profile-selector");
  el.innerHTML=builds.map(b=>'<option value="'+escapeHtml(b.id)+'"'+(b.id===current.id?' selected':'')+'>'+escapeHtml(b.character+" — "+b.name)+'</option>').join("");
 }
+
+function combatSnapshot(){return current?getCombatRotation(localStorage,current.id):null;}
+function updateCombatButtons(){
+ const saved=combatSnapshot();
+ const valid=!!saved&&saved.ap===current.ap&&saved.turns.length===current.turns;
+ $("#combat-open").disabled=!valid;
+ $("#combat-fab").hidden=!valid;
+ if(!valid&&$("#combat-drawer").classList.contains("is-open"))closeCombatDrawer();
+}
+function closeCombatDrawer(){
+ const panel=$("#combat-drawer");
+ if(!panel)return;
+ panel.classList.remove("is-open");
+ panel.setAttribute("aria-hidden","true");
+ $("#combat-open").setAttribute("aria-expanded","false");
+ $("#combat-fab").setAttribute("aria-expanded","false");
+}
+function renderCombatDrawer(){
+ const saved=combatSnapshot();
+ if(!saved)return;
+ const active=getCombatTurn(localStorage,current.id,saved.turns.length);
+ $("#combat-build").textContent=saved.character+" · "+saved.name;
+ $("#combat-info").textContent=saved.turns.length+" tours · "+saved.ap+" PA / tour";
+ $("#combat-current").textContent="Tour "+active+" / "+saved.turns.length;
+ $("#combat-prev").disabled=active<=1;
+ $("#combat-next").disabled=active>=saved.turns.length;
+ $("#combat-list").innerHTML=renderCombatTurns(saved,active);
+ if($("#combat-drawer").classList.contains("is-open")){
+  $("#combat-list").querySelector(".combat-turn.is-current")?.scrollIntoView({block:"nearest"});
+ }
+}
+function openCombatDrawer(){
+ updateCombatButtons();
+ if(!combatSnapshot()||$("#combat-open").disabled)return;
+ const panel=$("#combat-drawer");
+ panel.classList.add("is-open");panel.setAttribute("aria-hidden","false");
+ $("#combat-open").setAttribute("aria-expanded","true");
+ $("#combat-fab").setAttribute("aria-expanded","true");
+ renderCombatDrawer();
+}
+function chooseCombatTurn(turn){
+ const saved=combatSnapshot();
+ if(!saved)return;
+ setCombatTurn(localStorage,current.id,turn,saved.turns.length);
+ renderCombatDrawer();
+}
+function invalidateCombatSnapshot(){
+ if(!current)return;
+ clearCombatRotation(localStorage,current.id);
+ updateCombatButtons();
+}
+function detachCombatWindow(){
+ const saved=combatSnapshot();
+ if(!saved)return;
+ const url=new URL("./combat.html",window.location.href);
+ url.searchParams.set("build",current.id);
+ const pop=window.open(url.href,"_blank","popup=yes,width=420,height=730,resizable=yes,scrollbars=yes");
+ if(!pop)$("#status").textContent="La fenêtre compacte a été bloquée. Autorise les pop-ups pour ce site.";
+}
+
 function renderBuilds(){
  const root=$("#build-cards");
  root.innerHTML=builds.map(b=>{
@@ -194,6 +255,7 @@ function renderSpellbook(){
 
 }
 function invalidateRotationForVariant(){
+ invalidateCombatSnapshot();
  if(currentJob)cancelCalculation();
  result=null;
  $("#total-stat").textContent="—";
@@ -250,7 +312,7 @@ function renderSpells(){
 }
 function activateBuild(id){
  const next=builds.find(b=>b.id===id);if(!next)return;
- cancelCalculation();activeId=id;current=next;model=CLASSES[current.classId];
+ cancelCalculation();closeCombatDrawer();activeId=id;current=next;model=CLASSES[current.classId];
  applyCalibration();result=null;
  store(ACTIVE,id);
  document.documentElement.style.setProperty("--class-accent",model.color);
@@ -276,6 +338,7 @@ function activateBuild(id){
  $("#explored-count").textContent="";
  $("#status").textContent=model.id==="sacrieur"?"Mode Sacrieur expérimental : Souffrance, pertes de PV, soins et certains effets sont incomplets. Les dégâts sont uniquement indicatifs.":"Mode Sram expérimental : la carte, les placements et certaines interactions de pièges ne sont pas simulés.";
  renderProfileSelect();renderBuilds();renderCharacterStats();renderVariantPicker();renderSpellbook();renderSpells();
+ updateCombatButtons();
  $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
 }
 function saveCalibration(){
@@ -349,6 +412,9 @@ function calculate(){
   cancelCalculation();
   if(error){$("#status").textContent="Erreur : "+(error.message||String(error));return;}
   result=outcome;render();
+  try{const snapshot=packCombatRotation(current,outcome);storeCombatRotation(localStorage,snapshot);setCombatTurn(localStorage,current.id,1,snapshot.turns.length);}catch(err){console.warn("Rotation compacte non sauvegardée",err);}
+  updateCombatButtons();
+  if($("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();
   $("#status").textContent="Simulation "+model.name+" sur "+outcome.turns.length+" tours terminée. Dégâts approximatifs"+(model.id==="sacrieur"?" — Souffrance et PV non modélisés":"")+".";
  }
  try{
@@ -377,13 +443,30 @@ function renameBuild(id){
 function deleteBuild(){
  if(builds.length<=1){alert("Tu dois conserver au moins un build.");return;}
  if(!window.confirm("Supprimer définitivement ce build enregistré dans ce navigateur ?"))return;
- builds=builds.filter(b=>b.id!==current.id);saveBuilds();activateBuild(builds[0].id);tab("builds");
+ clearCombatRotation(localStorage,current.id);builds=builds.filter(b=>b.id!==current.id);saveBuilds();activateBuild(builds[0].id);tab("builds");
 }
 function copyRotation(){
  if(!result)return;
  const output=["OMBRE — "+current.character+" / "+current.name+" — "+result.settings.ap+" PA / "+result.turns.length+" tours","Stuff "+current.source,"Estimation : "+fmt(result.total),...result.turns.map(t=>"T"+t.number+" : "+t.actions.map(a=>a.name+" ("+a.pa+" PA)").join(" → ")+" | "+fmt(t.total)+" dégâts")].join("\n");
  navigator.clipboard?.writeText(output).then(()=>{$("#copy-btn").textContent="✓ Copié";setTimeout(()=>$("#copy-btn").textContent="⧉ Copier",1500)}).catch(()=>prompt("Copier",output));
 }
+$("#combat-open").addEventListener("click",openCombatDrawer);
+$("#combat-fab").addEventListener("click",openCombatDrawer);
+$("#combat-close").addEventListener("click",closeCombatDrawer);
+$("#combat-prev").addEventListener("click",()=>chooseCombatTurn(getCombatTurn(localStorage,current.id,combatSnapshot()?.turns.length||1)-1));
+$("#combat-next").addEventListener("click",()=>chooseCombatTurn(getCombatTurn(localStorage,current.id,combatSnapshot()?.turns.length||1)+1));
+$("#combat-list").addEventListener("click",e=>{
+ const target=e.target.closest("button[data-combat-turn]");
+ if(target)chooseCombatTurn(Number(target.dataset.combatTurn));
+});
+$("#combat-popout").addEventListener("click",detachCombatWindow);
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape" && $("#combat-drawer").classList.contains("is-open"))closeCombatDrawer();
+});
+window.addEventListener("storage",e=>{
+ if((e.key===COMBAT_TURNS||e.key===COMBAT_STORE)&&$("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();
+ if(e.key===COMBAT_STORE)updateCombatButtons();
+});
 $("#profile-selector").addEventListener("change",e=>activateBuild(e.target.value));
 $("#profile-add").addEventListener("click",()=>{tab("builds");$("#build-character").focus()});
 $("#profile-clone").addEventListener("click",()=>cloneBuild(current.id));
@@ -448,13 +531,14 @@ $("#spells-body").addEventListener("input",e=>{
  if(field==="buffDuration"&&s.status.buff)s.status.buff.duration=Math.max(1,val);
 });
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
+$("#tab-optimize .params-panel").addEventListener("change",invalidateCombatSnapshot);
 $("#distance").addEventListener("change",e=>{if(current){current.distance=Number(e.target.value);saveBuilds();}});
 for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
  $("#"+id+"-value").textContent=e.target.value+" "+(id==="ap"?"PA":"tours");
- if(current){current[id]=Number(e.target.value);saveBuilds();}
+ if(current){current[id]=Number(e.target.value);saveBuilds();invalidateCombatSnapshot();}
 });
 $("#calculate").addEventListener("click",calculate);
 $("#copy-btn").addEventListener("click",copyRotation);
-$("#save-spells").addEventListener("click",()=>{saveCalibration();tab("optimize");if(currentJob)cancelCalculation();calculate();});
-$("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();});
+$("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();tab("optimize");if(currentJob)cancelCalculation();calculate();});
+$("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
