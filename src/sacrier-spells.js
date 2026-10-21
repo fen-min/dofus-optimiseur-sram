@@ -25,10 +25,12 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
  const status={};
  let utility="";
  if(cat.name==="Mutilation"){
-   // Approximation initiale : +50 puissance, 3 états successifs jusqu'à 150.
-   // L'état et le sacrifice de PV ne sont PAS encore simulés de manière fidèle.
-   status.buff={stat:"Puissance",value:50,duration:10,stacks:1,ramp:50,max:150};
-   utility="Puissance progressive de Mutilation ; coût PV et Coagulation non simulés";
+   // Rang 3 (niveau 200) : +150 Puissance dès le lancer.
+   // La progression 1/3 → 3/3 détermine Coagulation, PAS un buff qui augmente de 50/tour.
+   status.buff={stat:"Puissance",value:150,duration:10,stacks:1};
+   status.hpCostPercent=10;
+   status.mutilation=true;
+   utility="Rang 3 : -10% PV, +150 Puissance, Mutilation 1/3→3/3 ; relance : Coagulation 15/25% PV max. PV et bouclier non calculés.";
  }
  if(cat.name==="Pacte de Sang"){
    // Rang 2 confirmé par capture en jeu (21 octobre 2026).
@@ -43,7 +45,37 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
    status.buff={stat:"Dommages finaux",unit:"%",value:3,duration:3,stacks:2};
    utility="Bonus vérifié : +3 % de dommages finaux pendant 3 tours, cumul max 2 (+6 %). Dégâts en zone non simulés.";
  }
- if(cat.name==="Berserk")utility="État Berserk avec changement de PV et dommages : non chiffré";
+ if(cat.name==="Nervosité"){
+   // Rang 2 : +7% de chances de critique pendant 3 tours.
+   status.buff={stat:"Critique",unit:"%",value:7,duration:3,stacks:2};
+   utility="Rang 2 : frappe Eau en zone et +7% Critique pendant 3 tours (jusqu’à 2 lancers par tour).";
+ }
+ if(cat.name==="Douleur Cuisante"){
+   // Rang 2 : +60 Puissance 3 tours, le bonus suit les dégâts du sort.
+   status.buff={stat:"Puissance",value:60,duration:3,stacks:2};
+   utility="Rang 2 : frappe Feu en zone et +60 Puissance pendant 3 tours (2 lancers par tour).";
+ }
+ if(cat.name==="Berserk"){
+   status.hpCostPercent=70;
+   status.conditionalBonus={stat:"Dommages aux sorts",value:10,unit:"%",condition:"Souffrance ≥ 6"};
+   utility="Rang 2 : -70% PV, Intaclable, +10% dommages aux sorts, soins reçus ×30%. État retiré si Souffrance ≤ 5 ou relance. Non simulé sans PV.";
+ }
+ if(["Carnage","Déchaînement","Immolation","Entaille"].includes(cat.name))status.hpCostPercent=10;
+ if(cat.name==="Libation")status.hpCostPercent=30;
+ if(cat.name==="Châtiment")status.hpCostPercent=15;
+ if(cat.name==="Décimation"){
+   status.vulnerability=1.03;
+   status.vulnerabilityTurns=1; // hypothèse de durée à confirmer pour la cible.
+   utility="Rang 2 : +3% dommages subis par les ennemis en zone. Durée provisoirement 1 tour dans le moteur.";
+ }
+ if(cat.name==="Bain de Sang"){
+   status.buff={stat:"Tacle",value:15,duration:1,stacks:1};
+   utility="Rang 2 : +15 Tacle par cible dans la zone, durant 1 tour. Une seule cible prise en compte."; 
+ }
+ if(cat.name==="Désolation")utility="Vol Air en zone et -3 PM pendant 1 tour ; retrait et soin non intégrés au DPS.";
+ if(cat.name==="Transfusion")utility="Rang 3 : dommages Neutre équivalents à 10% des PV du lanceur et transfert de PV alliés ; nécessite le module PV.";
+ if(cat.name==="Punition")utility="Dégâts du meilleur élément et Neutre à hauteur de 30% des PV érodés ; nécessite le module de PV érodés.";
+ if(cat.name==="Folie Sanguinaire")utility="Vole de la vie dans le meilleur élément en zone non dégressive ; nécessite le calcul du meilleur élément.";
  if(cat.name==="Libation")utility="Coût en PV et montée de Souffrance : non chiffrés";
  if(personal.has(cat.name))status.target="self";
  if(cat.type==="Invocation")utility="Invocation : dommages autonomes non pris en compte";
