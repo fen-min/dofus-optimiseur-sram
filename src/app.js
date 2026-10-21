@@ -1,126 +1,236 @@
-import {DEFAULT_SETTINGS,SOURCE_URL} from "./spells.js";
-import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js";
-import {SRAM_CATALOG} from "./sram-catalog.js";
+import {DEFAULT_SETTINGS} from "./spells.js";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js";
 import {optimize} from "./engine.js";
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],spells=SIM_SPELLS.map(s=>({...s}));
-const fmt=n=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0}).format(n||0);
-let result=null;
-function settings(){
- const names=["ap","turns","resistance","resistanceTerre","resistanceFeu","resistanceEau","resistanceNeutre","distance","inLine","lineOfSight","criticals","triggerTraps","triggerOnPush","comploteurContact","enemyLowHp"];
- const values=Object.fromEntries(names.map(k=>{
-  const e=document.getElementById(k)||document.querySelector('[name="'+k+'"]');
-  return [k,!e?DEFAULT_SETTINGS[k]:e.type==="checkbox"?e.checked:["number","range"].includes(e.type)||e.tagName==="SELECT"?Number(e.value):e.value];
+
+const $=selector=>document.querySelector(selector);
+const $$=selector=>[...document.querySelectorAll(selector)];
+const fmt=value=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0}).format(value||0);
+const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const STORE="ombre-builds-v1";
+const ACTIVE="ombre-active-build-v1";
+const deep=x=>JSON.parse(JSON.stringify(x));
+const get=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||"null")??fallback}catch{return fallback}};
+const store=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{}};
+
+function loadBuilds(){
+ const stored=get(STORE,null);
+ if(Array.isArray(stored)&&stored.length)return stored.slice(0,60).map(normalizeBuild);
+ const initial=INITIAL_BUILDS.map(normalizeBuild);
+ const old=get("ombre-spell-calibration",[]);
+ if(Array.isArray(old))for(const item of old)if(item?.id)initial[0].calibration[item.id]=item;
+ const selected=get("ombre-variants-v03",[]);
+ if(Array.isArray(selected))initial[0].variants=normalizeBuild({...initial[0],variants:selected}).variants;
+ return initial;
+}
+let builds=loadBuilds(),activeId=get(ACTIVE,"sram-air-pvm"),current=null,model=null,spells=[],result=null,currentJob=null;
+const calculateLabel=$("#calculate").innerHTML;
+function saveBuilds(){store(STORE,builds);}
+function cancelCalculation(){
+ if(!currentJob)return;
+ currentJob.worker?.terminate();
+ currentJob=null;
+ $("#calculate").innerHTML=calculateLabel;
+ $("#calculate").setAttribute("aria-busy","false");
+}
+function appliedSettings(){
+ const keys=["ap","turns","resistance","resistanceTerre","resistanceFeu","resistanceEau","resistanceNeutre","distance","inLine","lineOfSight","criticals","triggerTraps","triggerOnPush","comploteurContact","enemyLowHp"];
+ const values=Object.fromEntries(keys.map(k=>{
+  const el=document.getElementById(k)||document.querySelector('[name="'+k+'"]');
+  return [k,!el?DEFAULT_SETTINGS[k]:el.type==="checkbox"?el.checked:Number(el.value)];
  }));
- values.variants=VARIANT_PAIRS.map((pair,i)=>document.querySelector('[data-variant="'+i+'"]')?.value||DEFAULT_VARIANTS[i]);
+ values.variants=model.pairs.map((pair,i)=>document.querySelector('[data-variant="'+i+'"]')?.value||current.variants[i]);
+ values.variantPairs=model.pairs;
+ values.defaultVariants=model.defaultVariants;
+ values.classId=model.id;
  return values;
 }
-function variantPicker(){
- let saved=[];
- try{saved=JSON.parse(localStorage.getItem("ombre-variants-v03")||"[]");}catch{}
- const picker=document.getElementById("variant-picker");
- picker.innerHTML=VARIANT_PAIRS.map((pair,i)=>{
-   const choice=pair.includes(saved[i])?saved[i]:DEFAULT_VARIANTS[i];
-   return '<label class="variant-option"><span>Paire '+(i+1)+'</span><select data-variant="'+i+'" aria-label="Variante paire '+(i+1)+'">'+pair.map(n=>'<option value="'+escapeHtml(n)+'"'+(n===choice?' selected':'')+'>'+escapeHtml(n)+'</option>').join("")+'</select></label>';
+function saveActiveSettings(){
+ if(!current||!model)return;
+ const state=appliedSettings();
+ current.ap=state.ap;current.turns=state.turns;current.variants=state.variants;
+ saveBuilds();
+}
+function applyCalibration(){
+ spells=model.spells.map(x=>({...x,status:deep(x.status||{})}));
+ for(const s of spells){const item=current.calibration[s.id];if(!item)continue;
+  for(const k of ["min","max","critMin","critMax","summonBase"])if(Number.isFinite(item[k])&&item[k]>=0)s[k]=item[k];
+  if(s.status.buff&&item.buff)for(const k of ["value","duration"])if(Number.isFinite(item.buff[k])&&item.buff[k]>=0)s.status.buff[k]=item.buff[k];
+ }
+}
+function renderProfileSelect(){
+ const el=$("#profile-selector");
+ el.innerHTML=builds.map(b=>'<option value="'+escapeHtml(b.id)+'"'+(b.id===current.id?' selected':'')+'>'+escapeHtml(b.character+" — "+b.name)+'</option>').join("");
+}
+function renderBuilds(){
+ const root=$("#build-cards");
+ root.innerHTML=builds.map(b=>{
+  const cls=CLASSES[b.classId],active=b.id===current.id;
+  return '<article class="build-card '+(active?'is-active':'')+'"><div class="build-avatar" style="--card-accent:'+cls.color+'">'+cls.glyph+'</div>'+
+   '<div class="build-data"><span class="build-label">'+escapeHtml(cls.name)+' · '+escapeHtml(b.element)+' · Niv. '+b.level+'</span>'+
+   '<h3>'+escapeHtml(b.character)+'</h3><p>'+escapeHtml(b.name)+'</p>'+
+   '<small>'+b.ap+' PA · '+b.turns+' tours · '+b.variants.length+' variantes sélectionnées</small></div>'+
+   '<div class="build-card-actions"><button type="button" data-open-build="'+escapeHtml(b.id)+'">'+(active?'Actif ✓':'Sélectionner')+'</button>'+
+   '<button type="button" data-clone-build="'+escapeHtml(b.id)+'" aria-label="Dupliquer le build">⧉</button>'+
+   '<button type="button" data-rename-build="'+escapeHtml(b.id)+'">Renommer</button></div></article>';
  }).join("");
- picker.addEventListener("change",()=>{try{localStorage.setItem("ombre-variants-v03",JSON.stringify(settings().variants));}catch{}});
+}
+function renderVariantPicker(){
+ const picker=$("#variant-picker");
+ picker.innerHTML=model.pairs.map((pair,i)=>{
+  const chosen=pair.includes(current.variants[i])?current.variants[i]:model.defaultVariants[i];
+  return '<div class="variant-option"><span class="variant-label">PAIRE '+String(i+1).padStart(2,"0")+'</span><div class="variant-duo">'+pair.map(name=>{
+    const spell=spells.find(x=>x.name===name);
+    return '<button type="button" class="variant-choice '+(name===chosen?'is-selected':'')+'" data-pair="'+i+'" data-choice="'+escapeHtml(name)+'" aria-pressed="'+(name===chosen)+'"><span>'+escapeHtml(name)+'</span><small>'+(spell?.pa??"?")+' PA</small></button>';
+   }).join("")+'</div></div>';
+ }).join("");
+}
+function renderSpells(){
+ const query=$("#spell-search").value.trim().toLocaleLowerCase("fr");
+ const element=$("#spell-element").value,type=$("#spell-type").value;
+ const items=model.catalog.filter(c=>(!query||[c.name,c.type,...c.elements].join(" ").toLocaleLowerCase("fr").includes(query))&&(!element||(element==="aucun"?c.elements.length===0:c.elements.includes(element)))&&(!type||c.type===type));
+ $("#spell-count").textContent=items.length+" sorts affichés sur "+model.catalog.length;
+ $("#spells-body").innerHTML=items.map(cat=>{
+  const ix=spells.findIndex(s=>s.name===cat.name),s=spells[ix],first=cat.effects.find(e=>!e.cc);
+  const selected=current.variants[s.variantGroup]===s.name;
+  const summary=s.status?.buff?"Buff : +"+s.status.buff.value+" "+s.status.buff.stat+" · "+s.status.buff.duration+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
+  const elements=cat.elements.length?cat.elements.map(e=>'<span class="element-tag element-'+e.toLowerCase()+'">'+escapeHtml(e)+'</span>').join(""):'<span class="element-tag">Soutien</span>';
+  const effects=cat.effects.length?'<div class="effect-lines">'+cat.effects.map(e=>'<div class="effect-row"><span>'+e.kind+" "+e.element+(e.cc?" CC":"")+'</span><strong>'+e.min+(e.max===e.min?"":" – "+e.max)+'</strong>'+(e.condition?'<small>'+escapeHtml(e.condition)+'</small>':'')+'</div>').join("")+'</div>':'<p class="muted">Aucune ligne de dégâts directs chiffrée sur DofusBook.</p>';
+  const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts utilisés par le calculateur</div><div class="calibration-grid">'+[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([key,label])=>'<label>'+label+'<input type="number" min="0" max="20000" data-spell="'+ix+'" data-field="'+key+'" value="'+s[key]+'"></label>').join("")+'</div></div>':'';
+  const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Buff du modèle (approximatif)</div><div class="calibration-grid"><label>Bonus <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
+  const isActiveClassVariant=selected?'<span class="catalog-tag tag-live">Variante équipée</span>':'<span class="catalog-tag">Variante non équipée</span>';
+  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">La sélection se règle dans Paramètres → Sorts et variantes. Les conditions et zones sont simplifiées.</p>'+effects+editable+boost+'</div></details>';
+ }).join("")||'<p class="muted">Aucun sort pour ces filtres.</p>';
+}
+function activateBuild(id){
+ const next=builds.find(b=>b.id===id);if(!next)return;
+ cancelCalculation();activeId=id;current=next;model=CLASSES[current.classId];
+ applyCalibration();result=null;
+ store(ACTIVE,id);
+ document.documentElement.style.setProperty("--class-accent",model.color);
+ $("#profile-glyph").textContent=model.glyph;
+ $("#hero-glyph").textContent=model.glyph;
+ $("#profile-heading").textContent=current.character+" · "+current.name;
+ $("#profile-description").textContent=model.name+" · Niv. "+current.level+" · "+current.element+" · "+current.ap+" PA";
+ $("#breadcrumb-class").textContent=model.name.toUpperCase();
+ $("#hero-class").textContent=model.name+" · Niveau "+current.level;
+ $("#hero-build").textContent=current.element+" / "+current.name;
+ $("#hero-model").textContent="Modèle "+model.name;
+ $("#spell-catalog-heading").textContent="Tous les sorts du "+model.name+" · "+model.catalog.length+" sorts";
+ const url=/^https:\/\/www\.dofusbook\.net\/desktop\/fr\/equipement\//.test(current.source)?current.source:model.source;
+ $("#dofus-link").href=url;$("#catalog-dofus-link").href=url;
+ $("#ap").value=current.ap;$("#ap-value").textContent=current.ap+" PA";
+ $("#turns").value=current.turns;$("#turns-value").textContent=current.turns+" tours";
+ $("#summary-turns").textContent=current.turns;
+ $("#calculate").innerHTML=calculateLabel;
+ $("#total-stat").textContent="—";$("#direct-stat").textContent="—";$("#poison-stat").textContent="—";
+ $("#bar-chart").innerHTML='<p class="empty">Lance le calcul pour afficher les dégâts.</p>';
+ $("#turn-results").innerHTML='<p class="muted">Aucune simulation pour ce build. Lance le calcul pour commencer.</p>';
+ $("#explored-count").textContent="";
+ $("#status").textContent=model.id==="sacrieur"?"Mode Sacrieur expérimental : Souffrance, pertes de PV, soins et certains effets sont incomplets. Les dégâts sont uniquement indicatifs.":"Mode Sram expérimental : la carte, les placements et certaines interactions de pièges ne sont pas simulés.";
+ renderProfileSelect();renderBuilds();renderVariantPicker();renderSpells();
+}
+function saveCalibration(){
+ current.calibration={};
+ for(const spell of spells)current.calibration[spell.id]={id:spell.id,min:spell.min,max:spell.max,critMin:spell.critMin,critMax:spell.critMax,
+  buff:spell.status?.buff?{value:spell.status.buff.value,duration:spell.status.buff.duration}:undefined};
+ saveBuilds();
 }
 function render(){
  if(!result)return;
- $("#total-stat").textContent=fmt(result.total);
- const horizon=$("#summary-turns");if(horizon)horizon.textContent=String(result.turns.length);
- $("#direct-stat").textContent=fmt(result.immediate);
- $("#poison-stat").textContent=fmt(result.poison);
- $("#explored-count").textContent=result.considered+"/"+result.fullCatalog+" variantes de sorts testables · "+fmt(result.explored)+" actions explorées";
+ $("#summary-turns").textContent=result.turns.length;
+ $("#total-stat").textContent=fmt(result.total);$("#direct-stat").textContent=fmt(result.immediate);$("#poison-stat").textContent=fmt(result.poison);
+ $("#explored-count").textContent=result.considered+" variantes actives / "+result.fullCatalog+" sorts · "+fmt(result.explored)+" actions évaluées";
  const max=Math.max(1,...result.turns.map(x=>x.total));
- $("#bar-chart").innerHTML=result.turns.map(t=>'<div class="bar-column"><div class="bar-amount">'+fmt(t.total)+'</div><div class="bar-plot" style="height:'+Math.max(2,t.total/max*105)+'px"><div class="bar-segment bar-poison" style="height:'+(t.total?t.poison/t.total*100:0)+'%"></div><div class="bar-segment bar-direct" style="height:'+(t.total?t.immediate/t.total*100:0)+'%"></div></div><div class="bar-label">Tour '+t.number+'</div></div>').join("");
- $("#turn-results").innerHTML=result.turns.map(t=>
- '<article class="turn-card"><div class="turn-card-head"><span class="turn-label"><span class="turn-num">'+t.number+'</span> Tour '+t.number+' · '+t.spent+'/'+result.settings.ap+' PA</span><span class="turn-score">'+fmt(t.total)+' <small>dégâts estimés</small></span></div><div class="spell-chips">'+
- (t.actions.map(a=>'<span class="spell-chip" title="'+escapeHtml(a.notes.join(" · "))+'">'+escapeHtml(a.name)+' <b>'+a.pa+' PA</b></span>').join("")||"Passer le tour")+
- '</div><div class="turn-breakdown">Direct : '+fmt(t.immediate)+' · Effets différés : '+fmt(t.poison)+'</div>'+
- (t.actions.some(a=>a.notes.length)?'<div class="turn-notes">'+t.actions.flatMap(a=>a.notes.map(n=>escapeHtml(a.name)+" : "+escapeHtml(n))).map(n=>'<span>'+n+'</span>').join("")+'</div>':"")+
- '</article>').join("");
+ $("#bar-chart").innerHTML=result.turns.map(t=>'<div class="bar-column"><div class="bar-amount">'+fmt(t.total)+'</div><div class="bar-plot" style="height:'+Math.max(3,t.total/max*115)+'px"><div class="bar-segment bar-poison" style="height:'+(t.total?t.poison/t.total*100:0)+'%"></div><div class="bar-segment bar-direct" style="height:'+(t.total?t.immediate/t.total*100:0)+'%"></div></div><div class="bar-label">T'+t.number+'</div></div>').join("");
+ $("#turn-results").innerHTML=result.turns.map(t=>'<article class="turn-card"><div class="turn-card-head"><span class="turn-label"><span class="turn-num">'+t.number+'</span> Tour '+t.number+' · '+t.spent+'/'+result.settings.ap+' PA</span><span class="turn-score">'+fmt(t.total)+' <small>dégâts estimés</small></span></div><div class="spell-chips">'+(t.actions.map(a=>'<span class="spell-chip" title="'+escapeHtml(a.notes.join(" · "))+'">'+escapeHtml(a.name)+' <b>'+a.pa+' PA</b></span>').join("")||"Passer le tour")+'</div><div class="turn-breakdown">Direct : '+fmt(t.immediate)+' · Différé : '+fmt(t.poison)+'</div>'+(t.actions.some(a=>a.notes.length)?'<div class="turn-notes">'+t.actions.flatMap(a=>a.notes.map(n=>'<span>'+escapeHtml(a.name+" : "+n)+'</span>')).join("")+'</div>':'')+'</article>').join("");
  $("#copy-btn").disabled=false;
 }
-
-let currentJob=null;
-const calculateLabel=$("#calculate").innerHTML;
-function setCalculationBusy(active){
- const button=$("#calculate");
- button.innerHTML=active?"✕ Annuler le calcul":calculateLabel;
- button.setAttribute("aria-busy",active?"true":"false");
-}
 function calculate(){
- // Le bouton sert aussi à interrompre une simulation longue.
- if(currentJob){
-  currentJob.worker?.terminate();
-  currentJob=null;
-  setCalculationBusy(false);
-  $("#status").textContent="Calcul interrompu. Tu peux modifier les paramètres puis relancer.";
-  return;
+ if(currentJob){cancelCalculation();$("#status").textContent="Calcul interrompu.";return;}
+ saveActiveSettings();const cfg=appliedSettings(),id=current.id,job={worker:null};currentJob=job;
+ $("#calculate").innerHTML="✕ Annuler le calcul";$("#calculate").setAttribute("aria-busy","true");
+ $("#status").textContent="Calcul en cours… 0 / "+cfg.turns+" tours";
+ function finish(error,outcome){
+  if(currentJob!==job||current.id!==id)return;
+  cancelCalculation();
+  if(error){$("#status").textContent="Erreur : "+(error.message||String(error));return;}
+  result=outcome;render();
+  $("#status").textContent="Simulation "+model.name+" sur "+outcome.turns.length+" tours terminée. Dégâts approximatifs"+(model.id==="sacrieur":"").toString().replace("true"," — Souffrance et PV non modélisés").replace("false","")+".";
  }
- const cfg=settings();
- const job={worker:null};currentJob=job;
- const status=$("#status");
- setCalculationBusy(true);
- status.textContent="Calcul en cours : 0 / "+cfg.turns+" tours analysés…";
- const finish=(error,outcome)=>{
-  if(currentJob!==job)return;
-  job.worker?.terminate();
-  currentJob=null;
-  setCalculationBusy(false);
-  if(error){status.textContent="Erreur de calcul : "+(error.message||String(error));return;}
-  result=outcome;
-  render();
-  status.textContent="Simulation terminée sur "+outcome.turns.length+" tours. Dégâts théoriques monocibles : effets de carte et certaines mécaniques restent approximatifs.";
- };
  try{
-  if(typeof Worker==="undefined"){
-   // Repli pour un navigateur ne prenant pas en charge les modules Worker.
-   setTimeout(()=>{
-    if(currentJob!==job)return;
-    try{finish(null,optimize(cfg,spells));}catch(error){finish(error);}
-   },30);
-  }else{
+  if(typeof Worker==="undefined"){setTimeout(()=>{if(currentJob!==job)return;try{finish(null,optimize(cfg,spells))}catch(e){finish(e)}},30);}
+  else {
    job.worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
-   job.worker.onmessage=event=>{
-    if(currentJob!==job)return;
-    const message=event.data||{};
-    if(message.type==="progress"){
-     status.textContent="Calcul du tour "+message.progress.turn+" / "+cfg.turns+"… "+fmt(message.progress.explored)+" actions explorées.";
-    }else if(message.type==="complete"){finish(null,message.result);}
-    else if(message.type==="error"){finish(new Error(message.message||"Erreur du moteur"));}
-   };
-   job.worker.onerror=event=>{
-    event.preventDefault?.();
-    finish(new Error(event.message||"Impossible de démarrer le moteur en arrière-plan."));
-   };
+   job.worker.onmessage=e=>{if(currentJob!==job)return;const m=e.data||{};if(m.type==="progress")$("#status").textContent="Tour "+m.progress.turn+"/"+cfg.turns+" · "+fmt(m.progress.explored)+" actions testées";else if(m.type==="complete")finish(null,m.result);else if(m.type==="error")finish(new Error(m.message));};
+   job.worker.onerror=e=>{e.preventDefault?.();finish(new Error(e.message||"Erreur du calcul en arrière-plan"))};
    job.worker.postMessage({settings:cfg,spells});
   }
- }catch(error){finish(error);}
+ }catch(e){finish(e)}
 }
-function tab(name){$$(".nav-btn").forEach(e=>e.classList.toggle("active",e.dataset.tab===name));$$(".tab-panel").forEach(e=>e.classList.toggle("hidden",e.id!=="tab-"+name));}
-function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
-function renderSpells(){
-  const query=document.getElementById("spell-search")?.value.trim().toLocaleLowerCase("fr")||"";
-  const element=document.getElementById("spell-element")?.value||"";
-  const type=document.getElementById("spell-type")?.value||"";
-  const visible=SRAM_CATALOG.filter(c=> 
-    (!query||[c.name,c.type,...c.elements].join(" ").toLocaleLowerCase("fr").includes(query)) &&
-    (!element||(element==="aucun"?c.elements.length===0:c.elements.includes(element))) &&
-    (!type||c.type===type)
-  );
-  document.getElementById("spell-count").textContent=`${visible.length} sort${visible.length!==1?"s":""} affiché${visible.length!==1?"s":""} sur ${SRAM_CATALOG.length}`;
-  document.getElementById("spells-body").innerHTML=visible.map(c=>{
-    const simIndex=spells.findIndex(s=>s.name===c.name),sim=spells[simIndex];
-    const first=c.effects.find(e=>!e.cc);
-    const summary=sim?.status?.buff?`Buff +${sim.status.buff.value} ${sim.status.buff.stat} · ${sim.status.buff.duration} tours`:sim?.status?.summon?"Explosion différée (si contact)":first?`${first.kind} ${first.element} : ${first.min}${first.max!==first.min?"–"+first.max:""}`:sim?.utility||"Sort de soutien / placement";
-    const el=c.elements.length?c.elements.map(e=>`<span class="element-tag element-${e.toLowerCase()}">${escapeHtml(e)}</span>`).join(""):`<span class="element-tag">Sans élément</span>`;
-    const effects=c.effects.length?`<div class="effect-lines"><div class="catalog-subhead">Lignes de dégâts et conditions sur DofusBook</div>${c.effects.map(e=>`<div class="effect-row"><span class="effect-label">${escapeHtml(e.kind)} ${escapeHtml(e.element)}${e.cc?' <b>CC</b>':""}</span><strong>${e.min}${e.max!==e.min?" – "+e.max:""}</strong>${e.condition?`<small>${escapeHtml(e.condition)}</small>`:""}</div>`).join("")}</div>`:'<p class="muted">Ce sort n’a pas de dégâts élémentaires chiffrés sur la fiche consultée. Son utilité (buff, placement, invisibilité, invocation, etc.) doit être prise en compte séparément.</p>';
-    const calibration=sim&&!sim.nonDirect?`<div class="calibration-box"><div class="catalog-subhead">Réglage utilisé par le simulateur expérimental</div><p class="microcopy">Ce bloc calibre la rotation sur la durée choisie ; les lignes de dégâts DofusBook ci-dessus restent la référence affichée.</p><div class="calibration-grid">${[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([k,label])=>`<label>${label}<input type="number" min="0" max="20000" value="${sim[k]}" data-spell="${simIndex}" data-field="${k}" aria-label="${escapeHtml(c.name+" "+label)}"></label>`).join("")}</div></div>`:"";
-    const info=[`Niv. ${c.level}`,`${c.pa} PA`,`PO ${escapeHtml(c.range)}`,...c.details,c.critChance!==null?`${c.critChance}% CC total`:""].filter(Boolean);
-    return `<details class="catalog-entry"><summary><span class="catalog-main"><strong>${escapeHtml(c.name)}</strong><span class="catalog-preview">${escapeHtml(summary)}${c.effects.filter(e=>!e.cc).length>1?" · plusieurs conditions":""}</span></span><span class="catalog-meta">${el}<span class="catalog-pa">${c.pa} PA</span><span class="catalog-tag ${sim?"tag-live":""}">${sim?"Dans le moteur":"Catalogue"}</span><span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts">${info.map(x=>`<span>${x}</span>`).join("")}</div><p class="catalog-note">Type : ${escapeHtml(c.type)} · Les valeurs conditionnelles et les variantes peuvent différer selon la situation.</p>${effects}${calibration}${sim?.status?.buff?`<p class="catalog-note"><strong>Buff dans la simulation :</strong> +${sim.status.buff.value} ${escapeHtml(sim.status.buff.stat)} pendant ${sim.status.buff.duration} tours (cumul maximal : ${sim.status.buff.stacks}).</p>`:""}${sim?.utility?`<p class="catalog-note">Effet suivi : ${escapeHtml(sim.utility)}</p>`:""}</div></details>`;
-  }).join("")||'<p class="muted">Aucun sort ne correspond à ces filtres.</p>';
+function tab(name){$$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));$$(".tab-panel").forEach(el=>el.classList.toggle("hidden",el.id!=="tab-"+name));}
+function cloneBuild(id){
+ const from=builds.find(b=>b.id===id);if(!from)return;
+ saveActiveSettings();
+ const newBuild=normalizeBuild({...deep(from),id:"custom-"+Date.now()+"-"+Math.floor(Math.random()*1e6),name:from.name+" (copie)"},builds.length);
+ builds.push(newBuild);saveBuilds();activateBuild(newBuild.id);tab("builds");
 }
-function copy(){if(!result)return;const t=["OMBRE — "+result.settings.ap+" PA, "+result.settings.turns+" tours",SOURCE_URL,"Dégâts théoriques : "+fmt(result.total),...result.turns.map(x=>"T"+x.number+" ("+x.spent+" PA) : "+x.actions.map(a=>a.name+" ("+a.pa+" PA)").join(" → ")+" | Direct "+fmt(x.immediate)+" | Poisons "+fmt(x.poison))].join("\n");navigator.clipboard?.writeText(t).then(()=>{$("#copy-btn").textContent="✓ Copié";setTimeout(()=>$("#copy-btn").textContent="⧉ Copier",1400)}).catch(()=>prompt("Copier",t));}
-try{for(const s of JSON.parse(localStorage.getItem("ombre-spell-calibration")||"[]")){const x=spells.find(a=>a.id===s.id);if(x)for(const k of ["min","max","critMin","critMax"])if(Number.isFinite(s[k])&&s[k]>=0)x[k]=s[k];}}catch{}
-variantPicker();renderSpells();["spell-search","spell-element","spell-type"].forEach(id=>document.getElementById(id)?.addEventListener("input",renderSpells));$("#spells-body").addEventListener("input",event=>{const target=event.target;if(target instanceof HTMLInputElement&&target.dataset.spell!==undefined){const index=Number(target.dataset.spell),field=target.dataset.field;if(spells[index]&&["min","max","critMin","critMax"].includes(field)&&target.value!==""){spells[index][field]=Math.max(0,Number(target.value)||0);}}});$$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));for(const id of ["ap","turns"]){const el=$("#"+id);el?.addEventListener("input",()=>{$("#"+id+"-value").textContent=el.value+" "+(id==="ap"?"PA":"tours");});}$("#calculate").addEventListener("click",calculate);$("#copy-btn").addEventListener("click",copy);$("#save-spells").addEventListener("click",()=>{try{localStorage.setItem("ombre-spell-calibration",JSON.stringify(spells.map(s=>({id:s.id,min:s.min,max:s.max,critMin:s.critMin,critMax:s.critMax}))));}catch{}tab("optimize");calculate();});$("#reset-spells").addEventListener("click",()=>{SIM_SPELLS.forEach((s,i)=>{for(const k of ["min","max","critMin","critMax"])spells[i][k]=s[k];});localStorage.removeItem("ombre-spell-calibration");renderSpells();});calculate();
+function renameBuild(id){
+ const b=builds.find(x=>x.id===id);if(!b)return;
+ const name=window.prompt("Nouveau nom de build :",b.name);
+ if(name===null||!name.trim())return;
+ b.name=name.trim().slice(0,60);saveBuilds();activateBuild(b.id);
+}
+function deleteBuild(){
+ if(builds.length<=1){alert("Tu dois conserver au moins un build.");return;}
+ if(!window.confirm("Supprimer définitivement ce build enregistré dans ce navigateur ?"))return;
+ builds=builds.filter(b=>b.id!==current.id);saveBuilds();activateBuild(builds[0].id);tab("builds");
+}
+function copyRotation(){
+ if(!result)return;
+ const output=["OMBRE — "+current.character+" / "+current.name+" — "+result.settings.ap+" PA / "+result.turns.length+" tours","Stuff "+current.source,"Estimation : "+fmt(result.total),...result.turns.map(t=>"T"+t.number+" : "+t.actions.map(a=>a.name+" ("+a.pa+" PA)").join(" → ")+" | "+fmt(t.total)+" dégâts")].join("\n");
+ navigator.clipboard?.writeText(output).then(()=>{$("#copy-btn").textContent="✓ Copié";setTimeout(()=>$("#copy-btn").textContent="⧉ Copier",1500)}).catch(()=>prompt("Copier",output));
+}
+$("#profile-selector").addEventListener("change",e=>activateBuild(e.target.value));
+$("#profile-add").addEventListener("click",()=>{tab("builds");$("#build-character").focus()});
+$("#profile-clone").addEventListener("click",()=>cloneBuild(current.id));
+$("#build-cards").addEventListener("click",e=>{
+ const button=e.target.closest("button");if(!button)return;
+ if(button.dataset.openBuild)activateBuild(button.dataset.openBuild);
+ if(button.dataset.cloneBuild)cloneBuild(button.dataset.cloneBuild);
+ if(button.dataset.renameBuild)renameBuild(button.dataset.renameBuild);
+});
+$("#build-form").addEventListener("submit",e=>{
+ e.preventDefault();
+ const cls=CLASSES[$("#build-class").value];if(!cls)return;
+ const source=$("#build-source").value.trim();
+ const b=normalizeBuild({id:"custom-"+Date.now()+"-"+Math.floor(Math.random()*1e5),classId:cls.id,character:$("#build-character").value.trim(),name:$("#build-name").value.trim(),element:$("#build-element").value,level:200,source:source||cls.source,variants:cls.defaultVariants,ap:12,turns:10});
+ builds.push(b);saveBuilds();activateBuild(b.id);$("#build-form").reset();tab("optimize");
+});
+$("#build-delete").addEventListener("click",deleteBuild);
+$("#variant-picker").addEventListener("click",e=>{
+ const button=e.target.closest("[data-pair]");if(!button)return;
+ const i=Number(button.dataset.pair),choice=button.dataset.choice;
+ if(!model.pairs[i]?.includes(choice))return;
+ current.variants[i]=choice;saveBuilds();renderVariantPicker();renderSpells();
+});
+$("#spell-search").addEventListener("input",renderSpells);
+$("#spell-element").addEventListener("change",renderSpells);
+$("#spell-type").addEventListener("change",renderSpells);
+$("#spells-body").addEventListener("input",e=>{
+ const input=e.target;if(!input.matches("input[data-spell]"))return;
+ const s=spells[Number(input.dataset.spell)],field=input.dataset.field,val=Math.max(0,Number(input.value)||0);
+ if(!s)return;
+ if(["min","max","critMin","critMax"].includes(field))s[field]=val;
+ if(field==="buffValue"&&s.status.buff)s.status.buff.value=val;
+ if(field==="buffDuration"&&s.status.buff)s.status.buff.duration=Math.max(1,val);
+});
+$$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
+for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
+ $("#"+id+"-value").textContent=e.target.value+" "+(id==="ap"?"PA":"tours");
+ if(current){current[id]=Number(e.target.value);saveBuilds();}
+});
+$("#calculate").addEventListener("click",calculate);
+$("#copy-btn").addEventListener("click",copyRotation);
+$("#save-spells").addEventListener("click",()=>{saveCalibration();tab("optimize");calculate();});
+$("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();});
+activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
