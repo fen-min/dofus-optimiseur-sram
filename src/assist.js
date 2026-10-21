@@ -1,9 +1,9 @@
 import {
  ASSIST_CONTEXT_STORE,ASSIST_HISTORY_STORE,
  getAssistContext,readAssistHistory,writeAssistHistory,resetAssistHistory,
- replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,
+ replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,setAssistTurnPA,
  contextFingerprint,escaped
-} from "./assist-core.js?v=1.5";
+} from "./assist-core.js?v=1.7";
 import {canPinAssist,openAssistPin,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 
 const root=document.getElementById("assist-root");
@@ -37,10 +37,18 @@ function render(){
   const {state,config}=replayAssist(context,history);
   const done=state.turn>config.turns;
   const turn=Math.min(state.turn,config.turns);
+  const budget=done?config.ap:(config.apByTurn?.[state.turn]??config.ap);
+  const spent=done?0:budget-state.pa;
   $("assist-build").textContent=context.build.character+" · "+context.build.name;
   $("assist-turn").textContent="Tour "+turn+" / "+config.turns+(done?" · Terminé":"");
-  $("assist-pa").textContent=(done?0:state.pa)+" / "+config.ap+" PA";
-  $("assist-progress-fill").style.width=(done?"100":Math.round((config.ap-state.pa)/config.ap*100))+"%";
+  $("assist-pa").textContent=(done?0:state.pa)+" / "+budget+" PA";
+  $("assist-turn-pa").value=String(budget);
+  $("assist-turn-pa").disabled=done;
+  $("assist-pa-minus").disabled=done||budget<=Math.max(1,spent);
+  $("assist-pa-plus").disabled=done||budget>=30;
+  $("assist-pa-reset").disabled=done||budget===config.ap;
+  $("assist-pa-reset").textContent="↺ "+config.ap+" PA";
+  $("assist-progress-fill").style.width=(done?"100":Math.round(spent/budget*100))+"%";
   $("assist-picked").innerHTML=history.current.length?
    history.current.map(name=>'<span class="assist-picked-item">'+escaped(name)+'</span>').join("") :
    '<span class="assist-muted">Aucun sort joué pour ce tour.</span>';
@@ -73,6 +81,23 @@ function saveAndReplan(next){
  recommend=[];
  render();
  plan();
+}
+function setRoundBudget(value){
+ if(!context||!history)return;
+ try{saveAndReplan(setAssistTurnPA(context,history,value));}
+ catch(error){
+  render();
+  message(error?.message||String(error));
+ }
+}
+function stepRoundBudget(delta){
+ if(!context||!history)return;
+ try{
+  const {state,config}=replayAssist(context,history);
+  if(state.turn>config.turns)return;
+  const total=config.apByTurn?.[state.turn]??config.ap;
+  setRoundBudget(total+delta);
+ }catch(error){message(error?.message||String(error));}
 }
 function chooseSpell(name){
  if(!context || !history)return;
@@ -120,7 +145,7 @@ function plan(){
   return;
  }
  try{
-  worker=new Worker(new URL("./assist-worker.js?v=1.6",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./assist-worker.js?v=1.7",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==request)return;
    const data=e.data||{};
@@ -202,6 +227,13 @@ root.addEventListener("click",event=>{
  if(suggested){const s=recommend[Number(suggested.dataset.recommend)];if(s)chooseSpell(s.name);}
 });
 $("assist-search").addEventListener("input",render);
+$("assist-turn-pa").addEventListener("change",e=>setRoundBudget(e.target.value));
+$("assist-turn-pa").addEventListener("keydown",e=>{
+ if(e.key==="Enter"){e.preventDefault();setRoundBudget(e.target.value);e.target.blur();}
+});
+$("assist-pa-minus").addEventListener("click",()=>stepRoundBudget(-1));
+$("assist-pa-plus").addEventListener("click",()=>stepRoundBudget(1));
+$("assist-pa-reset").addEventListener("click",()=>setRoundBudget(context.settings.ap));
 $("assist-refresh").addEventListener("click",plan);
 $("assist-next").addEventListener("click",goNext);
 $("assist-undo").addEventListener("click",goBack);
