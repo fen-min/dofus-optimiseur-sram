@@ -74,3 +74,17 @@ L'onglet **Sorts & variantes** est maintenant un grimoire en deux colonnes sur �
 Les petites icônes sont des symboles stylistiques propres à l'application, pas des illustrations copiées du jeu. Le design est inspiré du principe de sélection de DOFUS sans reprendre ses ressources graphiques.
 
 Note : les limites du moteur demeurent, notamment la Souffrance du Sacrieur et le placement des pièges du Sram.
+
+## v0.7 — Correction de Furie et état de vérification des effets
+
+⚠️ **Les 44 sorts sont catalogués, mais leurs effets secondaires ne sont PAS tous vérifiés ni simulés.** Les nombres de dommages/PA/PO de DofusBook ne décrivent pas l'intégralité de chaque sort. Les rotations restent expérimentales.
+
+La capture du menu de sorts DOFUS fournie pour **Furie (Sacrieur, rang 2)** confirme : 3 PA, portée 0–2, deux lancers par tour, **+3 % de dommages finaux pendant 3 tours**, cumulable **2 fois**. Le moteur applique désormais un multiplicateur de **1,03** après une Furie ou **1,06** après deux Furies actives, sur les sorts suivants. Les dégâts du sort sont appliqués avant le bonus qu'il génère.
+
+La zone en croix, les PV du Sacrieur, la Souffrance, les soins, et de nombreux effets secondaires restent partiellement ou totalement absents du calcul. Par conséquent, un calcul sur 10 tours ne doit pas être présenté comme une rotation optimale exacte.
+
+Le Sacrieur démarre désormais à **2 cases** de distance (valeur modifiable et conservée pour chaque build), car Furie ne porte pas au-delà de 2 cases. Les personnages existants sans distance enregistrée reçoivent la distance adaptée à leur classe.
+
+Les tests `test/furie.test.mjs` vérifient l'ordre des effets, les cumuls +3 % et +6 %, l'expiration et la contrainte de portée. Quand un sort n'a pas encore été audité, l'interface avertit explicitement que ses effets secondaires peuvent manquer.
+
+Remarque : une base communautaire peut afficher un pourcentage différent selon la version du jeu. Les valeurs de cette mise à jour s'appuient en priorité sur la capture récente de DOFUS et sont recoupées avec les builds communautaires.
