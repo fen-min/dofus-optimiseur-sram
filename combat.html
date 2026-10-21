@@ -6,18 +6,19 @@
  <meta name="theme-color" content="#171d2c">
  <meta name="description" content="Rotation de combat compacte pour OMBRE">
  <title>OMBRE — Rotation rapide</title>
- <link rel="stylesheet" href="./combat.css?v=1.3">
+ <link rel="stylesheet" href="./combat.css?v=1.4">
 </head>
 <body class="combat-popout">
  <main class="combat-popout-main">
   <div class="combat-drawer-top">
    <div class="combat-kicker">OMBRE / ROTATION RAPIDE</div>
-   <button id="combat-window-close" type="button" class="combat-close" aria-label="Fermer la fenêtre">✕</button>
+   <div class="combat-head-actions"><button id="combat-pin" type="button" class="combat-pin" aria-pressed="false" title="Garder la rotation au premier plan">📌 Épingler</button>   <button id="combat-window-close" type="button" class="combat-close" aria-label="Fermer la fenêtre">✕</button></div>
   </div>
   <div class="combat-identity">
    <strong id="combat-build">Rotation</strong>
    <small id="combat-info">Liste des tours</small>
   </div>
+  <p id="combat-pin-status" class="combat-pin-status" role="status" aria-live="polite" hidden></p>
   <div class="combat-controls">
    <button id="combat-prev" type="button" aria-label="Tour précédent">←</button>
    <strong id="combat-current" aria-live="polite">Tour 1</strong>
@@ -28,6 +29,6 @@
    <small>Les sorts et les PA uniquement · rotation théorique</small>
   </div>
  </main>
- <script type="module" src="./src/combat.js?v=1.3"></script>
+ <script type="module" src="./src/combat.js?v=1.4"></script>
 </body>
 </html>
