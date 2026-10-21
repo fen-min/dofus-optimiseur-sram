@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#171d2c">
+ <title>OMBRE — Combat assisté</title>
+ <link rel="stylesheet" href="./combat.css?v=1.5">
+ <link rel="stylesheet" href="./assist.css?v=1.5">
+</head>
+<body class="assist-body">
+ <div id="assist-root" class="assist-root">
+  <header class="assist-header">
+   <div><span class="combat-kicker">OMBRE / MODE COMBAT</span><h1>⚡ Combat assisté</h1></div>
+   <div class="assist-header-actions">
+    <button id="assist-pin" title="Garder au premier plan" type="button">📌</button>
+    <button id="assist-popout" title="Ouvrir en petite fenêtre" type="button">↗</button>
+   </div>
+  </header>
+  <p id="assist-build" class="assist-build">Chargement du build…</p>
+  <div class="assist-controls">
+   <div class="assist-counter"><strong id="assist-turn">Tour 1 / 10</strong><strong id="assist-pa">12 PA</strong></div>
+   <div class="assist-progress"><span id="assist-progress-fill"></span></div>
+   <p id="assist-warning" class="assist-warning">Simulation expérimentale : effets de placement, PV et Souffrance incomplets.</p>
+  </div>
+  <section class="assist-section">
+   <div class="assist-section-heading"><h2>Sorts que tu as joués</h2><button type="button" id="assist-undo" class="assist-small-btn">↶ Annuler</button></div>
+   <div id="assist-picked" class="assist-picked"><span class="assist-muted">Aucun sort joué pour ce tour.</span></div>
+  </section>
+  <section class="assist-section assist-suggestion-section">
+   <div class="assist-section-heading"><h2>✨ Suite conseillée</h2><button type="button" id="assist-refresh" class="assist-small-btn">↻ Optimiser</button></div>
+   <p id="assist-status" class="assist-status" role="status" aria-live="polite">Calcul en cours…</p>
+   <div id="assist-recommendation" class="assist-recommendation"></div>
+   <div id="assist-future" class="assist-future"></div>
+  </section>
+  <section class="assist-section">
+   <div class="assist-section-heading"><h2>Choisir ton prochain sort</h2><span class="assist-small-text">Variantes équipées uniquement</span></div>
+   <label class="assist-search-label"><span class="sr-only">Rechercher un sort</span><input id="assist-search" type="search" placeholder="Rechercher parmi tes sorts…"></label>
+   <div id="assist-spell-list" class="assist-spell-list"></div>
+  </section>
+  <div class="assist-bottom">
+   <button id="assist-next" class="assist-next" type="button">Tour suivant →</button>
+   <button id="assist-reset" class="assist-reset" type="button">Recommencer le combat</button>
+  </div>
+  <p id="assist-message" class="assist-message" role="status" aria-live="polite" hidden></p>
+  <p class="assist-disclaimer">Recommandations théoriques pour une cible, basées sur ton build actuel. Les effets non simulés peuvent modifier la vraie meilleure action.</p>
+ </div>
+ <script type="module" src="./src/assist.js?v=1.5"></script>
+</body>
+</html>
