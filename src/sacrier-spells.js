@@ -30,6 +30,11 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
    status.buff={stat:"Puissance",value:50,duration:10,stacks:1,ramp:50,max:150};
    utility="Puissance progressive de Mutilation ; coût PV et Coagulation non simulés";
  }
+ if(cat.name==="Furie"){
+   // Confirmé par la capture du jeu : +3 % finaux pendant 3 tours, 2 cumuls.
+   status.buff={stat:"Dommages finaux",unit:"%",value:3,duration:3,stacks:2};
+   utility="Bonus vérifié : +3 % de dommages finaux pendant 3 tours, cumul max 2 (+6 %). Dégâts en zone non simulés.";
+ }
  if(cat.name==="Berserk")utility="État Berserk avec changement de PV et dommages : non chiffré";
  if(cat.name==="Libation")utility="Coût en PV et montée de Souffrance : non chiffrés";
  if(personal.has(cat.name))status.target="self";
