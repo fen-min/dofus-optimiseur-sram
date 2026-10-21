@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#171d2c">
+ <meta name="description" content="Rotation de combat compacte pour OMBRE">
+ <title>OMBRE — Rotation rapide</title>
+ <link rel="stylesheet" href="./combat.css?v=1.3">
+</head>
+<body class="combat-popout">
+ <main class="combat-popout-main">
+  <div class="combat-drawer-top">
+   <div class="combat-kicker">OMBRE / ROTATION RAPIDE</div>
+   <button id="combat-window-close" type="button" class="combat-close" aria-label="Fermer la fenêtre">✕</button>
+  </div>
+  <div class="combat-identity">
+   <strong id="combat-build">Rotation</strong>
+   <small id="combat-info">Liste des tours</small>
+  </div>
+  <div class="combat-controls">
+   <button id="combat-prev" type="button" aria-label="Tour précédent">←</button>
+   <strong id="combat-current" aria-live="polite">Tour 1</strong>
+   <button id="combat-next" type="button" aria-label="Tour suivant">→</button>
+  </div>
+  <div id="combat-list" class="combat-list" aria-label="Ordre des sorts pour chaque tour"></div>
+  <div class="combat-footer">
+   <small>Les sorts et les PA uniquement · rotation théorique</small>
+  </div>
+ </main>
+ <script type="module" src="./src/combat.js?v=1.3"></script>
+</body>
+</html>
