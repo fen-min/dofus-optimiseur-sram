@@ -280,3 +280,14 @@ a{color:var(--class-accent)}
  .turn-card .turn-card-body{grid-template-columns:minmax(0,1fr);}
  .turn-effects-panel{margin-top:4px}
 }
+
+
+/* v1.2 — Fiche de stats enregistrée par build */
+.character-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:17px}
+.character-stat-section{background:#202537;border:1px solid #3f4960;padding:15px;border-radius:12px;min-width:0}
+.character-stat-section h3{font-size:13px;margin:0 0 12px;color:var(--class-accent)}
+.character-stat-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.character-stat-fields label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#bac4d8;min-width:0}
+.character-stat-fields input{min-width:0;width:100%;font-size:13px;border:1px solid #505b71;background:#151b2a;color:#f8f5ff;padding:10px;border-radius:8px}
+@media(max-width:900px){.character-stats-grid{grid-template-columns:1fr}}
+@media(max-width:475px){.character-stat-fields{grid-template-columns:1fr 1fr}}
