@@ -13,7 +13,9 @@ export function cleanSettings(input={}){
  c.resistances={Air:c.resistance,Terre:clamp(c.resistanceTerre,0,90,0),Feu:clamp(c.resistanceFeu,0,90,0),Eau:clamp(c.resistanceEau,0,90,0),Neutre:clamp(c.resistanceNeutre,0,90,0)};
  c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
  c.triggerTraps=!!c.triggerTraps;c.triggerOnPush=!!c.triggerOnPush;c.comploteurContact=!!c.comploteurContact;
- c.variants=Array.isArray(c.variants)&&c.variants.length===VARIANT_PAIRS.length?c.variants.map((n,i)=>VARIANT_PAIRS[i].includes(n)?n:DEFAULT_VARIANTS[i]):DEFAULT_VARIANTS.slice();
+ c.variantPairs=Array.isArray(c.variantPairs)&&c.variantPairs.length===22?c.variantPairs:VARIANT_PAIRS;
+ const fallback=c.variantPairs.map((pair,i)=>pair.includes(c.defaultVariants?.[i])?c.defaultVariants[i]:(c.variantPairs===VARIANT_PAIRS?DEFAULT_VARIANTS[i]:pair[0]));
+ c.variants=c.variantPairs.map((pair,i)=>pair.includes(c.variants?.[i])?c.variants[i]:fallback[i]);
  return c;
 }
 export function initialState(input={}){
@@ -159,7 +161,10 @@ export function endTurn(original,input={}){
  s.invocations=summons;
  s.turns.push({number:s.turn,actions:s.actions,spent:c.ap-s.pa,immediate:round(s.turnImmediate),poison:round(poison),total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key)});
  s.turn++;s.pa=c.ap;s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
- s.buffs=s.buffs.filter(b=>b.until>=s.turn);s.traps=s.traps.slice(-12);
+ s.buffs=s.buffs.filter(b=>b.until>=s.turn);
+ // Sacrieur Mutilation: progressive Power approximation (+50 to +150).
+ for(const buff of s.buffs){if(buff.key==="Mutilation")buff.amount=Math.min(150,buff.amount+50);}
+ s.traps=s.traps.slice(-12);
  if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
  return s;
 }
