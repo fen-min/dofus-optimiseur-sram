@@ -6,6 +6,7 @@ import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
 const fmt=value=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0}).format(value||0);
+const spellBonuses=s=>[...(s.status?.buff?[s.status.buff]:[]),...(s.status?.extraBuffs||[])];
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const STORE="ombre-builds-v1";
 const ACTIVE="ombre-active-build-v1";
@@ -114,13 +115,13 @@ function spellbookOption(name,index){
  const chosen=current.variants[index]===name;
  const other=model.pairs[index].find(n=>n!==name);
  const first=cat.effects.find(e=>!e.cc);
- const buff=spell.status?.buff;
+ const buffs=spellBonuses(spell);
  const audit=SPELL_EFFECTS_AUDIT[model.id]?.[name];
  const tooltip=[
   cat.name,cat.pa+" PA",cat.range==="Non précisée"?"Portée variable":"PO "+cat.range,
   cat.type,
   first?first.kind+" "+first.element+" "+first.min+" à "+first.max:spell.utility||"Sort de soutien",
-  buff?"+"+buff.value+(buff.unit||"")+" "+buff.stat+" ("+buff.duration+" tours, "+buff.stacks+" cumuls)":"",
+  ...buffs.map(b=>"+"+b.value+(b.unit||"")+" "+b.stat+" ("+b.duration+" tours, "+b.stacks+" cumul max)"),
   audit?"Effets recensés : "+audit.description:""
  ].filter(Boolean).join(" · ");
  return '<button type="button" class="spellbook-option '+(chosen?'is-equipped':'is-alternative')+
@@ -130,7 +131,7 @@ function spellbookOption(name,index){
   '<span class="spellbook-level">Niv. '+cat.level+'</span>'+
   '<span class="spellbook-icon element-'+spellbookElement(cat)+'" aria-hidden="true">'+spellbookIcon(cat)+'</span>'+
   '<span class="spellbook-option-copy"><span class="spellbook-option-name">'+escapeHtml(name)+'</span>'+
-  (buff?'<span class="spellbook-option-effect">+'+buff.value+(buff.unit||"")+' '+escapeHtml(buff.stat)+'</span>':'')+'</span>'+
+  buffs.map(b=>'<span class="spellbook-option-effect">+'+b.value+(b.unit||"")+' '+escapeHtml(b.stat)+'</span>').join("")+'</span>'+
   '<span class="spellbook-option-pa">'+cat.pa+' PA</span>'+
   (chosen?'<span class="spellbook-option-check" aria-hidden="true">✓</span>':'')+
   '</button>';
@@ -203,14 +204,15 @@ function renderSpells(){
   const ix=spells.findIndex(s=>s.name===cat.name),s=spells[ix],first=cat.effects.find(e=>!e.cc);
   const selected=current.variants[s.variantGroup]===s.name;
   const audit=SPELL_EFFECTS_AUDIT[model.id]?.[cat.name];
-  const summary=s.status?.buff?"Buff : +"+s.status.buff.value+(s.status.buff.unit||"")+" "+s.status.buff.stat+" · "+s.status.buff.duration+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
+  const summary=spellBonuses(s).length?"Buffs : "+spellBonuses(s).map(b=>"+"+b.value+(b.unit||"")+" "+b.stat).join(", ")+" · "+(s.status.buff?.duration||spellBonuses(s)[0].duration)+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
   const elements=cat.elements.length?cat.elements.map(e=>'<span class="element-tag element-'+e.toLowerCase()+'">'+escapeHtml(e)+'</span>').join(""):'<span class="element-tag">Soutien</span>';
   const effects=cat.effects.length?'<div class="effect-lines">'+cat.effects.map(e=>'<div class="effect-row"><span>'+e.kind+" "+e.element+(e.cc?" CC":"")+'</span><strong>'+e.min+(e.max===e.min?"":" – "+e.max)+'</strong>'+(e.condition?'<small>'+escapeHtml(e.condition)+'</small>':'')+'</div>').join("")+'</div>':'<p class="muted">Aucune ligne de dégâts directs chiffrée sur DofusBook.</p>';
   const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts utilisés par le calculateur</div><div class="calibration-grid">'+[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([key,label])=>'<label>'+label+'<input type="number" min="0" max="20000" data-spell="'+ix+'" data-field="'+key+'" value="'+s[key]+'"></label>').join("")+'</div></div>':'';
   const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Bonus de sort pris en compte par le moteur</div><div class="calibration-grid"><label>Bonus '+(s.status.buff.unit||"")+' <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
+  const additionalBuffs=s.status?.extraBuffs?.length?'<div class="spell-audit-box"><div class="catalog-subhead">Bonus supplémentaires suivis</div>'+s.status.extraBuffs.map(b=>'<p>+'+b.value+(b.unit||"")+' '+escapeHtml(b.stat)+' · '+b.duration+' tours</p>').join("")+'<p class="microcopy">La Vitalité est enregistrée comme effet actif, mais ne modifie pas encore les PV dans le simulateur.</p></div>':'';
   const auditNote=audit?'<div class="spell-audit-box"><div class="catalog-subhead">Effets recensés dans l’audit</div><p>'+escapeHtml(audit.description)+'</p><p class="microcopy">'+(audit.checked?'Mécanisme généralement recoupé.':'Description à vérifier plus précisément.')+' Les valeurs exactes par rang et leur simulation restent incomplètes. <a href="'+escapeHtml(audit.source)+'" target="_blank" rel="noopener noreferrer">Source de comparaison ↗</a></p></div>':'';
   const isActiveClassVariant=selected?'<span class="catalog-tag tag-live">Variante équipée</span>':'<span class="catalog-tag">Variante non équipée</span>';
-  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">Une seule variante par paire. Ces effets sont documentés à titre indicatif et ne sont pas nécessairement tous intégrés au calcul de rotation.</p>'+auditNote+effects+editable+boost+'</div></details>';
+  return '<details class="catalog-entry"><summary><span class="catalog-main"><strong>'+escapeHtml(cat.name)+'</strong><span class="catalog-preview">'+escapeHtml(summary)+'</span></span><span class="catalog-meta">'+elements+'<span class="catalog-pa">'+cat.pa+' PA</span>'+isActiveClassVariant+'<span class="catalog-chevron">⌄</span></span></summary><div class="catalog-details"><div class="catalog-facts"><span>Niv. '+cat.level+'</span><span>PO '+escapeHtml(cat.range)+'</span>'+cat.details.map(d=>'<span>'+escapeHtml(d)+'</span>').join("")+'</div><p class="catalog-note">Une seule variante par paire. Ces effets sont documentés à titre indicatif et ne sont pas nécessairement tous intégrés au calcul de rotation.</p>'+auditNote+effects+editable+boost+additionalBuffs+'</div></details>';
  }).join("")||'<p class="muted">Aucun sort pour ces filtres.</p>';
 }
 function activateBuild(id){
