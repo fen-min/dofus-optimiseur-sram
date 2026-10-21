@@ -55,8 +55,12 @@ function damage(spell,s,c,override=null){
   if(b.stat==="Puissance"||b.stat===element)return tot+b.amount*spell.baseDamage/100;
   return tot;
  },0);
+ // Les +3 % de Furie ne sont pas des dommages fixes.
+ // Deux charges actives donnent 1 + (3+3)/100 = 1,06.
+ const finalPercent=buffsNow(s).reduce((sum,b)=>b.stat==="Dommages finaux"?sum+b.amount:sum,0);
+ const finalMultiplier=1+finalPercent/100;
  const vulner=s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1;
- return Math.max(0,(row+buff)*(1-(c.resistances[element]||0)/100)*vulner);
+ return Math.max(0,(row+buff)*(1-(c.resistances[element]||0)/100)*vulner*finalMultiplier);
 }
 function addDamage(s,n,delayed=false){if(!Number.isFinite(n)||n<=0)return;n=round(n);s.total+=n;s.turnDamage+=n;if(delayed)s.delayed+=n;else{s.immediate+=n;s.turnImmediate=(s.turnImmediate||0)+n;}}
 function addBuff(s,key,stat,amount,duration,maxStacks){
@@ -112,7 +116,7 @@ export function castSpell(origin,spell,input={}){
  if(status.buff){
   const b=status.buff;
   addBuff(s,name,b.stat,b.value,b.duration,b.stacks);
-  action.notes.push("Buff +"+b.value+" "+b.stat+" ("+b.duration+" tours)");
+  action.notes.push("Buff +"+b.value+(b.unit||"")+" "+b.stat+" ("+b.duration+" tours, "+b.stacks+" cumul(s) max)");
  }
  if(status.vulnerability){
   const rate=name==="Marque Mortuaire"?1.02+0.02*Math.min(4,s.charges):status.vulnerability;
