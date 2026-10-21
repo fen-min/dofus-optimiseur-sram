@@ -144,3 +144,68 @@ a{color:var(--class-accent)}
 @media(max-width:1100px){.build-cards{grid-template-columns:1fr}.variant-grid{grid-template-columns:1fr}}
 @media(max-width:850px){.sidebar{height:auto;position:static;width:100%;padding:14px 17px}.brand{border:0;padding:4px}.profile-switch{margin:12px 0}.side-nav{display:flex;flex-wrap:wrap}.side-bottom{display:none}.main-content,main{padding:18px 13px}.selected-build{flex-wrap:wrap}.profile-clone{margin-left:auto}}
 @media(max-width:520px){.build-form{grid-template-columns:1fr}.build-cards{grid-template-columns:1fr}.selected-build-avatar{width:55px;height:55px;font-size:30px}.topbar{flex-wrap:wrap}.hero{padding:20px}.build-card{flex-wrap:wrap}.build-card-actions{grid-template-columns:repeat(3,auto);width:100%}}
+
+
+/* v0.6 — Grimoire à variantes : dispositions inspirées du menu de sorts DOFUS */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.spellbook-shell{--spellbook-green:#394820;--spellbook-stone:#33302e;--spellbook-paper:#b5ada2;--spellbook-gold:#f5dfad;position:relative;overflow:hidden;border:1px solid #737467;border-radius:16px;background:linear-gradient(145deg,#292c29,#1b201f 45%,#242422);box-shadow:0 12px 34px #0006;color:#f5f1e8;margin-bottom:18px}
+.spellbook-shell:before{content:"";pointer-events:none;position:absolute;top:0;right:0;width:245px;height:74px;background:radial-gradient(ellipse at top right,#78833b32,transparent 71%)}
+.spellbook-header{background:linear-gradient(145deg,#4b6030,#394e29 70%,#293b26);border-bottom:2px solid #77924f;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:82px}
+.spellbook-header-name{display:flex;align-items:center;gap:12px}
+.spellbook-crest{width:44px;height:44px;display:grid;place-items:center;font-size:26px;color:#ecde9c;background:#253021;border:1px solid #849962;border-radius:10px;box-shadow:inset 0 0 8px #0b150a}
+.spellbook-kicker{font-size:10px;letter-spacing:.17em;color:#dce6b4;text-transform:uppercase;font-weight:750}
+.spellbook-header h2{font-size:26px;letter-spacing:.04em;color:white;margin:0;line-height:1.1}
+.spellbook-shortcut{display:inline-grid;place-items:center;font-size:11px;vertical-align:middle;background:#e0d8ba;color:#4d4e3c;border-radius:3px;width:17px;height:17px}
+.spellbook-header-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px}
+.spellbook-class-name{font-size:12px;font-weight:850;letter-spacing:.2em;color:#faf1c5}
+.spellbook-counter{font-size:11px;border:1px solid #8c9c68;border-radius:50px;background:#293827;padding:7px 11px;color:#e4f6c7;font-weight:700;white-space:nowrap}
+.spellbook-toolbar{padding:18px 20px 11px;background:linear-gradient(#30312f,#292927);border-bottom:1px solid #545249}
+.spellbook-toolbar-top{display:flex;align-items:start;justify-content:space-between;gap:18px}
+.spellbook-subtitle{font-weight:850;color:#eedba9;font-size:12px;letter-spacing:.14em}
+.spellbook-help{font-size:13px;margin:5px 0 14px;color:#cecac1;max-width:670px}
+.spellbook-selection-message{font-size:11px;color:#e4edbf;background:#4a54365e;border:1px solid #6d815a;padding:7px 10px;border-radius:8px;max-width:250px;line-height:1.45}
+.spellbook-filters{display:flex;align-items:end;flex-wrap:wrap;gap:10px}
+.spellbook-search{position:relative;display:block;flex:2 1 230px;margin:0;max-width:410px}
+.spellbook-filter-icon{position:absolute;top:7px;left:11px;color:#c2bba9;font-size:23px}
+.spellbook-search input{width:100%;min-height:40px;padding:9px 13px 9px 39px;background:#171919;color:#eee9df;border:1px solid #686558;outline-offset:3px}
+.spellbook-search input:focus,.spellbook-filter select:focus{border-color:#d8c48c;outline:2px solid #baaf7780}
+.spellbook-filter{display:grid;gap:3px;margin:0;font-size:10px;letter-spacing:.04em;color:#c5c0b4}
+.spellbook-filter select{min-height:40px;min-width:118px;background:#202422;color:#e4dccc;border:1px solid #67665c}
+.spellbook-filter-reset{min-height:40px;background:#3e4039;border:1px solid #6d6f5f;border-radius:7px;color:#ede6d6;font-size:12px;padding:7px 11px}
+.spellbook-filter-reset:hover{background:#515449}
+.spellbook-legend{display:flex;flex-wrap:wrap;align-items:center;gap:16px;color:#d1cabe;font-size:11px;margin-top:13px}
+.spellbook-legend>span{display:inline-flex;align-items:center;gap:6px}
+.spellbook-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.spellbook-legend-active{background:#c2b8aa;border:1px solid #f5e4c3}
+.spellbook-legend-inactive{background:#302e2c;border:1px solid #73716a}
+.spellbook-stat{margin-left:auto;color:#e6d49c;font-weight:650}
+.spell-pair-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;padding:22px 19px 28px}
+.spellbook-column{display:flex;flex-direction:column;gap:12px;min-width:0}
+.spellbook-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));min-width:0;position:relative;gap:3px;padding-top:9px}
+.spellbook-pair:before{content:"";pointer-events:none;position:absolute;top:0;left:50%;width:1px;height:calc(100% - 10px);background:#72736545}
+.spellbook-option{appearance:none;position:relative;display:flex;align-items:center;text-align:left;gap:9px;min-width:0;min-height:51px;border:1px solid #747069;border-radius:6px;padding:10px 30px 8px 8px;background:linear-gradient(155deg,#332f2d,#262524);color:#bfb8ae;box-shadow:inset 0 1px #625b4c30,0 2px 4px #0003;transition:background .13s,border-color .13s,transform .13s;cursor:pointer}
+.spellbook-option.is-equipped{color:#302a21;background:linear-gradient(170deg,#d0c8b9,#ada497);border-color:#f0dbb2;box-shadow:inset 0 1px #fff8db88,0 2px 8px #0005}
+.spellbook-option:hover{border-color:#f1dcac;transform:translateY(-1px)}
+.spellbook-option:focus-visible{outline:3px solid #f4db95;outline-offset:2px;z-index:2}
+.spellbook-icon{display:grid;place-items:center;flex:0 0 35px;height:35px;background:linear-gradient(145deg,#544038,#2e2d2b);border:1px solid #9a7355;border-radius:6px;box-shadow:inset 0 2px 4px #0006;color:#efddc3;font-size:22px;text-shadow:0 1px 2px #000a}
+.spellbook-icon.element-air{background:linear-gradient(145deg,#7a9369,#2d5e4d);border-color:#98c08f;color:#ecffe8}
+.spellbook-icon.element-eau{background:linear-gradient(145deg,#678fa2,#234b75);border-color:#8ebad5;color:#d9f5ff}
+.spellbook-icon.element-feu{background:linear-gradient(145deg,#bf8759,#772c24);border-color:#e6b476;color:#ffe2b4}
+.spellbook-icon.element-terre{background:linear-gradient(145deg,#ac8a66,#66503b);border-color:#e1b68a;color:#ffebd3}
+.spellbook-icon.element-neutre{background:linear-gradient(145deg,#a599a0,#535265);border-color:#c5afb9;color:#fff4ff}
+.spellbook-icon.element-support{background:linear-gradient(145deg,#93878b,#5b4c5d);border-color:#b5a1be;color:#f7e9ff}
+.spellbook-option-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:clamp(10px,.86vw,12px);font-weight:750;line-height:1.25}
+.spellbook-option-pa{position:absolute;bottom:3px;right:5px;color:inherit;opacity:.72;font-size:9px;font-weight:700}
+.spellbook-option-check{position:absolute;top:3px;right:5px;color:#315637;font-size:13px;font-weight:900}
+.spellbook-level{position:absolute;top:-12px;left:12px;z-index:1;font-size:9px;font-weight:850;letter-spacing:.03em;white-space:nowrap;background:#e7ddc9;color:#5f4c39;padding:0 6px;border:1px solid #9d8f7f;border-radius:3px;line-height:16px}
+.spellbook-option.is-alternative .spellbook-level{background:#a9a396;color:#352c26;border-color:#635a50}
+.spellbook-empty{margin:18px 20px;padding:24px;text-align:center;color:#efe4c7;border:1px dashed #888476;border-radius:10px}
+.spellbook-bottom{background:#292b26;border-top:1px solid #6c6c5c;padding:13px 18px;display:flex;justify-content:space-between;gap:13px;align-items:center}
+.spellbook-bottom p{margin:0;color:#cfc6b5;font-size:11px}
+.spellbook-detail-button{padding:9px 14px;border:1px solid #99895f;border-radius:7px;color:#f6eccb;background:#474436;font-size:12px;white-space:nowrap}
+.spellbook-detail-button:hover{background:#5b553f}
+.spellbook-details{margin-top:16px}
+.spellbook-details .spell-catalog{max-height:820px;overflow-y:auto;padding-right:3px}
+@media(max-width:1180px){.spell-pair-grid{gap:12px;padding:17px 12px}.spellbook-icon{flex-basis:31px;height:31px;font-size:18px}.spellbook-option{gap:6px;padding-left:6px;padding-right:22px}.spellbook-option-name{font-size:11px}}
+@media(max-width:980px){.spell-pair-grid{grid-template-columns:1fr;gap:12px}.spellbook-column{gap:12px}.spellbook-option-name{font-size:12px}.spellbook-toolbar-top{flex-direction:column;gap:4px}.spellbook-selection-message{max-width:none;margin:0 0 12px}.spellbook-header{flex-wrap:wrap}}
+@media(max-width:510px){.spellbook-shell{border-radius:12px}.spellbook-header{padding:15px 12px}.spellbook-toolbar{padding:13px 9px}.spell-pair-grid{padding:14px 7px}.spellbook-option{min-height:57px;gap:5px;padding-left:4px;padding-right:17px}.spellbook-icon{flex-basis:27px;height:28px;font-size:17px}.spellbook-option-name{font-size:10px}.spellbook-level{left:5px}.spellbook-option-pa{font-size:8px}.spellbook-header-actions{justify-content:start}.spellbook-bottom{align-items:stretch;flex-direction:column}.spellbook-detail-button{white-space:normal}.spellbook-filter{flex:1}}
