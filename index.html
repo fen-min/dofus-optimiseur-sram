@@ -6,7 +6,7 @@
   <meta name="description" content="Atelier multi-personnages DOFUS : builds, variantes exclusives et rotations sur 10 tours.">
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
-  <link rel="stylesheet" href="./styles.css?v=1.0">
+  <link rel="stylesheet" href="./styles.css?v=1.1">
 </head>
 <body>
   <div class="app-shell">
@@ -18,7 +18,7 @@
         <button class="nav-btn" data-tab="spells"><span>✧</span> Sorts & variantes</button>
         <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
       </nav>
-      <div class="side-bottom"><div class="tiny-dot"></div> <span>Effets de sorts · v1.0</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
+      <div class="side-bottom"><div class="tiny-dot"></div> <span>Suivi des effets · v1.1</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
     </aside>
     <main class="main-content">
       <header class="topbar"><span><span class="breadcrumb">ATELIER / PERSONNAGES</span> <span class="slash">/</span> <span id="breadcrumb-class">Sram</span></span><a id="dofus-link" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer" class="outline-link">↗ Voir le stuff DofusBook</a></header>
@@ -185,10 +185,10 @@
           </section>
         </section>
         <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement le prototype</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; la durée choisie (jusqu'à 10 tours) est évaluée ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Les buffs dépendent de la classe et sont suivis de tour en tour. Manigance est disponible sur Sram ; Mutilation sur Sacrieur, avec une approximation explicite.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Le Sram possède notamment des poisons différés ; le Sacrieur demande en plus une modélisation des PV et de la Souffrance, encore incomplète.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges du Sram nécessitent un déclenchement hypothétique. Les déplacements du Sacrieur ne remplacent pas une vraie simulation tactique.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte réelle, d'obstacles, de ligne de vue dynamique, de résistances fixes, de propagation multi-cible, ni de survie ou de soins. La Souffrance du Sacrieur n'est pas encore simulée. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts">DofusBook — Sacrieur Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — Sram</a> · <a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sacrieur/">Sacrieur</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
-        <footer class="footer"><span>OMBRE v1.0 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
+        <footer class="footer"><span>OMBRE v1.1 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
       </div>
     </main>
   </div>
-  <script type="module" src="./src/app.js?v=1.0"></script>
+  <script type="module" src="./src/app.js?v=1.1"></script>
 </body>
 </html>
