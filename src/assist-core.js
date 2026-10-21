@@ -1,4 +1,4 @@
-import {initialState,castSpell,endTurn,eligible,cleanSettings} from "./engine.js?v=1.5";
+import {initialState,castSpell,endTurn,eligible,cleanSettings,turnActionPoints} from "./engine.js?v=1.7";
 
 /** The player chooses spells. Rebuild state from choices, never from guessed actions. */
 export const ASSIST_CONTEXT_STORE="ombre-assist-context-v1";
@@ -27,7 +27,7 @@ export function contextFingerprint(context){
  let h=2166136261;for(let i=0;i<body.length;i++){h^=body.charCodeAt(i);h=Math.imul(h,16777619);}
  return (h>>>0).toString(36);
 }
-export function emptyAssistHistory(context){return {fingerprint:contextFingerprint(context),finished:[],current:[]};}
+export function emptyAssistHistory(context){return {fingerprint:contextFingerprint(context),finished:[],current:[],turnPA:{}};}
 export function readAssistHistory(storage,buildId,context){
  const saved=fetchMap(storage,ASSIST_HISTORY_STORE)[buildId];
  if(!saved||saved.fingerprint!==contextFingerprint(context))return emptyAssistHistory(context);
@@ -47,10 +47,20 @@ export function validateAssistHistory(h,c){
  const names=xs=>{if(!Array.isArray(xs)||xs.length>30||xs.some(n=>typeof n!=="string"||n.length>80))throw Error("Liste de sorts incorrecte");return xs.slice();};
  const finished=h.finished.map(names),current=names(h.current);
  if(finished.length===settings.turns&&current.length)throw Error("Le combat est terminé");
- return {fingerprint:String(h.fingerprint||""),finished,current};
+ const turnPA={};
+ const raw=h.turnPA&&typeof h.turnPA==="object"&&!Array.isArray(h.turnPA)?h.turnPA:{};
+ for(const [key,value] of Object.entries(raw)){
+  const turn=Number(key),pa=Number(value);
+  if(Number.isInteger(turn)&&turn>=1&&turn<=settings.turns&&
+     Number.isInteger(pa)&&pa>=1&&pa<=30&&pa!==settings.ap){
+   turnPA[turn]=pa;
+  }
+ }
+ return {fingerprint:String(h.fingerprint||""),finished,current,turnPA};
 }
 export function replayAssist(context,history){
- const c=cleanSettings(context.settings),h=validateAssistHistory(history,c);
+ const h=validateAssistHistory(history,context.settings);
+ const c=cleanSettings({...context.settings,apByTurn:h.turnPA});
  const spells=new Map(context.spells.map(s=>[s.name,s]));
  let state=initialState(c);
  const push=name=>{
@@ -64,6 +74,25 @@ export function replayAssist(context,history){
  }
  for(const name of h.current)push(name);
  return {state,config:c,finished:h.finished.length,remainingTurns:c.turns-h.finished.length};
+}
+/**
+ * Choose the TOTAL AP available at the start of this specific turn.
+ * Existing casts are immutable; a value below AP already spent is rejected.
+ * Other turns continue using the build's standard AP unless overridden.
+ */
+export function setAssistTurnPA(context,history,requested){
+ const h=validateAssistHistory(history,context.settings);
+ const budget=Number(requested);
+ if(!Number.isInteger(budget)||budget<1||budget>30)
+  throw Error("Choisis un nombre de PA entier entre 1 et 30.");
+ const {state,config}=replayAssist(context,h);
+ if(state.turn>config.turns)throw Error("Le combat est terminé.");
+ const spent=turnActionPoints(config,state.turn)-state.pa;
+ if(budget<spent)throw Error("Tu as déjà dépensé "+spent+" PA ce tour. Choisis au moins "+spent+" PA.");
+ const turnPA={...h.turnPA};
+ if(budget===config.ap)delete turnPA[state.turn];
+ else turnPA[state.turn]=budget;
+ return {...h,turnPA};
 }
 export function legalAssistSpells(context,history){
  const {state,config}=replayAssist(context,history);
