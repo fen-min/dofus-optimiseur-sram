@@ -165,3 +165,15 @@ Après **Calculer la rotation**, le bouton **⚔ Vue combat** apparaît dans les
 Le mode Combat n'apporte **aucune nouvelle mécanique de dégâts** : il simplifie seulement la lecture des rotations théoriques déjà calculées. Les PV, la Souffrance, les cases et les autres limites du moteur restent applicables.
 
 Tests : `test/combat-view.test.mjs` (ordre des sorts, 10 tours, PA, séparation entre builds et protection du HTML).
+
+ 
+## v1.4 — 📌 Épinglage au premier plan (mode Combat)
+
+Une nouvelle **épingle** apparaît dans la petite fenêtre `combat.html` et dans le panneau « Vue combat » de l'application principale. Cliquer sur **📌 Épingler / Garder au premier plan** ouvre une fenêtre Document Picture-in-Picture (PiP) du navigateur, légère et redimensionnable, contenant les 10 tours et uniquement les sorts/PA. Le PiP peut rester **au-dessus des autres fenêtres du bureau** et les flèches continuent de faire avancer le tour, avec mémorisation du tour actif par build.
+
+Cliquer sur **✕** dans la fenêtre épinglée la ferme ; le panneau ou la petite fenêtre d'origine reste intact. La fermeture de l'onglet/la fenêtre qui a créé le PiP ferme **également** le PiP : il faut laisser l'application d'origine ouverte.
+
+**Compatibilité :** l'API Document Picture-in-Picture fonctionne sur les navigateurs qui l'implémentent (notamment Chrome et Edge de bureau, sur HTTPS). En cas d'absence de prise en charge, un message apparaît : JavaScript **ne peut pas** forcer une fenêtre `window.open` traditionnelle à rester au premier plan. Le mode épinglé est piloté par le navigateur, pas par un réglage natif du système. Une application/jeu en **plein écran exclusif** peut tout de même masquer le PiP : privilégier le mode fenêtré sans bordures si nécessaire.
+
+**Fichiers :** `src/combat-pin.js` (API de mise au premier plan), `combat.html` / `src/combat.js` et panneau latéral `index.html` / `src/app.js`. Tests : `test/combat-pin.test.mjs` (fonctionnalité disponible ou non, affichage et navigation des tours, libération des événements après fermeture).
+
