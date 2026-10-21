@@ -206,3 +206,18 @@ L'historique des tours et des sorts joués est sauvegardé par build dans localS
 Le modèle reste **expérimental** : PV et Souffrance Sacrieur, obstacles, placement des pièges, soins, boucliers, zones et lignes de vue réelles incomplets. Aucune lecture de l'état du jeu en direct ni action automatique. Le joueur doit choisir manuellement les sorts vraiment lancés. Les rotations conseillées sont des estimations, pas une garantie de DPS optimal.
 
 Tests : test/assist-core.test.mjs.
+
+
+## v1.6 — Correction fenêtre vide et épingle du Combat assisté
+
+Deux problèmes de la v1.5 sont corrigés :
+
+- **La fenêtre détachable devenait vide lors de l'épinglage** car son élément racine était déplacé (append du DOM existant) dans Document Picture-in-Picture. L'origine garde maintenant toute son interface. Le PiP charge une vue indépendante via une iframe même origine ; l'historique reste synchronisé via le stockage local par build.
+- **Erreur « requestWindow is only allowed from a top-level browsing context »** : l'épingle située dans l'iframe du panneau latéral appelait une API interdite dans les frames. Le panneau possède désormais une épingle dans son en-tête, sur la page principale, qui déclenche la demande depuis le contexte de navigation de premier niveau. L'épingle intérieure est masquée dans les cadres.
+- Cliquer sur **↗** dans le panneau intégré ouvre la fenêtre détachable puis ferme le panneau pour éviter deux vues visibles simultanément. Dans la vue épinglée, le bouton ↗ est masqué pour éviter des fenêtres supplémentaires.
+
+**Utilisation conseillée :** ouvrir ⚡ Combat assisté puis cliquer directement sur l'épingle **dans le bandeau supérieur du panneau latéral**. Il n'est plus nécessaire de passer par ↗. La petite fenêtre indépendante peut également être épinglée ; elle reste alors remplie à l'arrière-plan tant que le PiP est actif (le navigateur impose de conserver sa fenêtre d'origine ouverte).
+
+Compatibilité : Chrome/Edge de bureau sur HTTPS avec Document Picture-in-Picture. Une page web ne peut pas forcer une fenêtre Chrome classique à rester toujours devant ; le PiP est géré par le navigateur. Le jeu en plein écran exclusif peut masquer l'overlay.
+
+Fichiers : `src/assist-pin.js`, `src/assist.js`, `src/app.js`, `index.html`, `combat-assiste.html`, `combat.css`. Tests de non-régression : `test/assist-pin.test.mjs`.
