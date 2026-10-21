@@ -20,7 +20,7 @@ export function cleanSettings(input={}){
 }
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],warnings:[],};
+ return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
@@ -64,10 +64,10 @@ function damage(spell,s,c,override=null){
  return Math.max(0,(row+buff)*(1-(c.resistances[element]||0)/100)*vulner*finalMultiplier);
 }
 function addDamage(s,n,delayed=false){if(!Number.isFinite(n)||n<=0)return;n=round(n);s.total+=n;s.turnDamage+=n;if(delayed)s.delayed+=n;else{s.immediate+=n;s.turnImmediate=(s.turnImmediate||0)+n;}}
-function addBuff(s,key,stat,amount,duration,maxStacks){
+function addBuff(s,key,stat,amount,duration,maxStacks,unit=""){
  const previous=s.buffs.filter(b=>b.key===key);
  if(previous.length>=maxStacks){const replace=previous.sort((a,b)=>a.until-b.until)[0];s.buffs.splice(s.buffs.indexOf(replace),1);}
- s.buffs.push({key,stat,amount,until:s.turn+duration-1});
+ s.buffs.push({key,stat,amount,unit,until:s.turn+duration-1});
 }
 function dot(s,spell,c){
  const d=spell.status.poison;
@@ -132,7 +132,7 @@ export function castSpell(origin,spell,input={}){
  const bonuses=coagulation?[]:[...(status.buff?[status.buff]:[]),...(status.extraBuffs||[])];
  for(const b of bonuses){
   const key=bonuses.length===1?name:name+":"+b.stat;
-  addBuff(s,key,b.stat,b.value,b.duration,b.stacks);
+  addBuff(s,key,b.stat,b.value,b.duration,b.stacks,b.unit||"");
   action.notes.push("Buff +"+b.value+(b.unit||"")+" "+b.stat+" ("+b.duration+" tours, "+b.stacks+" cumul(s) max)");
  }
  if(status.hpCostPercent&&!status.mutilation)
@@ -157,6 +157,34 @@ export function castSpell(origin,spell,input={}){
  if(!action.immediate&&!action.notes.length)action.notes.push(status.utility||"Contrôle / placement : aucun dégât monocible vérifiable");
  return s;
 }
+
+// Vue de l'état au début d'un tour : pas de regroupement ici pour préserver
+// les expirations distinctes de deux charges du même bonus.
+export function snapshotEffects(state,atTurn=state.turn){
+ const entries=state.buffs
+  .filter(b=>b.until>=atTurn)
+  .map(b=>({kind:"buff",name:b.stat,source:b.key,amount:b.amount,
+   unit:b.unit||"",remaining:b.until-atTurn+1}));
+ if(state.mutilationStage>0){
+  entries.push({kind:"state",name:"Mutilation",stage:state.mutilationStage,
+   maxStage:3,remaining:null,source:"Mutilation"});
+ }
+ for(const p of Object.values(state.dots)){
+  if(p.left>0)entries.push({kind:"poison",name:p.name,
+   source:p.source||p.name,remaining:p.left,phase:p.phase});
+ }
+ if(state.enemyDebuff.multiplier>1&&state.enemyDebuff.expires>=atTurn){
+  entries.push({kind:"debuff",name:"Dommages subis (cible)",
+   amount:Math.round((state.enemyDebuff.multiplier-1)*1000)/10,unit:"%",
+   remaining:state.enemyDebuff.expires-atTurn+1,source:"Vulnérabilité"});
+ }
+ if(!state.visible){
+  entries.push({kind:"state",name:"Invisibilité (modèle simplifié)",
+   remaining:null,source:"Invisibilité"});
+ }
+ return entries;
+}
+
 export function endTurn(original,input={}){
  const c=cleanSettings(input);const s=cpy(original);s.turnImmediate=s.turnImmediate||0;
  const ticks=[];let poison=0;
@@ -184,7 +212,11 @@ export function endTurn(original,input={}){
   }else summons.push(summon);
  }
  s.invocations=summons;
- s.turns.push({number:s.turn,actions:s.actions,spent:c.ap-s.pa,immediate:round(s.turnImmediate),poison:round(poison),total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key)});
+ const summary={number:s.turn,actions:s.actions,spent:c.ap-s.pa,
+  immediate:round(s.turnImmediate),poison:round(poison),
+  total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key),
+  startEffects:s.turnStartEffects||[],
+  endEffects:snapshotEffects(s,s.turn)};
  s.turn++;s.pa=c.ap;s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
  s.buffs=s.buffs.filter(b=>b.until>=s.turn);
  // Seule la progression de l'état Mutilation est incrémentée ;
@@ -192,6 +224,11 @@ export function endTurn(original,input={}){
  if(s.mutilationStage>0)s.mutilationStage=Math.min(3,s.mutilationStage+1);
  s.traps=s.traps.slice(-12);
  if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
+ // Le tour suivant commence après la consommation des poisons et
+ // l'expiration des buffs du tour courant.
+ summary.nextEffects=snapshotEffects(s,s.turn);
+ s.turnStartEffects=summary.nextEffects;
+ s.turns.push(summary);
  return s;
 }
 function potential(s,c){
