@@ -2,7 +2,8 @@ import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.2";
 import {optimize} from "./engine.js?v=1.3";
-import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.3";
+import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
+import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 
@@ -67,6 +68,7 @@ function renderProfileSelect(){
  el.innerHTML=builds.map(b=>'<option value="'+escapeHtml(b.id)+'"'+(b.id===current.id?' selected':'')+'>'+escapeHtml(b.character+" — "+b.name)+'</option>').join("");
 }
 
+let pinnedCombat=null,pinOpening=false;
 function combatSnapshot(){return current?getCombatRotation(localStorage,current.id):null;}
 function updateCombatButtons(){
  const saved=combatSnapshot();
@@ -111,11 +113,42 @@ function chooseCombatTurn(turn){
  if(!saved)return;
  setCombatTurn(localStorage,current.id,turn,saved.turns.length);
  renderCombatDrawer();
+ pinnedCombat?.refresh();
 }
 function invalidateCombatSnapshot(){
  if(!current)return;
  clearCombatRotation(localStorage,current.id);
+ pinnedCombat?.refresh();
  updateCombatButtons();
+}
+function updatePinButton(){
+ const pin=$("#combat-pin-drawer"),isPinned=!!pinnedCombat?.window&&!pinnedCombat.window.closed;
+ pin.disabled=pinOpening;
+ pin.setAttribute("aria-pressed",String(isPinned));
+ pin.textContent=isPinned?"📌 Épinglée · retirer":"📌 Garder au premier plan";
+}
+function showPinMessage(message=""){
+ const el=$("#combat-pin-status");
+ el.textContent=message;
+ el.hidden=!message;
+}
+async function toggleCombatPin(){
+ if(pinnedCombat?.window&&!pinnedCombat.window.closed){pinnedCombat.close();return;}
+ if(!canPinCombat(window)){showPinMessage(unsupportedPinText);return;}
+ const saved=combatSnapshot();
+ if(pinOpening||!saved)return;
+ const id=current.id;
+ pinOpening=true;updatePinButton();showPinMessage("");
+ try{
+  const controller=await openPinnedCombat(window,id,localStorage,{
+   onSync:()=>{if(current?.id===id && $("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();},
+   onClose:()=>{pinnedCombat=null;updatePinButton();showPinMessage("");}
+  });
+  pinnedCombat=controller;
+  showPinMessage("Fenêtre épinglée : garde cet onglet OMBRE ouvert.");
+ }catch(error){
+  showPinMessage("Impossible d’épingler : "+(error?.message||"fonction indisponible"));
+ }finally{pinOpening=false;updatePinButton();}
 }
 function detachCombatWindow(){
  const saved=combatSnapshot();
@@ -312,7 +345,7 @@ function renderSpells(){
 }
 function activateBuild(id){
  const next=builds.find(b=>b.id===id);if(!next)return;
- cancelCalculation();closeCombatDrawer();activeId=id;current=next;model=CLASSES[current.classId];
+ cancelCalculation();closeCombatDrawer();pinnedCombat?.close();activeId=id;current=next;model=CLASSES[current.classId];
  applyCalibration();result=null;
  store(ACTIVE,id);
  document.documentElement.style.setProperty("--class-accent",model.color);
@@ -415,6 +448,7 @@ function calculate(){
   try{const snapshot=packCombatRotation(current,outcome);storeCombatRotation(localStorage,snapshot);setCombatTurn(localStorage,current.id,1,snapshot.turns.length);}catch(err){console.warn("Rotation compacte non sauvegardée",err);}
   updateCombatButtons();
   if($("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();
+  pinnedCombat?.refresh();
   $("#status").textContent="Simulation "+model.name+" sur "+outcome.turns.length+" tours terminée. Dégâts approximatifs"+(model.id==="sacrieur"?" — Souffrance et PV non modélisés":"")+".";
  }
  try{
@@ -460,11 +494,13 @@ $("#combat-list").addEventListener("click",e=>{
  if(target)chooseCombatTurn(Number(target.dataset.combatTurn));
 });
 $("#combat-popout").addEventListener("click",detachCombatWindow);
+$("#combat-pin-drawer").addEventListener("click",toggleCombatPin);
 document.addEventListener("keydown",e=>{
  if(e.key==="Escape" && $("#combat-drawer").classList.contains("is-open"))closeCombatDrawer();
 });
 window.addEventListener("storage",e=>{
  if((e.key===COMBAT_TURNS||e.key===COMBAT_STORE)&&$("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();
+ if(e.key===COMBAT_TURNS||e.key===COMBAT_STORE)pinnedCombat?.refresh(true);
  if(e.key===COMBAT_STORE)updateCombatButtons();
 });
 $("#profile-selector").addEventListener("change",e=>activateBuild(e.target.value));
@@ -542,3 +578,4 @@ $("#copy-btn").addEventListener("click",copyRotation);
 $("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();tab("optimize");if(currentJob)cancelCalculation();calculate();});
 $("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
+updatePinButton();
