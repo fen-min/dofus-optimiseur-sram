@@ -1,5 +1,5 @@
-import {optimizeFromState} from "./engine.js?v=1.5";
-import {replayAssist} from "./assist-core.js?v=1.5";
+import {optimizeFromState} from "./engine.js?v=1.7";
+import {replayAssist} from "./assist-core.js?v=1.7";
 
 // A fresh worker is used per request; the UI can cancel obsolete suggestions.
 self.onmessage=event=>{
