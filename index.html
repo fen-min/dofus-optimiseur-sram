@@ -15,7 +15,7 @@
       <div class="side-section-label">PLAN DE COMBAT</div>
       <nav class="side-nav" aria-label="Sections">
         <button class="nav-btn active" data-tab="optimize"><span>◈</span> Optimisation</button><button class="nav-btn" data-tab="builds"><span>◉</span> Personnages & builds</button>
-        <button class="nav-btn" data-tab="spells"><span>✧</span> Dégâts des sorts</button>
+        <button class="nav-btn" data-tab="spells"><span>✧</span> Sorts & variantes</button>
         <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
       </nav>
       <div class="side-bottom"><div class="tiny-dot"></div> <span>Toutes les actions · v0.3</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
@@ -101,31 +101,87 @@
             </section>
           </div>
         </section>
+
         <section id="tab-spells" class="tab-panel hidden">
-          <section class="panel wide-panel">
-            <div class="panel-eyebrow">ENCYCLOPÉDIE / SORTS DE CLASSE</div>
-            <h2 id="spell-catalog-heading">Tous les sorts du Sram · 44 sorts</h2>
-            <p class="muted">Sorts de classe relevés sur <a id="catalog-dofus-link" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer">ton DofusBook</a> : dégâts affichés avec ce stuff, coût en PA, portée, conditions et variantes. Clique sur un sort pour voir ses lignes de dégâts.</p>
-            <div class="catalog-controls">
-              <label class="catalog-control">Rechercher un sort
-                <input id="spell-search" type="search" placeholder="Rechercher un sort…" autocomplete="off">
-              </label>
-              <label class="catalog-control">Élément
-                <select id="spell-element">
-                  <option value="">Tous les éléments</option><option value="Air">Air</option><option value="Terre">Terre</option><option value="Feu">Feu</option><option value="Eau">Eau</option><option value="Neutre">Neutre</option><option value="aucun">Sans dégâts élémentaires</option>
-                </select>
-              </label>
-              <label class="catalog-control">Type
-                <select id="spell-type">
-                  <option value="">Tous les types</option><option value="Attaque">Attaques</option><option value="Poison">Poisons</option><option value="Piège">Pièges</option><option value="Invocation">Invocations</option><option value="Utilitaire">Utilitaires</option>
-                </select>
-              </label>
+          <section class="spellbook-shell" aria-labelledby="spellbook-title">
+            <header class="spellbook-header">
+              <div class="spellbook-header-name">
+                <span class="spellbook-crest" aria-hidden="true">✦</span>
+                <div>
+                  <div class="spellbook-kicker">GRIMOIRE DES CLASSES</div>
+                  <h2 id="spellbook-title">Sorts <span class="spellbook-shortcut">S</span></h2>
+                </div>
+              </div>
+              <div class="spellbook-header-actions">
+                <span class="spellbook-class-name" id="spellbook-class-name">SRAM</span>
+                <span class="spellbook-counter" id="spellbook-selected-count" aria-live="polite">22 / 22 variantes</span>
+              </div>
+            </header>
+
+            <div class="spellbook-toolbar">
+              <div class="spellbook-toolbar-top">
+                <div>
+                  <div class="spellbook-subtitle" id="spell-catalog-heading">SORTS DU SRAM</div>
+                  <p class="spellbook-help">Clique sur un sort pour l'équiper : l'autre variante de la même ligne sera automatiquement retirée.</p>
+                </div>
+                <div id="spellbook-selection-message" class="spellbook-selection-message" aria-live="polite">Les variantes sont enregistrées dans le build actuel.</div>
+              </div>
+              <div class="spellbook-filters">
+                <label class="spellbook-search">
+                  <span class="spellbook-filter-icon" aria-hidden="true">⌕</span>
+                  <span class="sr-only">Rechercher un sort</span>
+                  <input id="spell-search" type="search" placeholder="Rechercher un sort…" autocomplete="off">
+                </label>
+                <label class="spellbook-filter">
+                  <span>Élément</span>
+                  <select id="spell-element">
+                    <option value="">Tous</option>
+                    <option value="Air">Air</option>
+                    <option value="Terre">Terre</option>
+                    <option value="Feu">Feu</option>
+                    <option value="Eau">Eau</option>
+                    <option value="Neutre">Neutre</option>
+                    <option value="aucun">Soutien</option>
+                  </select>
+                </label>
+                <label class="spellbook-filter">
+                  <span>Type</span>
+                  <select id="spell-type">
+                    <option value="">Tous</option>
+                    <option value="Attaque">Attaques</option>
+                    <option value="Poison">Poisons</option>
+                    <option value="Piège">Pièges</option>
+                    <option value="Invocation">Invocations</option>
+                    <option value="Utilitaire">Utilitaires</option>
+                  </select>
+                </label>
+                <button id="spellbook-reset-filters" type="button" class="spellbook-filter-reset">Effacer filtres</button>
+              </div>
+              <div class="spellbook-legend">
+                <span><i class="spellbook-legend-active"></i> Sort équipé</span>
+                <span><i class="spellbook-legend-inactive"></i> Variante non équipée</span>
+                <span class="spellbook-stat" id="spell-count" role="status">22 paires affichées</span>
+              </div>
             </div>
-            <div class="catalog-key"><span class="catalog-tag tag-live">Variante équipée pour ce build</span><span class="catalog-tag">Variante non équipée</span></div>
-            <div id="spell-count" class="catalog-count" role="status"></div>
+
+            <div id="spell-pair-grid" class="spell-pair-grid" role="group" aria-label="Variantes de sorts à choisir"></div>
+            <div id="spellbook-empty" class="spellbook-empty" hidden>Aucune paire ne correspond à cette recherche.</div>
+            <div class="spellbook-bottom">
+              <p>Une variante par paire · 22 sorts actifs parmi 44 · Sélection indépendante pour chaque build</p>
+              <button id="spellbook-show-details" type="button" class="spellbook-detail-button" aria-expanded="false" aria-controls="spell-details">Afficher les dégâts et les effets détaillés <span>⌄</span></button>
+            </div>
+          </section>
+
+          <section id="spell-details" class="panel wide-panel spellbook-details hidden" aria-label="Dégâts et effets détaillés">
+            <div class="panel-eyebrow">FICHE D'ÉQUIPEMENT ET CALIBRATION</div>
+            <h2>Dégâts des sorts</h2>
+            <p class="muted">Détails relevés sur <a id="catalog-dofus-link" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts" target="_blank" rel="noopener noreferrer">ton DofusBook</a>. Certaines valeurs correspondent à des conditions alternatives (charges, états, coups critiques), pas à des dégâts cumulables.</p>
             <div id="spells-body" class="spell-catalog"></div>
-            <div class="form-footer"><button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs</button><button id="save-spells" class="primary-btn compact">Enregistrer les valeurs simulées →</button></div>
-            <p class="microcopy">Important : les valeurs de dommages de DofusBook sont propres à ce stuff et certaines lignes correspondent à des conditions alternatives (charges, états, coups critiques). Ne les additionne pas automatiquement. Tous les sorts sont proposés comme actions, mais leurs effets de placement, de zone ou de défense ne peuvent pas être chiffrés en dégâts sans carte tactique. Les réglages de chaque build sont enregistrés sur ton navigateur.</p>
+            <div class="form-footer">
+              <button id="reset-spells" class="ghost-btn">↺ Remettre les valeurs du build</button>
+              <button id="save-spells" class="primary-btn compact">Enregistrer et recalculer →</button>
+            </div>
+            <p class="microcopy">Les dommages modifiés sont enregistrés seulement pour ce build et dans ce navigateur. La simulation de certaines mécaniques reste approximative.</p>
           </section>
         </section>
         <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement le prototype</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; la durée choisie (jusqu'à 10 tours) est évaluée ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Les buffs dépendent de la classe et sont suivis de tour en tour. Manigance est disponible sur Sram ; Mutilation sur Sacrieur, avec une approximation explicite.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Le Sram possède notamment des poisons différés ; le Sacrieur demande en plus une modélisation des PV et de la Souffrance, encore incomplète.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges du Sram nécessitent un déclenchement hypothétique. Les déplacements du Sacrieur ne remplacent pas une vraie simulation tactique.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte réelle, d'obstacles, de ligne de vue dynamique, de résistances fixes, de propagation multi-cible, ni de survie ou de soins. La Souffrance du Sacrieur n'est pas encore simulée. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts">DofusBook — Sacrieur Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — Sram</a> · <a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sacrieur/">Sacrieur</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
