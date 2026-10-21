@@ -1,11 +1,40 @@
 import {
  getCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,
  COMBAT_STORE,COMBAT_TURNS
-} from "./combat-view.js?v=1.3";
+} from "./combat-view.js?v=1.4";
+import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
 
 const $=id=>document.getElementById(id);
 const buildId=new URLSearchParams(window.location.search).get("build");
-let rotation=null,active=1;
+let rotation=null,active=1,pinned=null,pinOpening=false;
+function setPinMessage(message=""){
+ const status=$("combat-pin-status");
+ status.hidden=!message;
+ status.textContent=message;
+}
+function updatePinButton(){
+ const btn=$("combat-pin"),activePin=!!pinned?.window&&!pinned.window.closed;
+ btn.disabled=pinOpening;
+ btn.setAttribute("aria-pressed",String(activePin));
+ btn.textContent=activePin?"📌 Épinglée · retirer":"📌 Épingler";
+ btn.title=activePin?"Fermer la fenêtre au premier plan":"Garder la rotation au premier plan";
+}
+async function togglePin(){
+ if(pinned?.window&&!pinned.window.closed){pinned.close();return;}
+ if(!canPinCombat(window)){setPinMessage(unsupportedPinText);return;}
+ if(pinOpening||!buildId)return;
+ pinOpening=true;updatePinButton();setPinMessage("");
+ try{
+  const next=await openPinnedCombat(window,buildId,localStorage,{
+   onSync:()=>render(true),
+   onClose:()=>{pinned=null;updatePinButton();setPinMessage("");}
+  });
+  pinned=next;
+  setPinMessage("Épinglée au premier plan. Garde cette petite fenêtre d’origine ouverte.");
+ }catch(error){
+  setPinMessage("Impossible d’épingler : "+(error?.message||"fonction indisponible"));
+ }finally{pinOpening=false;updatePinButton();}
+}
 function render(keepScroll=false){
  rotation=buildId?getCombatRotation(localStorage,buildId):null;
  if(!rotation){
@@ -30,6 +59,7 @@ function choose(n){
  if(!rotation)return;
  setCombatTurn(localStorage,buildId,n,rotation.turns.length);
  render();
+ pinned?.refresh();
 }
 $("combat-list").addEventListener("click",e=>{
  const node=e.target.closest("button[data-combat-turn]");
@@ -38,11 +68,13 @@ $("combat-list").addEventListener("click",e=>{
 $("combat-prev").addEventListener("click",()=>choose(active-1));
 $("combat-next").addEventListener("click",()=>choose(active+1));
 $("combat-window-close").addEventListener("click",()=>window.close());
+$("combat-pin").addEventListener("click",togglePin);
 window.addEventListener("storage",e=>{
- if(e.key===COMBAT_STORE || e.key===COMBAT_TURNS)render(true);
+ if(e.key===COMBAT_STORE || e.key===COMBAT_TURNS){render(true);pinned?.refresh(true);}
 });
 window.addEventListener("keydown",e=>{
  if(e.key==="ArrowRight"){e.preventDefault();choose(active+1);}
  if(e.key==="ArrowLeft"){e.preventDefault();choose(active-1);}
 });
 render();
+updatePinButton();
