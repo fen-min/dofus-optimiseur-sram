@@ -1,6 +1,7 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js";
 import {optimize} from "./engine.js";
+import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
 
 const $=selector=>document.querySelector(selector);
@@ -251,16 +252,61 @@ function saveCalibration(){
   buff:spell.status?.buff?{value:spell.status.buff.value,duration:spell.status.buff.duration}:undefined};
  saveBuilds();
 }
+
+const effectMarkup=(effects=[],empty="Aucun effet actif")=>{
+ const groups=groupActiveEffects(effects);
+ if(!groups.length)return '<p class="active-effect-empty">'+escapeHtml(empty)+'</p>';
+ return '<ul class="active-effect-list">'+groups.map(x=>{
+  const value=effectValue(x);
+  const count=x.stacks>1
+   ?'<span class="active-effect-stacks">'+x.stacks+(x.sources.length===1?' cumuls':' sources')+'</span>'
+   :"";
+  return '<li class="active-effect-item effect-kind-'+escapeHtml(x.kind)+'">'+
+   '<span class="active-effect-symbol" aria-hidden="true">'+({buff:"↗",debuff:"↘",poison:"☣",state:"◈"}[x.kind]||"◆")+'</span>'+
+   '<div class="active-effect-details">'+
+    '<div class="active-effect-main"><strong>'+escapeHtml(x.name)+'</strong>'+
+    (value?'<span class="active-effect-value">'+escapeHtml(value)+'</span>':"")+'</div>'+
+    '<div class="active-effect-meta"><span>'+escapeHtml(effectDuration(x))+'</span>'+count+'</div>'+
+   '</div></li>';
+ }).join("")+'</ul>';
+};
+const renderTurnEffects=t=>
+ '<aside class="turn-effects-panel" aria-label="Effets actifs au tour '+t.number+'">'+
+ '<div class="turn-effects-title"><span aria-hidden="true">✦</span> Effets actifs</div>'+
+ '<div class="active-effects-group"><h4>Début du tour '+t.number+'</h4>'+
+ effectMarkup(t.startEffects||[],"Aucun effet au début de ce tour")+'</div>'+
+ '<div class="active-effects-group after-turn"><h4>Pour le tour '+(t.number+1)+'</h4>'+
+ effectMarkup(t.nextEffects||[],"Aucun effet conservé pour le tour suivant")+'</div>'+
+ '</aside>';
 function render(){
  if(!result)return;
  $("#summary-turns").textContent=result.turns.length;
  $("#total-stat").textContent=fmt(result.total);$("#direct-stat").textContent=fmt(result.immediate);$("#poison-stat").textContent=fmt(result.poison);
  $("#explored-count").textContent=result.considered+" variantes actives / "+result.fullCatalog+" sorts · "+fmt(result.explored)+" actions évaluées";
  const max=Math.max(1,...result.turns.map(x=>x.total));
- $("#bar-chart").innerHTML=result.turns.map(t=>'<div class="bar-column"><div class="bar-amount">'+fmt(t.total)+'</div><div class="bar-plot" style="height:'+Math.max(3,t.total/max*115)+'px"><div class="bar-segment bar-poison" style="height:'+(t.total?t.poison/t.total*100:0)+'%"></div><div class="bar-segment bar-direct" style="height:'+(t.total?t.immediate/t.total*100:0)+'%"></div></div><div class="bar-label">T'+t.number+'</div></div>').join("");
- $("#turn-results").innerHTML=result.turns.map(t=>'<article class="turn-card"><div class="turn-card-head"><span class="turn-label"><span class="turn-num">'+t.number+'</span> Tour '+t.number+' · '+t.spent+'/'+result.settings.ap+' PA</span><span class="turn-score">'+fmt(t.total)+' <small>dégâts estimés</small></span></div><div class="spell-chips">'+(t.actions.map(a=>'<span class="spell-chip" title="'+escapeHtml(a.notes.join(" · "))+'">'+escapeHtml(a.name)+' <b>'+a.pa+' PA</b></span>').join("")||"Passer le tour")+'</div><div class="turn-breakdown">Direct : '+fmt(t.immediate)+' · Différé : '+fmt(t.poison)+'</div>'+(t.actions.some(a=>a.notes.length)?'<div class="turn-notes">'+t.actions.flatMap(a=>a.notes.map(n=>'<span>'+escapeHtml(a.name+" : "+n)+'</span>')).join("")+'</div>':'')+'</article>').join("");
+ $("#bar-chart").innerHTML=result.turns.map(t=>
+  '<div class="bar-column"><div class="bar-amount">'+fmt(t.total)+'</div>'+
+  '<div class="bar-plot" style="height:'+Math.max(3,t.total/max*115)+'px">'+
+   '<div class="bar-segment bar-poison" style="height:'+(t.total?t.poison/t.total*100:0)+'%"></div>'+
+   '<div class="bar-segment bar-direct" style="height:'+(t.total?t.immediate/t.total*100:0)+'%"></div>'+
+  '</div><div class="bar-label">T'+t.number+'</div></div>').join("");
+ $("#turn-results").innerHTML=result.turns.map(t=>
+  '<article class="turn-card">'+
+   '<div class="turn-card-head"><span class="turn-label"><span class="turn-num">'+t.number+'</span> Tour '+t.number+
+    ' · '+t.spent+'/'+result.settings.ap+' PA</span>'+
+    '<span class="turn-score">'+fmt(t.total)+' <small>dégâts estimés</small></span></div>'+
+   '<div class="turn-card-body">'+
+    '<div class="turn-card-main">'+
+     '<div class="spell-chips">'+(t.actions.map(a=>'<span class="spell-chip" title="'+escapeHtml(a.notes.join(" · "))+'">'+escapeHtml(a.name)+' <b>'+a.pa+' PA</b></span>').join("")||"Passer le tour")+'</div>'+
+     '<div class="turn-breakdown">Direct : '+fmt(t.immediate)+' · Différé : '+fmt(t.poison)+'</div>'+
+     (t.actions.some(a=>a.notes.length)?'<div class="turn-notes">'+t.actions.flatMap(a=>a.notes.map(n=>'<span>'+escapeHtml(a.name+" : "+n)+'</span>')).join("")+'</div>':"")+
+    '</div>'+
+    renderTurnEffects(t)+
+   '</div>'+
+  '</article>').join("");
  $("#copy-btn").disabled=false;
 }
+
 function calculate(){
  if(currentJob){cancelCalculation();$("#status").textContent="Calcul interrompu.";return;}
  saveActiveSettings();const cfg=appliedSettings(),id=current.id,job={worker:null};currentJob=job;
