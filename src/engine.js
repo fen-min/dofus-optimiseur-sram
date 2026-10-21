@@ -9,6 +9,15 @@ const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({.
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
  c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,10,10);c.distance=clamp(c.distance,0,30,3);
+ // Chaque tour peut recevoir des PA différents (bonus PA, retrait, etc).
+ // Les autres tours conservent les PA normaux du build.
+ const rawPA=c.apByTurn&&typeof c.apByTurn==="object"?c.apByTurn:{};
+ c.apByTurn={};
+ for(let t=1;t<=c.turns;t++){
+  if(!Object.prototype.hasOwnProperty.call(rawPA,t))continue;
+  const n=Number(rawPA[t]);
+  if(Number.isInteger(n)&&n>=1&&n<=30&&n!==c.ap)c.apByTurn[t]=n;
+ }
  c.beamWidth=clamp(c.beamWidth,8,80,24);c.resistance=clamp(c.resistance,0,90,0);
  c.resistances={Air:c.resistance,Terre:clamp(c.resistanceTerre,0,90,0),Feu:clamp(c.resistanceFeu,0,90,0),Eau:clamp(c.resistanceEau,0,90,0),Neutre:clamp(c.resistanceNeutre,0,90,0)};
  c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
@@ -18,9 +27,13 @@ export function cleanSettings(input={}){
  c.variants=c.variantPairs.map((pair,i)=>pair.includes(c.variants?.[i])?c.variants[i]:fallback[i]);
  return c;
 }
+export function turnActionPoints(c,turn){
+ const adjusted=c.apByTurn?.[turn];
+ return Number.isInteger(adjusted)&&adjusted>=1&&adjusted<=30?adjusted:c.ap;
+}
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:c.ap,used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
+ return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
@@ -212,12 +225,12 @@ export function endTurn(original,input={}){
   }else summons.push(summon);
  }
  s.invocations=summons;
- const summary={number:s.turn,actions:s.actions,spent:c.ap-s.pa,
+ const summary={number:s.turn,actions:s.actions,spent:turnActionPoints(c,s.turn)-s.pa,
   immediate:round(s.turnImmediate),poison:round(poison),
   total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key),
   startEffects:s.turnStartEffects||[],
   endEffects:snapshotEffects(s,s.turn)};
- s.turn++;s.pa=c.ap;s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
+ s.turn++;s.pa=turnActionPoints(c,s.turn);s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
  s.buffs=s.buffs.filter(b=>b.until>=s.turn);
  // Seule la progression de l'état Mutilation est incrémentée ;
  // la Puissance reste à +150 au rang 3.
@@ -265,7 +278,7 @@ export function optimizeFromState(input={},allSpells=SIM_SPELLS,seed=null,onProg
   const finished=[];
   for(const seed of beam){
    let frontier=[seed];
-   for(let step=0;step<Math.ceil(c.ap/2)+1;step++){
+   for(let step=0;step<Math.ceil(turnActionPoints(c,turn)/2)+1;step++){
     const grown=[];
     for(const current of frontier){
      finished.push(endTurn(current,c)); // unused PA are allowed
