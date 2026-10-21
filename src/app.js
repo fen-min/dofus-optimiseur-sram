@@ -1,4 +1,5 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
+import {sanitizeCharacterStats} from "./character-stats.js";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js";
 import {optimize} from "./engine.js?v=1.1";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
@@ -76,6 +77,37 @@ function renderBuilds(){
    '<button type="button" data-clone-build="'+escapeHtml(b.id)+'" aria-label="Dupliquer le build">⧉</button>'+
    '<button type="button" data-rename-build="'+escapeHtml(b.id)+'">Renommer</button></div></article>';
  }).join("");
+}
+
+function renderCharacterStats(){
+ const root=$("#character-stats-grid");
+ const stats=current.stats||{};
+ const cells=[
+  ["Vitalité et caractéristiques",[
+   ["hitPoints","PV"],["actionPoints","PA réels"],["movementPoints","PM"],["rangeBonus","Portée"],
+   ["strength","Force"],["intelligence","Intelligence"],["chance","Chance"],["agility","Agilité"],
+   ["wisdom","Sagesse"],["power","Puissance"],["critical","Critique"],["summons","Invocations"]]],
+  ["Dégâts du personnage",[
+   ["flatDamage.Air","Dommages Air"],["flatDamage.Eau","Dommages Eau"],
+   ["flatDamage.Terre","Dommages Terre"],["flatDamage.Feu","Dommages Feu"],
+   ["flatDamage.Neutre","Dommages Neutre"],["criticalDamage","Dommages critiques"],
+   ["spellDamagePercent","Dommages aux sorts (%)"]]],
+  ["Résistances (%)",[
+   ["resistPercent.Air","Air"],["resistPercent.Eau","Eau"],
+   ["resistPercent.Terre","Terre"],["resistPercent.Feu","Feu"],["resistPercent.Neutre","Neutre"]]]
+ ];
+ root.innerHTML=cells.map(([heading,fields])=>'<div class="character-stat-section"><h3>'+
+  escapeHtml(heading)+'</h3><div class="character-stat-fields">'+fields.map(([key,label])=>{
+   const path=key.split(".");
+   const raw=path.length===1?stats[path[0]]:stats[path[0]]?.[path[1]];
+   const value=Number.isFinite(raw)?String(raw):"";
+   return '<label><span>'+escapeHtml(label)+'</span><input type="number" step="1" inputmode="numeric" data-stat-key="'+key+
+    '" value="'+escapeHtml(value)+'" placeholder="—"></label>';
+  }).join("")+'</div></div>').join("");
+ const note=document.querySelector("#character-stats-panel .microcopy");
+ if(note)note.textContent=stats.source?.startsWith("capture-en-jeu")
+  ?"Capture du jeu du 21/10/2026. Les dommages DofusBook restent un calcul distinct ; évite de compter deux fois les caractéristiques."
+  :"Statistiques locales de ce build, non recalculées automatiquement depuis DofusBook. Les dommages du moteur restent approximatifs.";
 }
 function renderVariantPicker(){
  const picker=$("#variant-picker");
@@ -243,7 +275,7 @@ function activateBuild(id){
  $("#turn-results").innerHTML='<p class="muted">Aucune simulation pour ce build. Lance le calcul pour commencer.</p>';
  $("#explored-count").textContent="";
  $("#status").textContent=model.id==="sacrieur"?"Mode Sacrieur expérimental : Souffrance, pertes de PV, soins et certains effets sont incomplets. Les dégâts sont uniquement indicatifs.":"Mode Sram expérimental : la carte, les placements et certaines interactions de pièges ne sont pas simulés.";
- renderProfileSelect();renderBuilds();renderVariantPicker();renderSpellbook();renderSpells();
+ renderProfileSelect();renderBuilds();renderCharacterStats();renderVariantPicker();renderSpellbook();renderSpells();
  $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
 }
 function saveCalibration(){
@@ -360,6 +392,25 @@ $("#build-cards").addEventListener("click",e=>{
  if(button.dataset.openBuild)activateBuild(button.dataset.openBuild);
  if(button.dataset.cloneBuild)cloneBuild(button.dataset.cloneBuild);
  if(button.dataset.renameBuild)renameBuild(button.dataset.renameBuild);
+});
+$("#character-stats-grid").addEventListener("change",event=>{
+ const input=event.target.closest("input[data-stat-key]");
+ if(!input||!current)return;
+ const path=input.dataset.statKey.split(".");
+ if(!current.stats)current.stats={source:"manuel"};
+ const number=input.value.trim()===""?null:Number(input.value);
+ if(path.length===1){
+  if(number===null||!Number.isFinite(number))delete current.stats[path[0]];
+  else current.stats[path[0]]=number;
+ }else{
+  if(!current.stats[path[0]])current.stats[path[0]]={};
+  if(number===null||!Number.isFinite(number))delete current.stats[path[0]][path[1]];
+  else current.stats[path[0]][path[1]]=number;
+ }
+ current.stats.source="manuel";
+ current.stats=sanitizeCharacterStats(current.stats);
+ saveBuilds();
+ renderCharacterStats();
 });
 $("#build-form").addEventListener("submit",e=>{
  e.preventDefault();
