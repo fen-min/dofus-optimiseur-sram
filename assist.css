@@ -56,3 +56,34 @@ body.assist-body{overflow-y:auto}
 .assist-root button:focus-visible{outline:2px solid #f8ddff;outline-offset:3px}
 .assist-root button:disabled{cursor:default}
 @media(max-width:420px){.assist-root{padding:10px 8px 18px}.assist-spell-list{grid-template-columns:1fr 1fr}.assist-spell{font-size:11px;padding:9px 6px}}
+
+
+/* v1.7 : Total PA customizable independently for each actual round */
+.assist-ap-control{
+ display:flex;flex-direction:column;gap:7px;padding:10px 11px;
+ background:#222b40;border:1px solid #4a5674;border-radius:10px;
+}
+.assist-ap-control>label{color:#d0d8ec;font-size:11px;font-weight:650;line-height:1.3}
+.assist-ap-stepper{display:flex;align-items:center;gap:7px;min-width:0}
+.assist-ap-stepper>button{
+ cursor:pointer;flex:0 0 auto;min-height:36px;padding:5px 11px;
+ border-radius:8px;border:1px solid #7167a7;background:#3a345c;
+ color:#f8f3ff;font-weight:800;font-size:16px;
+}
+.assist-ap-stepper>input{
+ min-width:0;flex:0 1 68px;width:68px;max-width:80px;
+ height:36px;border-radius:8px;border:1px solid #8b7abe;
+ background:#151c2d;color:#fff;text-align:center;font:750 15px/1.2 Inter,system-ui,Arial,sans-serif;
+ font-variant-numeric:tabular-nums;
+}
+.assist-ap-stepper>input::-webkit-inner-spin-button,
+.assist-ap-stepper>input::-webkit-outer-spin-button{opacity:.65}
+#assist-pa-reset{margin-left:auto;font-size:11px;font-weight:650;padding:6px 9px;white-space:nowrap;background:#2a3147}
+.assist-ap-stepper>button:disabled,.assist-ap-stepper>input:disabled{cursor:default;opacity:.38}
+.assist-ap-stepper>button:focus-visible,.assist-ap-stepper>input:focus-visible{outline:2px solid #e1d1ff;outline-offset:2px}
+@media(max-width:390px){
+ .assist-ap-control{padding:9px}
+ .assist-ap-stepper{gap:5px}
+ .assist-ap-stepper>button{padding:5px 8px}
+ #assist-pa-reset{padding:6px;font-size:10px}
+}
