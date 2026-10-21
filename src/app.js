@@ -1,6 +1,6 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js";
-import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.2";
 import {optimize} from "./engine.js?v=1.1";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
