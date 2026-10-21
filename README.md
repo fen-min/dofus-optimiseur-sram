@@ -117,3 +117,16 @@ Les sorts à coût en PV (Carnage, Déchaînement, Entaille, Immolation, Libatio
 La recherche sur 10 tours, les variantes exclusives et les builds individuels sont préservés. La simulation demeure **heuristique, monocible, sans carte de combat**, et ses résultats ne doivent pas être présentés comme un maximum de DPS exact en jeu.
 
 Un fichier de tests `test/sacrier-openddb.test.mjs` contrôle la couverture des 44 sorts, les buffs et la progression de Mutilation.
+
+ 
+## v1.1 — Effets actifs par tour dans l'optimiseur
+
+Dans **Optimisation → Rotation conseillée**, chaque tour affiche désormais une colonne **Effets actifs** à droite des sorts joués :
+- **Début du tour N** : buffs, états, poisons et altérations encore présents avant les actions.
+- **Pour le tour N+1** : mêmes effets conservés après la résolution du tour, les déclenchements et l'expiration des bonus.
+- Les cumuls d'une même source sont fusionnés : deux Furies à +3 % deviennent **+6 % Dommages finaux · 2 cumuls**.
+- Si deux bonus ont des échéances distinctes, la plage de tours restants est conservée plutôt que de cacher l'expiration la plus proche. Deux sources différentes sont désignées comme **sources**, et non cumuls d'un même sort.
+- Les bonus à durée non simulée (invisibilité) sont présentés comme tels. La progression de Mutilation est indiquée, sans inventer ses PV ou boucliers.
+- Affichage en deux colonnes sur ordinateur, une seule colonne sur écrans étroits.
+
+L'affichage est un **résumé de l'état du simulateur**, pas une validation supplémentaire de ses mécaniques. Les coûts de PV, la Souffrance et le placement des pièges restent limités. Tests de régression : `test/turn-effects.test.mjs`.
