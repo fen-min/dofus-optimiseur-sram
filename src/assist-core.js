@@ -23,7 +23,11 @@ export function saveAssistContext(storage,build,settings,spells){
 export function getAssistContext(storage,id){return fetchMap(storage,ASSIST_CONTEXT_STORE)[id]||null;}
 /** FNV-1a fingerprint; solely for staleness checking, not a security hash. */
 export function contextFingerprint(context){
- const body=JSON.stringify([context?.settings,context?.spells,context?.build?.id]);
+ // PA overrides belong to the live combat history, not the build identity.
+ // Ignore this new empty field to preserve compatible v1.6 saved sessions.
+ const settings={...(context?.settings||{})};
+ delete settings.apByTurn;
+ const body=JSON.stringify([settings,context?.spells,context?.build?.id]);
  let h=2166136261;for(let i=0;i<body.length;i++){h^=body.charCodeAt(i);h=Math.imul(h,16777619);}
  return (h>>>0).toString(36);
 }
