@@ -30,6 +30,14 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
    status.buff={stat:"Puissance",value:50,duration:10,stacks:1,ramp:50,max:150};
    utility="Puissance progressive de Mutilation ; coût PV et Coagulation non simulés";
  }
+ if(cat.name==="Pacte de Sang"){
+   // Rang 2 confirmé par capture en jeu (21 octobre 2026).
+   // Seule la Puissance est valorisée par le modèle DPS actuel.
+   // Vitalité est suivie comme état temporaire, sans calcul de PV max / actuels.
+   status.buff={stat:"Puissance",value:100,duration:3,stacks:1};
+   status.extraBuffs=[{stat:"Vitalité",value:25,unit:"%",duration:3,stacks:1}];
+   utility="Pacte de Sang : +100 Puissance et +25 % Vitalité pendant 3 tours (rang 2). La Vitalité ne modifie pas encore les PV simulés.";
+ }
  if(cat.name==="Furie"){
    // Confirmé par la capture du jeu : +3 % finaux pendant 3 tours, 2 cumuls.
    status.buff={stat:"Dommages finaux",unit:"%",value:3,duration:3,stacks:2};
