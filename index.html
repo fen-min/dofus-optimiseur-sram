@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=2.4">
-  <link rel="stylesheet" href="./team.css?v=2.5">
+  <link rel="stylesheet" href="./team.css?v=2.6">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -38,7 +38,7 @@
         <section id="tab-team" class="tab-panel hidden" aria-label="Optimisation de DPS en équipe">
           <div class="panel-eyebrow">NOUVEAU MODULE / ÉQUIPE JUSQU'À 8 PERSONNAGES</div>
           <h2>Optimiseur DPS en équipe</h2>
-          <p class="muted">Sélectionne jusqu’à 8 builds créés dans « Personnages & builds ». Les personnages sont automatiquement classés par initiative décroissante. Chaque rotation est estimée indépendamment avec ses propres sorts, variantes et dégâts calibrés.</p>
+          <p class="muted">Sélectionne jusqu’à 8 builds créés dans « Personnages & builds ». Les personnages sont automatiquement classés par initiative décroissante. Règle les PA de chaque personnage dans la colonne rouge et choisis le buff du Sacrieur. Tu peux tester un buff dès le tour 1. Les rotations restent des estimations indépendantes : les buffs entre alliés ne sont pas encore simulés.</p>
           <div class="team-shell">
             <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
               <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
@@ -67,7 +67,7 @@
             </section>
             <section class="team-panel team-roster-panel" aria-label="Personnages classés par initiative">
               <div class="team-panel-top"><h2>♜ L'équipe</h2><span id="team-count" class="team-count">0 / 8 personnages</span></div>
-              <p class="microcopy">Du plus rapide au plus lent. L’initiative est modifiable dans la fiche du build.</p>
+              <p class="microcopy">Du plus rapide au plus lent. Ici, tu peux modifier les PA et la variante de buff pour la simulation, sans modifier le build. « Buff au T1 » impose le sort au premier tour et permet de comparer ce scénario avec le DPS automatique.</p>
               <div id="team-members" class="team-members"></div>
             </section>
           </div>
@@ -274,6 +274,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=2.5"></script>
+  <script type="module" src="./src/app.js?v=2.6"></script>
 </body>
 </html>
