@@ -62,8 +62,7 @@ test("individual PA selector persists its value without changing the saved build
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  const markup=node("team-members").innerHTML;
  assert.match(markup,/data-team-ap="sacri-air-pvm"/);
- assert.match(markup,/data-team-support="sacri-air-pvm"/);
- assert.match(markup,/data-team-force-buff="sacri-air-pvm"/);
+ assert.doesNotMatch(markup,/data-team-support|data-team-force-buff|data-team-refresh-buffs/);
  root.listeners.change({target:{closest(selector){
   if(selector==="input[data-team-ap]")return {dataset:{teamAp:"sacri-air-pvm"},value:"14"};
   return null;
@@ -72,22 +71,6 @@ test("individual PA selector persists its value without changing the saved build
  assert.equal(store.memberOptions["sacri-air-pvm"].ap,14);
  assert.match(node("team-members").innerHTML,/value="14"/);
  assert.equal(INITIAL_BUILDS[1].ap,baseAP);
-}));
-test("Sacrier Pacte de Sang override and forced buff setting survive changes",()=>withBrowser(({root,node,localStorage})=>{
- mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
- root.listeners.change({target:{closest(selector){
-  if(selector==="select[data-team-support]")return {dataset:{teamSupport:"sacri-air-pvm"},value:"Pacte de Sang"};
-  return null;
- }}});
- root.listeners.change({target:{closest(selector){
-  if(selector==="input[data-team-force-buff]")return {dataset:{teamForceBuff:"sacri-air-pvm"},checked:true};
-  return null;
- }}});
- const store=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
- assert.equal(store.memberOptions["sacri-air-pvm"].support,"Pacte de Sang");
- assert.equal(store.memberOptions["sacri-air-pvm"].forceOpeningBuff,true);
- assert.match(node("team-members").innerHTML,/value="Pacte de Sang" selected/);
- assert.match(node("team-members").innerHTML,/data-team-force-buff="sacri-air-pvm" checked/);
 }));
 test("invalid team PA cannot be stored or propagated",()=>withBrowser(({root,localStorage,node})=>{
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
@@ -101,23 +84,29 @@ test("invalid team PA cannot be stored or propagated",()=>withBrowser(({root,loc
 }));
 
 
-test("refreshable buff checkbox is present for each selected character and on by default",()=>withBrowser(({node})=>{
+
+test("team roster is compact and shows no manual buff dropdowns or checkboxes",()=>withBrowser(({node})=>{
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  const html=node("team-members").innerHTML;
- assert.match(html,/data-team-refresh-buffs="sacri-air-pvm" checked/);
- assert.match(html,/data-team-refresh-buffs="sram-air-pvm" checked/);
- assert.equal((html.match(/data-team-refresh-buffs=/g)||[]).length,2);
+ assert.equal((html.match(/data-team-ap=/g)||[]).length,2);
+ assert.doesNotMatch(html,/data-team-support|data-team-force-buff|data-team-refresh-buffs/);
+ assert.doesNotMatch(html,/<input[^>]+type="checkbox"/);
+ assert.equal((html.match(/<article class="team-slot/g)||[]).length,8);
 }));
-test("per-member buff maintenance toggle persists independently and can be disabled",()=>withBrowser(({root,node,localStorage})=>{
+test("legacy saved buff overrides are discarded while custom PA survives",()=>withBrowser(({node,localStorage,root})=>{
+ localStorage.setItem("ombre-team-dps-v1",JSON.stringify({
+  ids:["sacri-air-pvm","sram-air-pvm"],
+  target:{turns:3,hp:9000},
+  memberOptions:{"sacri-air-pvm":{ap:14,support:"Pacte de Sang",forceOpeningBuff:true,refreshTimedBuffs:false}}
+ }));
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const html=node("team-members").innerHTML;
+ assert.match(html,/data-team-ap="sacri-air-pvm"[^>]+value="14"/);
+ assert.doesNotMatch(html,/Pacte de Sang|forceOpeningBuff|refreshTimedBuffs/);
  root.listeners.change({target:{closest(selector){
-  return selector==="input[data-team-refresh-buffs]"
-   ?{dataset:{teamRefreshBuffs:"sacri-air-pvm"},checked:false}:null;
+  if(selector==="input[data-team-ap]")return {dataset:{teamAp:"sacri-air-pvm"},value:"15"};
+  return null;
  }}});
- const state=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
- assert.equal(state.memberOptions["sacri-air-pvm"].refreshTimedBuffs,false);
- assert.equal(state.memberOptions["sram-air-pvm"],undefined);
- assert.match(node("team-members").innerHTML,/data-team-refresh-buffs="sacri-air-pvm"/);
- assert.doesNotMatch(node("team-members").innerHTML,/data-team-refresh-buffs="sacri-air-pvm" checked/);
- assert.match(node("team-members").innerHTML,/data-team-refresh-buffs="sram-air-pvm" checked/);
+ const persisted=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.deepEqual(persisted.memberOptions["sacri-air-pvm"],{ap:15});
 }));

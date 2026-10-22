@@ -1,77 +1,53 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
-import {createTeamContext,optimizeTeam,cleanTeamMemberOptions} from "../src/team-core.js";
-import {initialState,castSpell,endTurn,eligible,refreshExpiredBuffs,cleanSettings} from "../src/engine.js";
+import {SACRIER_VARIANTS} from "../src/sacrier-catalog.js";
+import {createTeamContext,optimizeTeamMember,openingBuffCandidates} from "../src/team-core.js";
+import {initialState,castSpell,endTurn,eligible,refreshExpiredBuffs,cleanSettings,optimize} from "../src/engine.js";
+
 const sacrier=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
-
-test("Sacrier Pacte de Sang refreshes precisely when the three-turn power buff expires",()=>{
- const target={turns:10};
- const ctx=createTeamContext(sacrier,target,{
-  support:"Pacte de Sang",forceOpeningBuff:true,refreshTimedBuffs:true
- });
- const result=optimizeTeam([ctx],target);
- const casts=result.turns.flatMap(t=>t.actors[0].actions
-  .filter(a=>a.name==="Pacte de Sang").map(a=>({turn:t.number,refreshed:a.autoRefreshed})));
- assert.deepEqual(casts,[
-  {turn:1,refreshed:false},{turn:4,refreshed:true},
-  {turn:7,refreshed:true},{turn:10,refreshed:true}
- ]);
- assert.ok(result.turns.every(t=>t.actors[0].spent<=ctx.settings.ap));
- assert.equal(result.members[0].refreshTimedBuffs,undefined); // not exposed in summary
+function withPact(){
+ const i=SACRIER_VARIANTS.findIndex(pair=>pair.includes("Pacte de Sang"));
+ return {...sacrier,variants:sacrier.variants.map((s,j)=>j===i?"Pacte de Sang":s)};
+}
+test("automatic strategy chooses when to open with the buff, without any checkbox",()=>{
+ const ctx=createTeamContext(withPact(),{turns:5});
+ assert.equal(ctx.forceOpeningSpell,undefined);
+ const choice=optimizeTeamMember(ctx);
+ const baseline=optimize(ctx.settings,ctx.spells);
+ assert.ok(choice.result.total>=baseline.total);
+ assert.equal(choice.result.turns[0].actions[0].name,"Pacte de Sang");
+ assert.ok(choice.result.turns[3].actions.some(a=>a.name==="Pacte de Sang"));
+ assert.ok(choice.strategiesTested>=2);
 });
-
-test("Buff maintenance off keeps the previous optimizer behavior",()=>{
- const target={turns:10};
- const ctx=createTeamContext(sacrier,target,{
-  support:"Pacte de Sang",forceOpeningBuff:true,refreshTimedBuffs:false
- });
- assert.equal(ctx.settings.refreshTimedBuffs,false);
- const result=optimizeTeam([ctx],target);
- const casts=result.turns.flatMap(t=>t.actors[0].actions.filter(a=>a.name==="Pacte de Sang"));
- assert.equal(casts.length,1);
- assert.ok(casts.every(a=>!a.autoRefreshed));
+test("expired buff refresh preserves cooldown and PA legality",()=>{
+ const ctx=createTeamContext(withPact(),{turns:6});
+ const spell=ctx.spells.find(s=>s.name==="Pacte de Sang");
+ const c=cleanSettings({...ctx.settings,refreshTimedBuffs:true});
+ let state=castSpell(initialState(c),spell,c);
+ state=endTurn(state,c);
+ assert.equal(refreshExpiredBuffs(state,[spell],c).actions.length,0);
+ state=endTurn(state,c);
+ assert.equal(refreshExpiredBuffs(state,[spell],c).actions.length,0);
+ state=endTurn(state,c);
+ const restored=refreshExpiredBuffs(state,[spell],c);
+ assert.equal(restored.actions[0].name,"Pacte de Sang");
+ assert.match(restored.actions[0].notes.join(" "),/Relance automatique/);
+ assert.equal(eligible(spell,restored,c),false);
+ assert.equal(refreshExpiredBuffs({...state,pa:1},[spell],c).actions.length,0);
 });
-
-test("Mutilation with ten-turn duration is not recast prematurely",()=>{
- const target={turns:10};
- const ctx=createTeamContext(sacrier,target,{support:"Mutilation",forceOpeningBuff:true});
- const result=optimizeTeam([ctx],target);
- const casts=result.turns.flatMap(t=>t.actors[0].actions.filter(a=>a.name==="Mutilation"));
- assert.equal(casts.length,1);
- assert.equal(casts[0].autoRefreshed,false);
-});
-
-test("Cooldown and PA constraints prevent illegal refresh; disabled refresh does nothing",()=>{
- const target={turns:6};
- const ctx=createTeamContext(sacrier,target,{support:"Pacte de Sang",forceOpeningBuff:true});
- const spell=ctx.spells.find(x=>x.name==="Pacte de Sang");
+test("no refresh is forced by the solo optimizer without the team policy",()=>{
+ const ctx=createTeamContext(withPact(),{turns:6});
  const c=cleanSettings(ctx.settings);
- const first=castSpell(initialState(c),spell,c);
- const at2=endTurn(first,c);
- assert.equal(refreshExpiredBuffs(at2,[spell],c).actions.length,0);
- const at3=endTurn(at2,c);
- assert.equal(refreshExpiredBuffs(at3,[spell],c).actions.length,0);
- const at4=endTurn(at3,c);
- const reapplied=refreshExpiredBuffs(at4,[spell],c);
- assert.equal(reapplied.actions[0].name,"Pacte de Sang");
- assert.match(reapplied.actions[0].notes.join(" "),/Relance automatique/);
- const noPA={...at4,pa:1};
- assert.equal(refreshExpiredBuffs(noPA,[spell],c).actions.length,0);
- assert.equal(refreshExpiredBuffs(at4,[spell],{...c,refreshTimedBuffs:false}),at4);
- assert.equal(eligible(spell,reapplied,c),false);
-});
-
-test("Member options maintain buffs by default without modifying original build",()=>{
- const options=cleanTeamMemberOptions(sacrier,{});
- assert.equal(options.refreshTimedBuffs,true);
- assert.equal(cleanTeamMemberOptions(sacrier,{refreshTimedBuffs:false}).refreshTimedBuffs,false);
- const ctx=createTeamContext(sacrier,{turns:3});
- assert.equal(ctx.settings.refreshTimedBuffs,true);
- assert.equal(sacrier.refreshTimedBuffs,undefined);
-});
-
-test("The single-character optimizer still defaults to disabled buff maintenance",()=>{
- const c=cleanSettings({ap:12,turns:3});
  assert.equal(c.refreshTimedBuffs,false);
+ const spell=ctx.spells.find(s=>s.name==="Pacte de Sang");
+ let state=castSpell(initialState(c),spell,c);
+ for(let i=0;i<3;i++)state=endTurn(state,c);
+ assert.equal(refreshExpiredBuffs(state,[spell],c),state);
+});
+test("no turn-one buff candidate outside the saved spell variants",()=>{
+ const ctx=createTeamContext(sacrier,{turns:3});
+ const candidates=openingBuffCandidates(ctx);
+ assert.ok(!candidates.some(s=>s.name==="Pacte de Sang"));
+ assert.ok(candidates.every(s=>s.nonDirect&&s.status.buff.duration>0));
 });

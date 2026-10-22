@@ -1,8 +1,8 @@
 import {CLASSES} from "./classes.js?v=1.8";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
- teamMembers,createTeamContext,cleanTeamMemberOptions,SACRIER_SUPPORT_SPELLS
-} from "./team-core.js?v=2.7";
+ teamMembers,createTeamContext,cleanTeamMemberOptions
+} from "./team-core.js?v=2.8";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -12,7 +12,13 @@ const readStore=()=>{
  try{const data=JSON.parse(localStorage.getItem(TEAM_STORAGE_KEY)||"null");return data&&typeof data==="object"?data:null;}
  catch{return null;}
 };
-const saveStore=(ids,target,memberOptions)=>{try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions}));}catch{}};
+const saveStore=(ids,target,memberOptions)=>{
+ // Do not re-save obsolete manual buff controls from the earlier team UI.
+ const paOnly=Object.fromEntries(Object.entries(memberOptions||{}).map(([id,options])=>[
+  id,{ap:options.ap}
+ ]));
+ try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions:paOnly}));}catch{}
+};
 
 export function mountTeamModule({getBuilds}){
  const root=document.getElementById("tab-team");
@@ -22,8 +28,11 @@ export function mountTeamModule({getBuilds}){
  let ids=Array.isArray(saved?.ids)?saved.ids.slice(0,TEAM_LIMIT):
   getBuilds().slice(0,2).map(b=>b.id);
  let target=cleanTeamTarget(saved?.target||defaultTeamTarget());
- let memberOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
+ const storedOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
   ?saved.memberOptions:{};
+ let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
+  ap:options?.ap
+ }]));
  let result=null,activeTurn=1,worker=null,job=0;
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
@@ -47,23 +56,15 @@ export function mountTeamModule({getBuilds}){
     '<option value="'+safe(other.id)+'"'+(b?.id===other.id?' selected':'')+
     (taken.has(other.id)&&b?.id!==other.id?' disabled':'')+'>'+
     safe(other.character+" — "+other.name)+'</option>')].join("");
-   const extra=b?'<div class="team-slot-options"><label>PA'+
-    '<input type="number" data-team-ap="'+safe(b.id)+'" min="6" max="20" step="1" value="'+settings.ap+'" aria-label="PA de '+safe(b.character)+'"></label>'+
-    (cls.id==="sacrieur"?
-      '<label>Buff équipé <select data-team-support="'+safe(b.id)+'" aria-label="Variante buff du Sacrieur">'+
-      SACRIER_SUPPORT_SPELLS.map(name=>'<option value="'+safe(name)+'"'+(name===settings.support?' selected':'')+'>'+safe(name)+'</option>').join("")+
-      '</select></label>'+
-      '<label class="team-slot-force"><input type="checkbox" data-team-force-buff="'+safe(b.id)+'"'+(settings.forceOpeningBuff?' checked':'')+
-      '> Buff au T1</label>':'')+
-    '<label class="team-slot-force"><input type="checkbox" data-team-refresh-buffs="'+safe(b.id)+'"'+(settings.refreshTimedBuffs?' checked':'')+
-    '> Entretenir les buffs</label></div>':'';
+   const extra=b?'<label class="team-slot-pa" aria-label="PA du personnage">PA '+
+    '<input type="number" data-team-ap="'+safe(b.id)+'" min="6" max="20" step="1" value="'+settings.ap+'" aria-label="PA de '+safe(b.character)+'"></label>':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
     '<span class="team-slot-icon" aria-hidden="true">'+(cls?safe(cls.glyph):'＋')+'</span>'+
     '<div class="team-slot-body"><label for="team-pick-'+i+'">'+(b?safe(b.character):'Emplacement libre')+'</label>'+
     '<select id="team-pick-'+i+'" data-team-slot="'+i+'" aria-label="Personnage en position '+(i+1)+'">'+options+'</select>'+
     '<small>'+(b?(b.initiative===null?'Initiative non renseignée':fmt(b.initiative)+' initiative')+
-     ' · '+safe(cls.name)+' · '+safe(settings.ap)+' PA':'Choisir parmi Personnages & builds')+'</small>'+extra+'</div></article>';
+     ' · '+safe(cls.name):'Choisir parmi Personnages & builds')+'</small>'+extra+'</div></article>';
   }).join("");
   $("team-count").textContent=roster.length+" / "+TEAM_LIMIT+" personnages";
  }
@@ -88,8 +89,8 @@ export function mountTeamModule({getBuilds}){
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
-   (activeTurn===1&&result.members.find(m=>m.id===a.id)?.forcedOpeningSpell?
-    ' · buff imposé : '+safe(result.members.find(m=>m.id===a.id).forcedOpeningSpell):'')+
+   (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
+    ' · ouverture choisie : '+safe(result.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
   $("team-damage").innerHTML=present?
@@ -134,10 +135,8 @@ export function mountTeamModule({getBuilds}){
    }
    value=pa;
   }
-  if(field==="support"&&(build.classId!=="sacrieur"||!SACRIER_SUPPORT_SPELLS.includes(value)))return;
-  if(field==="forceOpeningBuff"&&build.classId!=="sacrieur")return;
-  if(field==="refreshTimedBuffs")value=value===true;
-  memberOptions={...memberOptions,[id]:{...memberOptions[id],[field]:value}};
+  if(field!=="ap")return;
+  memberOptions={...memberOptions,[id]:{ap:value}};
   storeState();cancel();result=null;activeTurn=1;renderMembers();renderResult();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
  }
@@ -159,13 +158,13 @@ export function mountTeamModule({getBuilds}){
   $("team-calculate").disabled=true;
   status("Optimisation des rotations de "+members.length+" personnages…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=2.7",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=2.8",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
     if(data.type==="progress"){
      const p=data.progress;
-     status(p.character+" · personnage "+p.index+"/"+p.count+" · tour "+p.turn+"/"+p.turns);
+     status(p.character+" · "+(p.scenario||"Optimisation")+" · "+p.index+"/"+p.count+" · tour "+p.turn+"/"+p.turns);
     }
     if(data.type==="complete"||data.type==="error"){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;
@@ -190,12 +189,6 @@ export function mountTeamModule({getBuilds}){
   if(slot){changeSlot(Number(slot.dataset.teamSlot),slot.value);return;}
   const pa=event.target.closest("input[data-team-ap]");
   if(pa){changeMemberOption(pa.dataset.teamAp,"ap",pa.value);return;}
-  const support=event.target.closest("select[data-team-support]");
-  if(support){changeMemberOption(support.dataset.teamSupport,"support",support.value);return;}
-  const force=event.target.closest("input[data-team-force-buff]");
-  if(force){changeMemberOption(force.dataset.teamForceBuff,"forceOpeningBuff",force.checked);return;}
-  const refresh=event.target.closest("input[data-team-refresh-buffs]");
-  if(refresh){changeMemberOption(refresh.dataset.teamRefreshBuffs,"refreshTimedBuffs",refresh.checked);return;}
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);

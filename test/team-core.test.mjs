@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
-import {cleanTeamTarget,teamMembers,initiativeOf,createTeamContext,assembleTeamResult,optimizeTeam,cleanTeamMemberOptions} from "../src/team-core.js";
+import {SACRIER_VARIANTS} from "../src/sacrier-catalog.js";
+import {optimize} from "../src/engine.js";
+import {cleanTeamTarget,teamMembers,initiativeOf,createTeamContext,assembleTeamResult,optimizeTeam,cleanTeamMemberOptions,openingBuffCandidates,optimizeTeamMember} from "../src/team-core.js";
 
 const base=INITIAL_BUILDS[0],sacri=INITIAL_BUILDS[1];
 test("eight slots contain unique selected builds sorted by decreasing initiative",()=>{
@@ -82,35 +84,42 @@ test("team PA overrides stay per-character and leave original builds unchanged",
  assert.equal(cleanTeamMemberOptions(build,{ap:5}).ap,12);
  assert.equal(cleanTeamMemberOptions(build,{ap:8.5}).ap,12);
 });
-test("Sacrier buff variant is team-only, and Pacte and Mutilation remain exclusive",()=>{
+
+test("automatic optimizer uses equipped variants and ignores legacy manual buff controls",()=>{
  const original=sacri.variants.slice();
- const ctx=createTeamContext(sacri,{turns:2},{ap:14,support:"Pacte de Sang"});
- const pactIndex=ctx.settings.variantPairs.findIndex(p=>p.includes("Pacte de Sang"));
- assert.equal(ctx.settings.variants[pactIndex],"Pacte de Sang");
- assert.equal(ctx.settings.ap,14);
- assert.equal(ctx.build.support,"Pacte de Sang");
- assert.ok(ctx.spells.some(s=>s.name==="Pacte de Sang"));
+ const chosen=SACRIER_VARIANTS.findIndex(p=>p.includes("Pacte de Sang"));
+ const pact={...sacri,variants:sacri.variants.map((x,i)=>i===chosen?"Pacte de Sang":x)};
+ const context=createTeamContext(pact,{turns:3},{ap:14,
+  support:"Mutilation",forceOpeningBuff:true,refreshTimedBuffs:false});
+ assert.equal(context.settings.ap,14);
+ assert.equal(context.settings.variants[chosen],"Pacte de Sang");
+ assert.equal(context.settings.refreshTimedBuffs,false);
+ assert.equal(context.forceOpeningSpell,undefined);
  assert.deepEqual(sacri.variants,original);
- const fallback=createTeamContext(sacri,{turns:2},{support:"Inconnu"});
- assert.equal(fallback.settings.variants[pactIndex],original[pactIndex]);
+ assert.deepEqual(cleanTeamMemberOptions(sacri,{ap:14,support:"Pacte de Sang",forceOpeningBuff:true}),{ap:14});
+ const buffs=openingBuffCandidates(context);
+ assert.ok(buffs.some(x=>x.name==="Pacte de Sang"));
+ assert.ok(!buffs.some(x=>x.name==="Mutilation"));
 });
-test("forcing Pacte de Sang at the opening actually launches it and obeys PA",()=>{
- const target={hp:20000,turns:2};
- const context=createTeamContext(sacri,target,{ap:14,support:"Pacte de Sang",forceOpeningBuff:true});
- const output=optimizeTeam([context],target);
- assert.equal(output.turns[0].actors[0].actions[0].name,"Pacte de Sang");
- assert.equal(output.turns[0].actors[0].actions[0].pa,2);
- assert.equal(output.members[0].forcedOpeningSpell,"Pacte de Sang");
- assert.ok(output.turns.every(t=>t.actors[0].spent<=14));
- assert.equal(output.turns.length,2);
+test("automatic buff opening and renewal can win the five-turn comparison",()=>{
+ const chosen=SACRIER_VARIANTS.findIndex(p=>p.includes("Pacte de Sang"));
+ const pact={...sacri,variants:sacri.variants.map((x,i)=>i===chosen?"Pacte de Sang":x)};
+ const target={turns:5};
+ const ctx=createTeamContext(pact,target);
+ const baseline=optimize(ctx.settings,ctx.spells);
+ const trial=optimizeTeamMember(ctx);
+ assert.equal(trial.strategy,"ouverture");
+ assert.equal(trial.chosenOpening,"Pacte de Sang");
+ assert.equal(trial.result.turns[0].actions[0].name,"Pacte de Sang");
+ assert.ok(trial.result.turns[3].actions.some(a=>a.name==="Pacte de Sang"));
+ assert.ok(trial.result.total>=baseline.total);
+ assert.ok(trial.strategiesTested>=2);
 });
-test("forcing Mutilation is also possible while other actors keep distinct PA",()=>{
- const target={hp:25000,turns:1};
- const sacriCtx=createTeamContext(sacri,target,{ap:16,forceOpeningBuff:true});
- const sramCtx=createTeamContext(base,target,{ap:10});
- const output=optimizeTeam([sacriCtx,sramCtx],target);
- assert.equal(output.turns[0].actors[0].actions[0].name,"Mutilation");
- assert.ok(output.turns[0].actors[0].spent<=16);
- assert.ok(output.turns[0].actors[1].spent<=10);
- assert.equal(output.members[1].forcedOpeningSpell,null);
+test("optimizer does not force a support spell when that plan loses damage",()=>{
+ const context=createTeamContext(sacri,{turns:5});
+ const natural=optimize(context.settings,context.spells);
+ const compared=optimizeTeamMember(context);
+ assert.ok(compared.result.total>=natural.total);
+ assert.ok(compared.result.turns.every(t=>t.spent<=context.settings.ap));
+ assert.ok(compared.strategiesTested>=1);
 });
