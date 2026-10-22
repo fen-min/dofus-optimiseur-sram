@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
-import {cleanTeamTarget,teamMembers,initiativeOf,createTeamContext,assembleTeamResult} from "../src/team-core.js";
+import {cleanTeamTarget,teamMembers,initiativeOf,createTeamContext,assembleTeamResult,optimizeTeam} from "../src/team-core.js";
 
 const base=INITIAL_BUILDS[0],sacri=INITIAL_BUILDS[1];
 test("eight slots contain unique selected builds sorted by decreasing initiative",()=>{
@@ -50,4 +50,20 @@ test("result aggregates actors per turn in initiative order, caps effective targ
  assert.equal(res.turns[1].remainingHp,0);
  assert.deepEqual(res.turns[1].actors.map(a=>a.id),["high","low"]);
  assert.equal(res.turns[1].actors[0].actions[0].name,"Sort 1");
+});
+
+test("eight-build rotation generates eight initiative-sorted actions sets without PA overflow",()=>{
+ const builds=Array.from({length:8},(_,i)=>({
+  ...INITIAL_BUILDS[i%2],id:"synthetic-"+i,character:"Joueur "+(i+1),
+  stats:{initiative:2100-i*100}
+ }));
+ const target={hp:30000,turns:1,resistances:{Air:20}};
+ const lineup=teamMembers(builds,builds.map(b=>b.id));
+ const output=optimizeTeam(lineup.map(b=>createTeamContext(b,target)),target);
+ assert.equal(output.members.length,8);
+ assert.equal(output.turns.length,1);
+ assert.equal(output.turns[0].actors.length,8);
+ assert.ok(output.turns[0].actors.every(a=>a.spent<=12));
+ assert.ok(output.members.every((m,i)=>!i||output.members[i-1].initiative>=m.initiative));
+ assert.ok(Number.isFinite(output.theoretical)&&output.theoretical>=0);
 });
