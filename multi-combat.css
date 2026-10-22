@@ -66,3 +66,8 @@ summary{color:#e0cfef;cursor:pointer;font-size:11px;margin-top:10px}
 
 .board-cell.spread:not(.zone){background:#55436e!important;border-color:#bb94f1}
 .board-cell .trap-mark{position:absolute;right:-2px;bottom:-2px;z-index:2;border:1px solid #cba6fc;color:#f4dfff;background:#4d3269;border-radius:50%;font-size:9px;font-weight:bold;padding:1px 3px;line-height:1.2}
+
+/* v2.1 integrated linking indicators */
+.build-link-info{font-size:11px;color:#b9e6cf;background:#213d38;border:1px solid #3d7367;border-radius:9px;padding:9px 11px;line-height:1.5}
+[hidden]{display:none!important}
+.field input:disabled,.field select:disabled,.variants select:disabled{opacity:.82;cursor:default;background:#2a3046;border-color:#505a78}
