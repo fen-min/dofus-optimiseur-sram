@@ -175,6 +175,7 @@ export function applyAction(original,spell,center,context){
  try{result=castSpell(engineState,spell,forEngine);}
  catch(err){throw Error("Lancer non simulable : "+spell.name+" ("+err.message+")");}
  result.used[spell.id]=priorUses+1;
+ const enginePoison=result.dots?.[spell.id]?.base; // exact tick from OMBRE engine
  result.dots={}; // handled per target, not globally
  result.enemyDebuff={multiplier:1,expires:0};
  result.position=before.position; // abstract grid doesn't move entities
@@ -193,9 +194,10 @@ export function applyAction(original,spell,center,context){
    // everyone in its later propagation circle.
    if(spell.name==="Épidémie"&&e!==target)continue;
    const pd=spell.status.poison;
-   // Per-target, non-propagating proxy. The spell's DofusBook damage row
-   // is treated as the damage of ONE tick (not immediate damage).
-   const amount=buffDamageFactor(before,spell,s.settings,e);
+   // Reuse OMBRE's native poison tick calculation for this spell,
+   // including configured resistance, critical rate and active buffs.
+   const amount=Number.isFinite(enginePoison)?enginePoison:
+    buffDamageFactor(before,spell,s.settings,e);
    e.dots=e.dots.filter(x=>x.id!==spell.id);
    e.dots.push({id:spell.id,name:spell.name,amount:round(amount),left:pd.duration,phase:pd.phase,generation:0});
   }else{
