@@ -5,28 +5,14 @@
  * AOE templates are USER-ADJUSTABLE hypotheses, NOT official DOFUS hitboxes.
  */
 import {initialState,castSpell,endTurn,cleanSettings} from "./engine.js?v=1.8";
+import {geometryFor,inMask,MASK_LABELS} from "./spell-zones.js?v=2.0";
 
 export const SIZE=9;
 export const MULTI_STORE="ombre-multi-battle-v1";
 export const MAX_MONSTERS=8;
-export const SHAPES={
- single:"Une cible",
- cross1:"Croix 1 case (estimée)",
- square1:"Carré 1 case (estimé)",
- circle2:"Rayon 2 cases (estimé)",
- line2:"Ligne 2 cases (estimée)"
-};
-const aoeHints=new Set([
- "Fourvoiement","Furie","Nervosité","Douleur Cuisante","Carnage",
- "Désolation","Déchaînement","Bain de Sang","Dissolution","Afflux",
- "Condensation","Hécatombe","Immolation","Folie Sanguinaire",
- "Fulgurance","Décimation","Ravage","Projection","Supplice","Absorption",
- "Couronne d'Épines","Épidémie","Larcin","Fourberie","Cruauté"
-]);
-export function defaultShape(spell){
- if(spell?.isTrap||spell?.status?.poison)return "single";
- return aoeHints.has(spell?.name)?"cross1":"single";
-}
+export const SHAPES={...MASK_LABELS};
+/** Geometry source is separate so spell rules are centralized. */
+export function defaultShape(spell,classId="sram"){return geometryFor(spell,classId).mask;}
 export const round=n=>Math.round(n*10)/10;
 export const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 export const inGrid=p=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.y>=0&&p.x<SIZE&&p.y<SIZE;
@@ -53,43 +39,36 @@ export function validateBoard(input){
  for(const [name,value] of Object.entries(b.shapes||{}))if(SHAPES[value])shapes[name]=value;
  return {hero,monsters,shapes};
 }
-export function shapeHits(center,monster,shape,hero){
- const dx=Math.abs(center.x-monster.x),dy=Math.abs(center.y-monster.y);
- if(shape==="cross1")return dx+dy<=1;
- if(shape==="square1")return Math.max(dx,dy)<=1;
- if(shape==="circle2")return dx+dy<=2;
- if(shape==="line2"){
-  const horizontal= Math.abs(center.x-hero.x)>=Math.abs(center.y-hero.y);
-  return horizontal?(monster.y===center.y&&dx<=2):(monster.x===center.x&&dy<=2);
- }
- return dx===0&&dy===0;
-}
+export function shapeHits(center,monster,shape,hero){return inMask(center,monster,shape,hero);}
 export function selectedSpells(context){
  const settings=context.settings;
  return context.spells.filter(s=>settings.variants?.[s.variantGroup]===s.name);
 }
 function clone(v){return JSON.parse(JSON.stringify(v));}
-function affected(state,spell,center){
+export function affected(state,spell,center,includeDead=false){
  if(!center)return [];
- const shape=state.board.shapes[spell.name]||defaultShape(spell);
- return state.monsters.filter(e=>e.hp>0&&shapeHits(center,e,shape,state.board.hero));
+ const geometry=geometryFor(spell,state.settings.classId||"sram");
+ const shape=state.board.shapes[spell.name]||geometry.mask;
+ return state.monsters.filter(e=>(includeDead||e.hp>0)&&
+  shapeHits(center,e,shape,state.board.hero)&&!(e.x===state.board.hero.x&&e.y===state.board.hero.y));
 }
+/** Enumerate cast CENTER cells, not just occupied enemies.
+ * Fourvoiement may aim at an EMPTY center between 4 enemies.
+ */
 export function possibleTargets(state,spell){
- if(spell.target==="self")return [null];
- // Summons, traps and untargeted tile spells require a true combat map:
- // they can be tracked as manual actions, but aren't damage candidates.
+ const geometry=geometryFor(spell,state.settings.classId||"sram");
+ if(geometry.mode==="self")return [null];
+ if(geometry.mode==="selfArea")return [state.board.hero];
  const out=[];
- for(const e of state.monsters){
-  if(e.hp<=0)continue;
-  const center={x:e.x,y:e.y};
-  const d=dist(state.board.hero,center);
+ for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+  const p={x,y},d=dist(state.board.hero,p);
   if(d<spell.minRange||d>spell.range)continue;
-  if(spell.lineOnly&&state.board.hero.x!==center.x&&state.board.hero.y!==center.y)continue;
-  out.push(center);
+  if(spell.lineOnly&&state.board.hero.x!==x&&state.board.hero.y!==y)continue;
+  const occupied=state.monsters.some(m=>m.hp>0&&m.x===x&&m.y===y);
+  if(geometry.mode==="enemy"&&!occupied)continue;
+  if(geometry.mode==="free"&&(occupied||(state.board.hero.x===x&&state.board.hero.y===y)))continue;
+  out.push(p);
  }
- // Abstract AOE may be centered on empty cells only if user chose an area.
- // We deliberately limit the search to enemy-centered spells: exact
- // empty-cell cast restrictions (including LOS) aren't implemented.
  return out;
 }
 export function makeState(context,board){
@@ -98,7 +77,7 @@ export function makeState(context,board){
   comploteurContact:false});
  return {engine:initialState(settings),settings,board:b,
   monsters:b.monsters.map(e=>({...e,maxHp:e.hp,dots:[],damage:0})),
-  targetUses:{},total:0,turnTotals:[],actions:[],warnings:[]};
+  targetUses:{},placedTraps:[],total:0,turnTotals:[],actions:[],warnings:[]};
 }
 function buffDamageFactor(before,spell,settings,enemy){
  const norm=(spell.min+spell.max)/2,crit=(spell.critMin+spell.critMax)/2;
@@ -117,11 +96,12 @@ function validCast(state,spell,center){
  if(!Number.isFinite(spell.pa)||spell.pa>e.pa)return false;
  if((e.used[spell.id]||0)>=(spell.maxPerTurn||1)||e.turn<(e.ready[spell.id]||1))return false;
  if(spell.name==="Perfidie")return false; // variable cost by traps is not modeled
- if(spell.isTrap||spell.target==="tile")return false; // no automatic trap impacts
- if(spell.target!=="self"){
+ // Traps are manual placements; automatic DPS never assumes a trigger.
+ const geometry=geometryFor(spell,c.classId||"sram");
+ if(geometry.mode!=="self"){
   if(!center||!possibleTargets(state,spell).some(p=>p.x===center.x&&p.y===center.y))return false;
-  const direct=state.monsters.find(m=>m.x===center.x&&m.y===center.y);
-  if(direct&&(state.targetUses[spell.id+":"+direct.id]||0)>=(spell.perTarget||spell.maxPerTurn||1))return false;
+  const targets=affected(state,spell,center);
+  if(targets.some(e=>(state.targetUses[spell.id+":"+e.id]||0)>=(spell.perTarget||spell.maxPerTurn||1)))return false;
  }
  return true;
 }
@@ -130,11 +110,22 @@ export function legalActions(state,context){
  for(const spell of selectedSpells(context)){
   if(spell.isTrap||spell.target==="tile"||spell.name==="Perfidie")continue;
   const candidates=possibleTargets(state,spell);
-  for(const center of candidates)if(validCast(state,spell,center)){
-   const targets=spell.target==="self"?[]:affected(state,spell,center);
-   // Do not recommend a targetless offensive cast.
-   if(spell.target!=="self"&&!targets.length)continue;
-   moves.push({spell,center,targets:targets.map(t=>t.id)});
+  // Avoid duplicate cast centers with the same affected enemy set.
+  const seen=new Set();
+  const ranked=candidates.map(center=>({
+   center,targets:center?affected(state,spell,center):[],
+  })).filter(q=>geometryFor(spell,state.settings.classId||"sram").mode==="self"||
+    geometryFor(spell,state.settings.classId||"sram").mode==="selfArea"||
+    q.targets.length>0)
+   .sort((a,b)=>b.targets.length-a.targets.length||
+    (a.center?dist(state.board.hero,a.center):0)-(b.center?dist(state.board.hero,b.center):0));
+  for(const {center,targets:hit} of ranked)if(validCast(state,spell,center)){
+   const hash=hit.map(e=>e.id).sort().join(",");
+   if(seen.has(hash))continue;
+   seen.add(hash);
+   const hits=geometryFor(spell,state.settings.classId||"sram").mode==="self"?[]:affected(state,spell,center);
+   moves.push({spell,center,targets:hits.map(t=>t.id)});
+   if(moves.length>=85)break;
   }
  }
  return moves;
@@ -147,10 +138,11 @@ function applyHit(e,value){
 export function applyAction(original,spell,center,context){
  if(!validCast(original,spell,center))throw Error("Sort indisponible pour cette position, cette variante, ou ces PA.");
  const s=clone(original),before=s.engine;
- const touched=spell.target==="self"?[]:affected(s,spell,center);
+ const geometry=geometryFor(spell,s.settings.classId||"sram");
+ const touched=geometry.mode==="self"?[]:affected(s,spell,center);
  const target=touched.find(e=>e.x===center?.x&&e.y===center?.y)||touched[0];
- const point=spell.target==="self"?s.board.hero:center;
- const d=spell.target==="self"?0:dist(s.board.hero,point);
+ const point=geometry.mode==="self"?s.board.hero:center;
+ const d=geometry.mode==="self"?0:dist(s.board.hero,point);
  const forEngine={...s.settings,distance:d,inLine:true,lineOfSight:true,
   triggerTraps:false,triggerOnPush:false};
  // Monocible source engine's target debuff and DOT must not leak across
@@ -161,9 +153,9 @@ export function applyAction(original,spell,center,context){
  engineState.enemyDebuff={multiplier:1,expires:0};
  // Per-target limits are tracked separately while per-turn limits stay global.
  const priorUses=before.used[spell.id]||0;
- const focusKey=spell.id+":"+target?.id;
- engineState.used[spell.id]=Math.min(priorUses,s.targetUses[focusKey]||0);
- if((engineState.used[spell.id]||0)>=spell.maxPerTurn)engineState.used[spell.id]=priorUses;
+ // Global number of casts and per-target caps are checked in validCast.
+ // Never trick the original engine into ignoring its global cast limit.
+ engineState.used[spell.id]=priorUses;
  let result;
  try{result=castSpell(engineState,spell,forEngine);}
  catch(err){throw Error("Lancer non simulable : "+spell.name+" ("+err.message+")");}
@@ -172,13 +164,19 @@ export function applyAction(original,spell,center,context){
  result.enemyDebuff={multiplier:1,expires:0};
  result.position=before.position; // abstract grid doesn't move entities
  s.engine=result;
- if(target)s.targetUses[focusKey]=(s.targetUses[focusKey]||0)+1;
+ for(const e of touched)s.targetUses[spell.id+":"+e.id]=(s.targetUses[spell.id+":"+e.id]||0)+1;
+ if(spell.isTrap||geometry.mode==="free"&&spell.target==="tile"){
+  s.placedTraps.push({name:spell.name,center:{...center},mask:s.board.shapes[spell.name]||geometry.mask,turn:s.engine.turn});
+ }
  let total=0;
  const direct=spell.nonDirect||spell.isTrap||spell.status?.poison?0:
   Math.max(0,result.total-before.total);
  for(const e of touched){
   if(e.hp<=0)continue;
   if(spell.status?.poison){
+   // Epidémie is applied to the PRIMARY target, not instantly to
+   // everyone in its later propagation circle.
+   if(spell.name==="Épidémie"&&e!==target)continue;
    const pd=spell.status.poison;
    // Per-target, non-propagating proxy. The spell's DofusBook damage row
    // is treated as the damage of ONE tick (not immediate damage).
@@ -196,20 +194,32 @@ export function applyAction(original,spell,center,context){
  const action={name:spell.name,pa:result.actions.at(-1)?.pa??spell.pa,
   center:center?{x:center.x,y:center.y}:null,
   targets:touched.map(m=>m.id),damage:round(total),
-  approximate:(spell.target!=="self"&&(s.board.shapes[spell.name]||defaultShape(spell))!=="single")||!!spell.status?.poison};
+  approximate:geometry.confidence!=="verified"||!!spell.status?.poison||
+   !!spell.isTrap||(!spell.nonDirect&&(s.board.shapes[spell.name]||geometry.mask)!=="single")};
  s.actions.push(action);
  return s;
 }
 export function finishTurn(original){
  const s=clone(original);
  let poison=0;
+ // Tick each target exactly once and then queue Epidémie spread for
+ // the following enemy turn. This is still an approximation of initiative.
+ const spread=[];
  for(const m of s.monsters){
   if(m.hp<=0){m.dots=[];continue;}
   for(const dot of m.dots){
    poison+=applyHit(m,dot.amount);
+   if(dot.name==="Épidémie"&&m.hp>0){
+    for(const other of s.monsters)if(other.id!==m.id&&other.hp>0&&dist(m,other)<=2)
+     spread.push({id:other.id,dot:{...dot,left:1}});
+   }
    dot.left-=1;
   }
   m.dots=m.dots.filter(d=>d.left>0);
+ }
+ for(const {id,dot} of spread){
+  const m=s.monsters.find(e=>e.id===id);
+  if(m&&!m.dots.some(d=>d.id===dot.id))m.dots.push(dot);
  }
  s.total=round(s.total+poison);
  const previous=s.turnTotals.at(-1)?.cumulative||0;
