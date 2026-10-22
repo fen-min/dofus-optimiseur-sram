@@ -68,11 +68,11 @@
 @media(max-width:790px){.team-shell{grid-template-columns:1fr;grid-template-areas:"roster" "rotation" "damage"}.team-roster-panel{padding:14px}.team-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.team-slot{margin:0}}
 @media(max-width:540px){.team-members{grid-template-columns:1fr}.team-settings-row{grid-template-columns:repeat(2,minmax(0,1fr))}.team-resistances{grid-template-columns:repeat(3,minmax(0,1fr))}.team-rotation-heading{flex-wrap:wrap}.team-panel{padding:13px}}
 
-/* Team-only overrides: keep inputs readable in the compact red roster. */
-.team-slot-options{display:grid;grid-template-columns:75px minmax(0,1fr);align-items:end;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid #55404c}
-.team-slot-options label{display:flex;flex-direction:column;min-width:0;margin:0;gap:4px;font-size:10px;color:#decbd4;font-weight:650}
-.team-slot-options input[type=number],.team-slot-options select{width:100%;max-width:100%;min-width:0;height:32px;padding:5px 7px;font-size:11px;border:1px solid #655163;background:#161827;color:#fff;border-radius:7px}
-.team-slot-options .team-slot-force{grid-column:1/-1;flex-direction:row;align-items:center;gap:7px;font-size:10px;color:#ead1cd}
-.team-slot-force input{margin:0;accent-color:#f18476}
+/* Compact roster: one build picker and one PA input per character. */
+.team-slot{min-height:70px;padding:8px 9px;gap:8px}
+.team-slot-body{gap:4px}
+.team-slot-body>label{font-size:12px}
+.team-slot-body select{min-height:28px}
+.team-slot-pa{display:flex;align-items:center;gap:7px;width:max-content;font-size:10px!important;color:#d8c3cc!important;font-weight:700!important}
+.team-slot-pa input{width:54px!important;min-height:28px;padding:3px 5px;font-size:12px;border-radius:6px;background:#141725;color:#fff;border:1px solid #675266}
 .team-spell-chip.is-buff-refreshed{border:1px solid #e2b46e;background:#513d27;color:#fff}
-@media(max-width:1120px){.team-slot-options{grid-template-columns:70px minmax(0,1fr)}}
