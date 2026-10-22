@@ -1,0 +1,69 @@
+/* OMBRE DPS ÉQUIPE — yellow suggestions, blue damage board, red eight-member strip. */
+.team-shell{display:grid;grid-template-columns:minmax(0,1fr) minmax(255px,300px);grid-template-areas:"rotation roster" "damage roster";gap:15px;align-items:stretch;margin-top:18px}
+.team-panel{min-width:0;background:#191e2c;border:2px solid #394155;border-radius:18px;padding:18px}
+.team-rotation-panel{grid-area:rotation;border-color:#e5a02e;background:linear-gradient(145deg,#232026,#181c29 65%);min-height:320px}
+.team-damage-panel{grid-area:damage;border-color:#4379e5;background:linear-gradient(160deg,#171e36,#171c2a);min-height:310px}
+.team-roster-panel{grid-area:roster;border-color:#dd4b4b;background:linear-gradient(160deg,#291b27,#1b1d2b);padding:14px}
+.team-panel-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.team-panel-top h2{font-size:18px;margin:0;color:#fff}
+.team-label{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.team-rotation-panel .team-label{color:#f6b946}
+.team-damage-panel .team-label{color:#81aaff}
+.team-roster-panel .team-label{color:#ff9292}
+.team-settings{display:flex;flex-direction:column;gap:12px}
+.team-settings-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.team-settings label{display:flex;flex-direction:column;gap:5px;margin:0;font-size:11px;font-weight:650;color:#c3c9da}
+.team-settings input:not([type=checkbox]),.team-settings select{width:100%;min-width:0;min-height:36px;padding:7px 8px;border-radius:9px;background:#111626;color:#f7f6ff}
+.team-settings .team-critical{flex-direction:row;align-items:center;gap:9px;padding-top:8px}
+.team-resistances{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.team-resistances label{text-align:center}
+.team-resistances input{text-align:center}
+.team-calculate{width:100%;margin-top:12px;padding:12px;background:#be8634;color:#160f0b;border:none;border-radius:11px;font-weight:850}
+.team-calculate:hover{background:#edb758}
+.team-calculate:disabled{opacity:.55}
+.team-status{display:block;min-height:24px;margin:10px 0 0;color:#e2ceab;font-size:12px;overflow-wrap:anywhere}
+.team-turn-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.team-turn-buttons button{border:1px solid #5b5149;border-radius:8px;background:#24202b;padding:6px 10px;color:#d9d5da;font-size:11px}
+.team-turn-buttons button.is-current,.team-turn-buttons button:hover{border-color:#e5a02e;background:#513c26;color:#fff}
+.team-rotations{display:grid;gap:10px;max-height:600px;overflow:auto;min-width:0;margin-top:10px}
+.team-rotation-item{min-width:0;border:1px solid #444454;background:#1c202f;border-radius:11px;padding:11px}
+.team-rotation-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#f6f0ff;font-size:13px}
+.team-rotation-heading span{overflow-wrap:anywhere}
+.team-rotation-heading b{font-size:10px;color:#e5a02e;margin-right:7px}
+.team-rotation-heading strong{font-size:12px;white-space:nowrap}
+.team-rotation-spells{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.team-spell-chip{display:inline-flex;gap:7px;align-items:center;border-radius:8px;padding:6px 8px;background:#303046;color:#fff;font-size:12px}
+.team-spell-chip small{color:#e8c68c;font-size:10px}
+.team-rotation-meta{font-size:10px;color:#a5b2c9;margin-top:8px}
+.team-empty-actions{font-size:12px;color:#b5b3bb}
+.team-placeholder{color:#aeb8ce;font-size:13px;line-height:1.65}
+.team-slot{display:flex;gap:10px;align-items:center;border:1px solid #614352;background:#271f2c;border-radius:11px;padding:9px;margin:0 0 9px;min-height:79px}
+.team-slot.is-filled{background:#30232c;border-color:color-mix(in srgb,var(--team-accent) 43%,#614352)}
+.team-slot-order{font-size:11px;font-weight:800;color:#ff8585;min-width:16px}
+.team-slot-icon{width:35px;height:35px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:#171926;color:var(--team-accent,#cd8080);font-size:22px}
+.team-slot-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.team-slot-body label{margin:0;font-size:12px;font-weight:800;color:#fff;overflow-wrap:anywhere}
+.team-slot-body select{width:100%;font-size:11px;padding:5px 6px;min-height:30px;border-radius:6px;background:#191a28;cursor:pointer}
+.team-slot-body small{font-size:10px;color:#b5a7b4;line-height:1.4;overflow-wrap:anywhere}
+.team-count{font-size:11px;font-weight:800;color:#efaaaa}
+.team-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.team-numbers>div{border:1px solid #344368;border-radius:11px;background:#1c2940;padding:11px}
+.team-numbers small{display:block;color:#a4bbec;font-size:10px}
+.team-numbers strong{display:block;margin-top:3px;font-size:21px;color:#fff;font-variant-numeric:tabular-nums}
+.team-target-life{margin-top:15px}
+.team-target-life div{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.team-target-life strong{color:#d1defe}
+.team-target-life meter{width:100%;height:19px;margin-top:5px;accent-color:#6da7e9}
+.team-contributions,.team-round-totals{margin-top:14px}
+.team-contributions h3,.team-round-totals h3{font-size:13px;margin:0 0 9px}
+.team-contribution{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;font-size:12px;margin:0 0 7px}
+.team-contribution span{overflow-wrap:anywhere}
+.team-contribution-track{grid-column:1/-1;height:5px;border-radius:10px;background:#2b3954;overflow:hidden}
+.team-contribution-track i{display:block;height:100%;border-radius:10px;background:#79a8ff}
+.team-round-totals div{font-size:11px;color:#b1c5e7;padding:5px 0;border-bottom:1px solid #34415b}
+.team-round-totals strong{color:#fff}
+.team-footnote{margin:12px 0 0;font-size:11px;color:#a8bad7}
+.team-assumptions{font-size:12px;line-height:1.6;color:#b8c6d9;margin-top:14px;padding:13px;border:1px solid #39435a;background:#151b2a;border-radius:12px}
+@media(max-width:1050px){.team-shell{grid-template-columns:minmax(0,1fr) minmax(230px,270px)}.team-settings-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:790px){.team-shell{grid-template-columns:1fr;grid-template-areas:"roster" "rotation" "damage"}.team-roster-panel{padding:14px}.team-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.team-slot{margin:0}}
+@media(max-width:540px){.team-members{grid-template-columns:1fr}.team-settings-row{grid-template-columns:repeat(2,minmax(0,1fr))}.team-resistances{grid-template-columns:repeat(3,minmax(0,1fr))}.team-rotation-heading{flex-wrap:wrap}.team-panel{padding:13px}}
