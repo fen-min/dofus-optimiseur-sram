@@ -8,6 +8,15 @@ export const DEFAULT_VARIANTS=[
 "Extorsion","Arnaque","Attaque Mortelle","Injection Toxique","Peur","Piège Insidieux",
 "Piège Scélérat","Manigance","Piège Mortel","Fourvoiement","Marque Mortuaire"
 ];
+// Sélections claires (fond gris) sur la capture du grimoire Sram du 22/10/2026.
+// Ce préréglage s'applique au build Sram de référence, pas à tous les builds.
+export const SRAM_SCREENSHOT_VARIANTS=[
+ "Truanderie","Coupe-gorge","Arsenic","Poisse","Brume","Comploteur",
+ "Guet-apens","Épidémie","Piège Funeste","Piège Répulsif",
+ "Piège d'Immobilisation","Perquisition","Arnaque","Attaque Mortelle",
+ "Injection Toxique","Peur","Piège Insidieux","Piège Scélérat",
+ "Manigance","Piège Mortel","Fourvoiement","Marque Mortuaire"
+];
 const EXTRA={
 "Arnaque":{buff:{stat:"Air",value:100,duration:3,stacks:2},target:"enemy",utility:"Rang 3 : vole 100 Agilité. Vol de vie et retrait de caractéristiques à l’ennemi non simulés."},
 "Extorsion":{buff:{stat:"Terre",value:100,duration:3,stacks:2},utility:"Rang 3 : vole 100 Force. Vol de vie non modélisé."},
