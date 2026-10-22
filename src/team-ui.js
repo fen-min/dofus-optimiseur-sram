@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=1.8";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions,SACRIER_SUPPORT_SPELLS
-} from "./team-core.js?v=2.6";
+} from "./team-core.js?v=2.7";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -55,7 +55,8 @@ export function mountTeamModule({getBuilds}){
       '</select></label>'+
       '<label class="team-slot-force"><input type="checkbox" data-team-force-buff="'+safe(b.id)+'"'+(settings.forceOpeningBuff?' checked':'')+
       '> Buff au T1</label>':'')+
-    '</div>':'';
+    '<label class="team-slot-force"><input type="checkbox" data-team-refresh-buffs="'+safe(b.id)+'"'+(settings.refreshTimedBuffs?' checked':'')+
+    '> Entretenir les buffs</label></div>':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
     '<span class="team-slot-icon" aria-hidden="true">'+(cls?safe(cls.glyph):'＋')+'</span>'+
@@ -82,7 +83,8 @@ export function mountTeamModule({getBuilds}){
    '<div class="team-rotation-item"><div class="team-rotation-heading"><span>'+
    '<b>'+String(i+1).padStart(2,"0")+'</b> '+safe(a.character)+'</span><strong>'+fmt(a.damage)+' dégâts</strong></div>'+
    '<div class="team-rotation-spells">'+(a.actions.length?a.actions.map(s=>
-    '<span class="team-spell-chip">'+safe(s.name)+' <small>'+safe(s.pa)+' PA</small></span>').join(""):
+    '<span class="team-spell-chip'+(s.autoRefreshed?' is-buff-refreshed':'')+'"'+(s.autoRefreshed?' title="Buff expiré : relance automatique"':'')+'>'+
+     (s.autoRefreshed?'↻ ':'')+safe(s.name)+' <small>'+safe(s.pa)+' PA</small></span>').join(""):
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
@@ -134,6 +136,7 @@ export function mountTeamModule({getBuilds}){
   }
   if(field==="support"&&(build.classId!=="sacrieur"||!SACRIER_SUPPORT_SPELLS.includes(value)))return;
   if(field==="forceOpeningBuff"&&build.classId!=="sacrieur")return;
+  if(field==="refreshTimedBuffs")value=value===true;
   memberOptions={...memberOptions,[id]:{...memberOptions[id],[field]:value}};
   storeState();cancel();result=null;activeTurn=1;renderMembers();renderResult();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
@@ -156,7 +159,7 @@ export function mountTeamModule({getBuilds}){
   $("team-calculate").disabled=true;
   status("Optimisation des rotations de "+members.length+" personnages…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=2.6",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=2.7",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -191,6 +194,8 @@ export function mountTeamModule({getBuilds}){
   if(support){changeMemberOption(support.dataset.teamSupport,"support",support.value);return;}
   const force=event.target.closest("input[data-team-force-buff]");
   if(force){changeMemberOption(force.dataset.teamForceBuff,"forceOpeningBuff",force.checked);return;}
+  const refresh=event.target.closest("input[data-team-refresh-buffs]");
+  if(refresh){changeMemberOption(refresh.dataset.teamRefreshBuffs,"refreshTimedBuffs",refresh.checked);return;}
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);
