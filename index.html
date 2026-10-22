@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=2.4">
+  <link rel="stylesheet" href="./team.css?v=2.5">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -16,6 +17,7 @@
       <div class="side-section-label">PLAN DE COMBAT</div>
       <nav class="side-nav" aria-label="Sections">
         <button class="nav-btn active" data-tab="optimize"><span>◈</span> Optimisation</button><button class="nav-btn" data-tab="builds"><span>◉</span> Personnages & builds</button>
+        <button class="nav-btn" data-tab="team"><span>♜</span> DPS en équipe</button>
         <button class="nav-btn" data-tab="spells"><span>✧</span> Sorts & variantes</button>
         <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
       </nav>
@@ -32,6 +34,44 @@
         <section class="hero">
           <div class="hero-text"><div class="eyebrow"><span class="pulsedot"></span> MOTEUR DE SIMULATION / EXPÉRIMENTAL</div><h1>Chaque PA <em>compte.</em></h1><p>Compare des rotations de tes personnages et de leurs builds sur plusieurs tours. L'outil teste des combinaisons de sorts, buffs, poisons et relances sous des hypothèses explicites.</p><div class="hero-pills"><span id="hero-class">Sram · Niveau 200</span><span id="hero-build">Air / PvM</span><span id="hero-model">Calcul expérimental</span></div></div>
           <div class="hero-symbol" aria-hidden="true"><div class="hero-ring ring-1"></div><div class="hero-ring ring-2"></div><span id="hero-glyph">✵</span></div>
+        </section>
+        <section id="tab-team" class="tab-panel hidden" aria-label="Optimisation de DPS en équipe">
+          <div class="panel-eyebrow">NOUVEAU MODULE / ÉQUIPE JUSQU'À 8 PERSONNAGES</div>
+          <h2>Optimiseur DPS en équipe</h2>
+          <p class="muted">Sélectionne jusqu’à 8 builds créés dans « Personnages & builds ». Les personnages sont automatiquement classés par initiative décroissante. Chaque rotation est estimée indépendamment avec ses propres sorts, variantes et dégâts calibrés.</p>
+          <div class="team-shell">
+            <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
+              <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
+              <div id="team-settings" class="team-settings">
+                <div class="team-settings-row">
+                  <label for="team-hp">PV de la cible<input id="team-hp" type="number" min="100" max="100000000" step="100" value="10000"></label>
+                  <label for="team-turns">Tours simulés (1–10)<input id="team-turns" type="number" min="1" max="10" step="1" value="3"></label>
+                  <label class="team-critical" for="team-critical"><input id="team-critical" type="checkbox" checked> Inclure les critiques probables</label>
+                </div>
+                <div class="team-resistances">
+                  <label for="team-res-Air">Rés. Air %<input id="team-res-Air" type="number" min="0" max="90" step="1" value="0"></label>
+                  <label for="team-res-Terre">Rés. Terre %<input id="team-res-Terre" type="number" min="0" max="90" step="1" value="0"></label>
+                  <label for="team-res-Feu">Rés. Feu %<input id="team-res-Feu" type="number" min="0" max="90" step="1" value="0"></label>
+                  <label for="team-res-Eau">Rés. Eau %<input id="team-res-Eau" type="number" min="0" max="90" step="1" value="0"></label>
+                  <label for="team-res-Neutre">Rés. Neutre %<input id="team-res-Neutre" type="number" min="0" max="90" step="1" value="0"></label>
+                </div>
+              </div>
+              <button id="team-calculate" class="team-calculate" type="button">⚡ Calculer le DPS de l'équipe</button>
+              <p id="team-status" class="team-status" role="status" aria-live="polite"></p>
+              <nav id="team-turn-buttons" class="team-turn-buttons" aria-label="Sélection du tour"></nav>
+              <div id="team-rotations" class="team-rotations" aria-live="polite"></div>
+            </section>
+            <section class="team-panel team-damage-panel" aria-label="Bilan des dégâts">
+              <div class="team-panel-top"><h2>◈ Bilan des dégâts</h2><span class="team-label">CIBLE / DPS</span></div>
+              <div id="team-damage" aria-live="polite"></div>
+            </section>
+            <section class="team-panel team-roster-panel" aria-label="Personnages classés par initiative">
+              <div class="team-panel-top"><h2>♜ L'équipe</h2><span id="team-count" class="team-count">0 / 8 personnages</span></div>
+              <p class="microcopy">Du plus rapide au plus lent. L’initiative est modifiable dans la fiche du build.</p>
+              <div id="team-members" class="team-members"></div>
+            </section>
+          </div>
+          <p id="team-assumptions" class="team-assumptions">Les dégâts sont des estimations. Les buffs entre personnages et les déplacements ne sont pas simulés.</p>
         </section>
         <section id="tab-builds" class="tab-panel hidden">
           <section class="panel wide-panel">
@@ -234,6 +274,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=2.4"></script>
+  <script type="module" src="./src/app.js?v=2.5"></script>
 </body>
 </html>
