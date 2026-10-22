@@ -278,3 +278,27 @@ Les nouveaux fichiers sont **src/multi-core.js**, **src/multi-worker.js**, **src
 Les positions sont des repères approximatifs et les monstres sont considérés immobiles. Pas d'obstacles, de vrai calcul de ligne de vue, de carte DOFUS, de mouvements dynamiques ou de formes de zones officielles. La recherche vise seulement les cases occupées par un monstre (pas les centres sur cases libres). Les sorts de piège et autres invocations placées sur une case libre sont **exclus des propositions automatiques** : aucune activation fictive de piège n'est ajoutée aux dégâts. La propagation réelle d'Épidémie, les interactions du Double, les soins, le vol de vie, les dégâts de zone dégressifs et la Souffrance du Sacrieur restent incomplets. Chaque ennemi pris dans un gabarit reçoit provisoirement la même estimation de dommages directs, sans modélisation d'atténuation spatiale.
 
 **Les propositions sont expérimentales : les valeurs ne garantissent pas le meilleur tour DOFUS réel.**
+
+## v2.0 — Visualisation des zones de sorts sur la grille multi-cibles
+
+Cette évolution concerne **UNIQUEMENT** le module `multi-combat.html`. Le module `combat-assiste.html` (monocible), l'optimiseur traditionnel et les sauvegardes associées sont laissés intacts.
+
+### Exemple vérifié : Fourvoiement
+
+**Fourvoiement (Sram rang 2, 4 PA, portée 0–5) frappe les quatre cellules orthogonales autour de la case visée, MAIS PAS la case centrale.** Le joueur peut viser une case vide, y compris sa propre position, et toucher les quatre ennemis adjacents à ce centre. La grille affiche les cellules touchées en rouge et la case visée avec une bordure claire. Cette forme est corroborée par [OpenDofusDB](https://openddb.dev/spells/12909-fourvoiement) et [Dofus Grimoire 3.7](https://dofus-grimoire.fr/classes/sram/).
+
+### Tous les sorts, avec niveau de validation explicite
+
+- Le nouveau catalogue `src/spell-zones.js` fournit un profil pour **44 sorts Sram et 44 sorts Sacrieur**. Il distingue **34 géométries vérifiées**, **4 indicatives** et **50 non vérifiées**, ces dernières utilisant volontairement une seule cellule tant que leurs zones exactes ne sont pas documentées. Ce décompte porte sur les gabarits, **PAS** sur 88 mécanismes de dégâts complets.
+- La grille affiche le centre de lancer, la zone d'effet, les cases pouvant servir de centre et, pour Épidémie, un aperçu différent des cases voisines susceptibles de recevoir son effet. Les pièges posés manuellement laissent un marqueur ◇. Aucun dégât de piège n'est créé automatiquement sans déclenchement simulé.
+- Sram : Fourvoiement (croix sans centre), Fourberie (anneau), Épidémie (propagation différée approximative), plusieurs pièges et invocations, plus des formes prudentes pour les autres sorts.
+- Sacrieur : Furie (croix), Douleur Cuisante (croix de 2), Fulgurance (ligne du lanceur), Carnage (ligne de 2), Bain de Sang (carré autour du lanceur), Désolation (demi-cercle orienté, approximation), etc.
+- Il est désormais possible de viser une **case vide** avec les sorts de zone appropriés, et de placer manuellement les sorts de type piège/invocation sur une case libre. Les propositions automatiques n'attribuent pas de dégâts de piège non déclenché.
+- Les **22 paires de variantes** du build apparaissent dans un volet dédié à ce module : changer une variante n'écrase pas les choix du personnage enregistrés dans la page principale.
+- Le menu de géométrie permet de tester d'autres formes comme une croix sans centre, un cercle, un anneau ou une ligne. Il signale si une forme est confirmée par la source ou personnalisée.
+
+### Limites
+
+Les zones sont dessinées sur une grille orthogonale abstraite 9 × 9 : ce n'est pas une carte DOFUS et il n'y a pas de vrais obstacles/ligne de vue, de déplacement d'ennemis, de gestion complète des poussées et déplacements, ni de véritable activation de réseau de pièges. La transmission du poison Épidémie entre les cibles est encore un modèle simplifié, et ses effets exacts doivent être vérifiés avec les logs du jeu. Les soins, PV/Souffrance Sacrieur, effets sur alliés et dégâts de zones dégressifs ne sont pas reproduits exactement. Une forme vérifiée ne garantit pas que **tous les effets du sort** le soient.
+
+Tests : `test/spell-zones.test.mjs` et `test/multi-core.test.mjs`, comprenant la croix de Fourvoiement avec une case centrale vide.
