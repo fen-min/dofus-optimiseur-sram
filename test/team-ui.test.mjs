@@ -136,7 +136,7 @@ test("50-turn results expose direct turn navigation through the selector",()=>wi
   assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,50);
   node("team-turn-select").listeners.change({target:{value:"50"}});
   assert.match(node("team-turn-buttons").innerHTML,/data-team-turn="50" class="is-current"/);
-  assert.match(node("team-damage").innerHTML,/9[\\s\\u202f]950/);
+  assert.match(node("team-damage").innerHTML,/9\s950/);
   assert.equal(node("team-cancel").disabled,true);
  }finally{globalThis.Worker=previousWorker;globalThis.URL=previousURL;}
 }));
