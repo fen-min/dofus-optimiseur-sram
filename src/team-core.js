@@ -5,7 +5,7 @@
  */
 import {CLASSES} from "./classes.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {optimize,optimizeFromState,initialState,castSpell,eligible,cleanSettings} from "./engine.js?v=1.8";
+import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=1.8";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
@@ -154,6 +154,67 @@ export function openingBuffCandidates(ctx){
   return estimate(b)-estimate(a);
  }).slice(0,2);
 }
+/**
+ * Verify a proposed rotation by replaying every cast, with the real PA,
+ * cooldown, turn-duration and poison calculations. Reorder only self-cast,
+ * non-damaging offensive buffs; never move a damaging spell or a special
+ * state-toggle like Mutilation. This repairs beam-search paths which cast
+ * Pacte de Sang AFTER attacks it could have buffed.
+ *
+ * The change is accepted only when the complete replayed rotation deals
+ * strictly more damage and every action remains legal.
+ */
+export function improveTeamBuffOrder(result,ctx){
+ if(!result?.turns?.length)return result;
+ const c=cleanSettings(ctx.settings);
+ const spells=new Map(ctx.spells.map(spell=>[String(spell.id),spell]));
+ const planned=result.turns.map(t=>t.actions.slice());
+ if(planned.length!==c.turns)return result;
+ const canMove=action=>{
+  const spell=spells.get(String(action.id)),st=spell?.status;
+  return !!(spell?.nonDirect&&spell.target==="self"&&st?.buff&&
+   offensiveStats.has(st.buff.stat)&&Number(st.buff.value)>0&&
+   !st.mutilation&&!st.move&&!st.vulnerability&&!st.poison&&
+   !st.invisible&&!st.spendTrapCharges&&!spell.isTrap);
+ };
+ const replay=turnActions=>{
+  let state=initialState(c);
+  try{
+   for(const actions of turnActions){
+    for(const action of actions){
+     const spell=spells.get(String(action.id));
+     if(!spell||!eligible(spell,state,c))return null;
+     state=castSpell(state,spell,c);
+     // Preserve the "↻" indicator for automatic refresh actions.
+     if(action.notes?.includes("Relance automatique : buff expiré"))
+      state.actions[state.actions.length-1].notes.push("Relance automatique : buff expiré");
+    }
+    state=endTurn(state,c);
+   }
+  }catch{return null;}
+  return {...result,total:Math.round(state.total*10)/10,
+   immediate:Math.round(state.immediate*10)/10,
+   poison:Math.round(state.delayed*10)/10,
+   average:Math.round(state.total/c.turns*10)/10,turns:state.turns};
+ };
+ const baseline=replay(planned);
+ if(!baseline||Math.abs(baseline.total-result.total)>0.3)return result;
+ let best=result,working=planned;
+ for(let turn=0;turn<working.length;turn++){
+  for(let index=1;index<working[turn].length;index++){
+   const action=working[turn][index];
+   if(!canMove(action))continue;
+   const candidate=working.map(actions=>actions.slice());
+   candidate[turn].splice(index,1);
+   candidate[turn].unshift(action);
+   const evaluated=replay(candidate);
+   if(evaluated&&evaluated.total>best.total+0.01){
+    best=evaluated;working=candidate;
+   }
+  }
+ }
+ return best;
+}
 export function optimizeTeamMember(ctx,onProgress=()=>{}){
  const config=cleanSettings({...ctx.settings,refreshTimedBuffs:false});
  let trials=0;
@@ -161,8 +222,9 @@ export function optimizeTeamMember(ctx,onProgress=()=>{}){
  const run=(strategy,settings,seed=null,chosenOpening=null)=>{
   const label=chosenOpening?"Ouverture "+chosenOpening:strategy==="maintenance"?"Entretien des buffs":"Rotation libre";
   const report=p=>onProgress({...p,scenario:label});
-  const result=seed?optimizeFromState(settings,ctx.spells,seed,report)
+  const raw=seed?optimizeFromState(settings,ctx.spells,seed,report)
    :optimize(settings,ctx.spells,report);
+  const result=improveTeamBuffOrder(raw,ctx);
   trials++;
   if(!best||result.total>best.result.total+0.001)
    best={result,strategy,chosenOpening};
