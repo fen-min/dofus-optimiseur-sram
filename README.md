@@ -323,3 +323,14 @@ Le mode multi-cibles utilise la même fonction `castSpell` de `src/engine.js` po
 **Important :** sur plusieurs cibles, la forme de zone reste approximative lorsqu'elle n'est pas confirmée, et le simulateur ne reproduit toujours pas intégralement les effets de placement, la ligne de vue, les réseaux de pièges, la Souffrance, les interactions de poisons et les soins. La comparaison à une cible vérifie la cohérence du calcul, pas une garantie de précision en combat réel.
 
 Tests supplémentaires : `test/multi-build-link.test.mjs` ; le module mono-cibles n'a pas été modifié.
+
+
+## v2.2 — Coordonnées visibles dans le Combat multi-cibles
+
+- Les 81 cases de la grille 9 × 9 affichent désormais **leurs coordonnées (x,y) en petit en haut à gauche**, sans survol de souris : de `1,1` à `9,9`. Ce sont les **mêmes coordonnées 1-based que dans la suite conseillée** (par exemple `Fourvoiement → (6,4)`).
+- Les coordonnées restent lisibles sur **les cases bleues du personnage, les monstres rouges, les zones des sorts et les cases vides**. Les pions ne sont pas déplacés.
+- Une case à cocher **« Afficher les coordonnées (x,y) »** située au-dessus de la grille permet de masquer ou réafficher les numéros.
+- La préférence est sauvegardée dans `localStorage` sous `ombre-multi-show-coordinates-v1` et synchronisée entre fenêtres du même site.
+- C'est un changement **uniquement visuel** dans le module multi-cibles : ni recalcul des dégâts, ni réinitialisation de tour, ni modification du Combat assisté monocible.
+
+Vérification de l'interface : 81 étiquettes affichées par défaut, `1,1` et `9,9` présents, disparition des seules étiquettes après décochage, et aucun nouveau calcul lancé.
