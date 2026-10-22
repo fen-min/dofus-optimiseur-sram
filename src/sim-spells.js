@@ -1,4 +1,4 @@
-import {SRAM_CATALOG} from "./sram-catalog.js";
+import {SRAM_CATALOG} from "./sram-catalog.js?v=1.8";
 import {SOURCE_URL} from "./spells.js";
 
 export const VARIANT_PAIRS=Array.from({length:SRAM_CATALOG.length/2},(_,i)=>[SRAM_CATALOG[2*i].name,SRAM_CATALOG[2*i+1].name]);
