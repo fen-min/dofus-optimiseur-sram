@@ -302,3 +302,24 @@ Cette évolution concerne **UNIQUEMENT** le module `multi-combat.html`. Le modul
 Les zones sont dessinées sur une grille orthogonale abstraite 9 × 9 : ce n'est pas une carte DOFUS et il n'y a pas de vrais obstacles/ligne de vue, de déplacement d'ennemis, de gestion complète des poussées et déplacements, ni de véritable activation de réseau de pièges. La transmission du poison Épidémie entre les cibles est encore un modèle simplifié, et ses effets exacts doivent être vérifiés avec les logs du jeu. Les soins, PV/Souffrance Sacrieur, effets sur alliés et dégâts de zones dégressifs ne sont pas reproduits exactement. Une forme vérifiée ne garantit pas que **tous les effets du sort** le soient.
 
 Tests : `test/spell-zones.test.mjs` et `test/multi-core.test.mjs`, comprenant la croix de Fourvoiement avec une case centrale vide.
+
+
+## v2.1 — Combat multi-cibles intégré à OMBRE et lié au build actif
+
+**Le bouton « ⬡ Combat multi-cibles » ouvre maintenant un grand panneau directement dans OMBRE**, avec la grille et les recommandations dans l'application. Il n'ouvre plus automatiquement de nouvel onglet. Une fenêtre détachable reste disponible en cliquant « ↗ Fenêtre » en haut du panneau (épingle du navigateur possible si compatible).
+
+### Liaison avec OMBRE
+
+- Depuis `src/app.js`, à chaque ouverture, la page transmet le **build actif** au nouveau stockage de contexte `ombre-multi-context-v2` via `src/multi-build-link.js`. La transmission recopie exactement les paramètres de `appliedSettings()` et les sorts déjà calibrés de `applyCalibration()` et/ou modifiés dans « Dégâts des sorts ».
+- Le contexte contient les caractéristiques enregistrées du personnage, le nombre de PA de base, le niveau de critique et ses paramètres activés, les résistances par élément, les 22 variantes choisies, les buffs configurés et les quatre valeurs de dommages normaux/critiques de chaque sort. **Les caractéristiques ne sont pas rajoutées une seconde fois aux dégâts DofusBook déjà calculés.**
+- Le sélecteur de build, les PA de base et les variantes affichées dans le module sont **en lecture seule** : ils sont contrôlés depuis OMBRE. Le compteur de PA **du tour courant** reste modifiable (comme dans le Combat assisté monocible). L'horizon multi-cibles peut rester plus court pour accélérer le calcul, sans modifier l'horizon du build enregistré.
+- Pendant que le panneau est ouvert, modifier les paramètres, variantes, caractéristiques, calibrations ou lignes de dégâts dans OMBRE met à jour le contexte. Les actions multi-cibles sont réinitialisées si les paramètres utilisés dans le calcul changent ; le placement des monstres est conservé.
+- La grille et les actions du combat restent sauvegardées **séparément par build** dans `ombre-multi-battle-v1:<build id>`. Le code et l'historique de `combat-assiste.html` / `src/assist.js` sont préservés.
+
+### Précision des dégâts
+
+Le mode multi-cibles utilise la même fonction `castSpell` de `src/engine.js` pour les dégâts directs et les buffs. Depuis la v2.1, les poisons utilisent aussi la **valeur de base réellement calculée par la fonction `dot` dans le moteur OMBRE**, au lieu d'une deuxième formule de dégâts divergente. Dans le test d'une seule cible avec 20 % de résistances Air, **Arnaque** donne la même estimation de 564,9 dégâts directs et **Épidémie** la même estimation de 710 dégâts par déclenchement dans les deux modes.
+
+**Important :** sur plusieurs cibles, la forme de zone reste approximative lorsqu'elle n'est pas confirmée, et le simulateur ne reproduit toujours pas intégralement les effets de placement, la ligne de vue, les réseaux de pièges, la Souffrance, les interactions de poisons et les soins. La comparaison à une cible vérifie la cohérence du calcul, pas une garantie de précision en combat réel.
+
+Tests supplémentaires : `test/multi-build-link.test.mjs` ; le module mono-cibles n'a pas été modifié.
