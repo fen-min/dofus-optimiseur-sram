@@ -334,3 +334,23 @@ Tests supplémentaires : `test/multi-build-link.test.mjs` ; le module mono-cible
 - C'est un changement **uniquement visuel** dans le module multi-cibles : ni recalcul des dégâts, ni réinitialisation de tour, ni modification du Combat assisté monocible.
 
 Vérification de l'interface : 81 étiquettes affichées par défaut, `1,1` et `9,9` présents, disparition des seules étiquettes après décochage, et aucun nouveau calcul lancé.
+
+
+## v2.3 — Audit de non-régression OMBRE multi-cibles (22 octobre 2026)
+
+Suite à un audit du code et à des scénarios exécutés sur les fonctions JavaScript du dépôt, **trois erreurs reproductibles ont été corrigées dans le module multi-cibles seulement** (sans modifier `src/engine.js` ni l'interface du Combat assisté monocible) :
+
+1. **Limite de lancers par cible mal appliquée :** le sélecteur proposait un second Épidémie sur un monstre différent, mais la fonction de calcul héritée du monocible refusait l'action. Le nouveau moteur conserve la limite globale de lancers par tour, en traitant séparément les limites par monstre. Une Épidémie sur M1 puis M2 est acceptée (mais la deuxième sur M1 reste interdite).
+2. **Vulnérabilités perdues ou mal affectées :** Coupe-gorge sur M1 n'augmentait plus les attaques suivantes contre M1, parce que le multi-cibles réinitialisait l'altération de la cible à chaque coup. Les multiplicateurs sont désormais attachés au bon monstre, expirent à la fin de la durée définie, et n'augmentent pas les coups sur M2. Test de parité : Arnaque après Coupe-gorge sur M1 = **776,8 dégâts** en mode mono et multi dans un scénario identique, contre 706,2 avant le correctif.
+3. **Reprise de session et affichage :** un historique terminé exactement au dernier tour était effacé lors du rechargement. Il reste maintenant consultable jusqu'au prochain redémarrage volontaire. Les sorts visant une case vide affichent désormais **« case (x,y) »** dans l'historique au lieu du faux destinataire `M?`.
+
+### Vérifications réalisées
+
+- Rejeu de deux Épidémies sur deux monstres distincts et confirmation de la limite de deux lancers par tour.
+- 22 sorts Sram sélectionnés et lançables dans la configuration de test, sans erreur ; 19 sorts Sacrieur lançables au même placement, les trois autres étant hors des positions/conditions de cet essai (ce n'est pas une preuve de dysfonctionnement).
+- Six scénarios aléatoires déterministes couvrant 1, 3 et 8 monstres pour les deux classes, avec vérifications de PA, dégâts non négatifs et somme des dégâts par cible : **aucune erreur pendant ces scénarios**.
+- Simulations de **10 tours et 8 monstres** pour les deux classes, sans dépasser 12 PA/tour et avec somme des dommages des monstres égale au total du combat. Temps mesurés dans l'environnement de test : environ **9 secondes** chacun.
+- Ajout de tests de régression dans `test/multi-core.test.mjs` : limites par cible, vulnérabilité et expiration.
+
+**Limites de ce test :** pas de véritable partie DOFUS, pas d'exécution visuelle dans le navigateur de l'utilisateur, pas de test Node.js complet ni de confirmation du déploiement GitHub Pages. Les formes encore indicatives, les poisons et leur propagation, les déplacements, les réseaux de pièges et la Souffrance du Sacrieur restent des **simulations approximatives**. Les dommages estimés ne sont pas garantis en jeu.
+
