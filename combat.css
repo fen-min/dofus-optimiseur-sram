@@ -154,3 +154,24 @@
 .assist-drawer-actions button:disabled{opacity:.6}
 .assist-top-status{margin:0;padding:8px 11px;font-size:11px;color:#ffdbbc;background:#483328;line-height:1.4}
 .assist-top-status[hidden]{display:none}
+
+/* v2.1 — Multi-target mode lives INSIDE OMBRE, independent of the working mono assistant */
+.multi-drawer{
+ position:fixed;inset:14px 16px;max-width:1500px;margin:0 auto;
+ z-index:250;display:flex;flex-direction:column;overflow:hidden;
+ border:1px solid #8280b1;border-radius:15px;background:#151c2b;
+ box-shadow:0 25px 100px #000d;
+ visibility:hidden;opacity:0;pointer-events:none;
+ transition:opacity .17s ease,visibility .17s;
+}
+.multi-drawer.is-open{visibility:visible;opacity:1;pointer-events:auto}
+.multi-drawer-head{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;padding:10px 14px;background:#272a42;border-bottom:1px solid #555975;
+ font-size:13px;color:#f3e9ff;font-weight:800}
+.multi-drawer-head small{color:#aebad1;font-size:11px;font-weight:500}
+.multi-drawer-actions{display:flex;align-items:center;gap:7px}
+.multi-drawer-actions button{padding:8px 11px;background:#3c365b;color:#f4eeff;
+ border:1px solid #7570a2;border-radius:8px;cursor:pointer}
+.multi-drawer iframe{flex:1;width:100%;min-height:0;border:0;background:#121826}
+@media(max-width:650px){.multi-drawer{inset:0;border:0;border-radius:0}.multi-drawer-head{padding:8px}}
+@media(prefers-reduced-motion:reduce){.multi-drawer{transition:none}}
