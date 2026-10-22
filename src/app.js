@@ -676,6 +676,7 @@ $("#spells-body").addEventListener("input",e=>{
  if(["min","max","critMin","critMax"].includes(field))s[field]=val;
  if(field==="buffValue"&&s.status.buff)s.status.buff.value=val;
  if(field==="buffDuration"&&s.status.buff)s.status.buff.duration=Math.max(1,val);
+ if(multiIsOpen())refreshMultiContext();
 });
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
 $("#tab-optimize .params-panel").addEventListener("change",()=>{invalidateCombatSnapshot();if(assistIsOpen())refreshAssistContext();if(multiIsOpen())refreshMultiContext();});
@@ -686,8 +687,8 @@ for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
 });
 $("#calculate").addEventListener("click",calculate);
 $("#copy-btn").addEventListener("click",copyRotation);
-$("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();tab("optimize");if(currentJob)cancelCalculation();calculate();});
-$("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();});
+$("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();tab("optimize");if(currentJob)cancelCalculation();calculate();});
+$("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
 updatePinButton();
 updateAssistTopPin();
