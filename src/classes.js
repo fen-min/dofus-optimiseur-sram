@@ -3,13 +3,13 @@ import {SACRIER_SPELLS,SACRIER_DEFAULT_VARIANTS,SACRIER_SOURCE} from "./sacrier-
 import {SACRIER_CATALOG,SACRIER_VARIANTS} from "./sacrier-catalog.js";
 import {SRAM_CATALOG} from "./sram-catalog.js";
 import {SOURCE_URL} from "./spells.js";
-import {SACRIER_AIR_REFERENCE_STATS,sanitizeCharacterStats} from "./character-stats.js";
+import {SACRIER_AIR_REFERENCE_STATS,SRAM_AIR_REFERENCE_STATS,sanitizeCharacterStats} from "./character-stats.js";
 export const CLASSES={
  sram:{id:"sram",name:"Sram",glyph:"☽",color:"#b6a0ff",element:"Air",catalog:SRAM_CATALOG,spells:SIM_SPELLS,pairs:VARIANT_PAIRS,defaultVariants:DEFAULT_VARIANTS,source:SOURCE_URL,model:"Sram expérimental"},
  sacrieur:{id:"sacrieur",name:"Sacrieur",glyph:"◆",color:"#fb9a91",element:"Air",catalog:SACRIER_CATALOG,spells:SACRIER_SPELLS,pairs:SACRIER_VARIANTS,defaultVariants:SACRIER_DEFAULT_VARIANTS,source:SACRIER_SOURCE,model:"Sacrieur expérimental · Souffrance / PV non simulés"}
 };
 export const INITIAL_BUILDS=[
- {id:"sram-air-pvm",classId:"sram",character:"Mon Sram",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SOURCE_URL,variants:DEFAULT_VARIANTS.slice(),ap:12,turns:10,distance:3,calibration:{}},
+ {id:"sram-air-pvm",classId:"sram",character:"Mon Sram",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SOURCE_URL,variants:DEFAULT_VARIANTS.slice(),ap:12,turns:10,distance:3,stats:SRAM_AIR_REFERENCE_STATS,calibration:{}},
  {id:"sacri-air-pvm",classId:"sacrieur",character:"Mon Sacrieur",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SACRIER_SOURCE,variants:SACRIER_DEFAULT_VARIANTS.slice(),ap:12,turns:10,distance:2,stats:SACRIER_AIR_REFERENCE_STATS,calibration:{}}
 ];
 export function normalizeBuild(b,index=0){
@@ -28,7 +28,9 @@ export function normalizeBuild(b,index=0){
  // Ne pas attribuer les stats de cette capture aux nouveaux builds arbitraires.
  stats:sanitizeCharacterStats(b?.stats||
     (String(b?.id)==="sacri-air-pvm"&&b?.classId==="sacrieur"&&(!b?.source||b.source===SACRIER_SOURCE)
-     ?SACRIER_AIR_REFERENCE_STATS:null)),
+     ?SACRIER_AIR_REFERENCE_STATS:null)||
+    (String(b?.id)==="sram-air-pvm"&&b?.classId==="sram"&&(!b?.source||b.source===SOURCE_URL)
+     ?SRAM_AIR_REFERENCE_STATS:null)),
  calibration:b?.calibration&&typeof b.calibration==="object"?b.calibration:{}
  };
 }
