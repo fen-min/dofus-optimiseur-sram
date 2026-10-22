@@ -63,3 +63,6 @@ summary{color:#e0cfef;cursor:pointer;font-size:11px;margin-top:10px}
 .variants label{display:grid;gap:5px;font-size:11px;color:#b8c9db;min-width:0}
 .variants select{min-width:0;color:#f2edff;background:#151d2f;border:1px solid #5f6c89;border-radius:7px;padding:7px}
 @media(max-width:450px){.variants{grid-template-columns:1fr}}
+
+.board-cell.spread:not(.zone){background:#55436e!important;border-color:#bb94f1}
+.board-cell .trap-mark{position:absolute;right:-2px;bottom:-2px;z-index:2;border:1px solid #cba6fc;color:#f4dfff;background:#4d3269;border-radius:50%;font-size:9px;font-weight:bold;padding:1px 3px;line-height:1.2}
