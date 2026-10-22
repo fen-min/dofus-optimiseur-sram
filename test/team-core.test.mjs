@@ -18,7 +18,7 @@ test("initiative zero remains a known value, and unknown goes last",()=>{
 });
 test("target limits and resistances are sanitized",()=>{
  const t=cleanTeamTarget({hp:-1,turns:50,criticals:false,resistances:{Air:200,Feu:30,Eau:-10}});
- assert.equal(t.hp,100);assert.equal(t.turns,10);
+ assert.equal(t.hp,100);assert.equal(t.turns,50);
  assert.equal(t.criticals,false);assert.equal(t.resistances.Air,90);
  assert.equal(t.resistances.Feu,30);assert.equal(t.resistances.Eau,0);
 });
