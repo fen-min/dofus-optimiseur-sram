@@ -2,9 +2,10 @@ import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
 import {cleanSettings,turnActionPoints} from "./engine.js?v=1.8";
 import {
  SIZE,MAX_MONSTERS,MULTI_STORE,SHAPES,makeBoard,validateBoard,shapeHits,
- defaultShape,dist,selectedSpells,legalActions,replay,newHistory,
+ defaultShape,dist,selectedSpells,legalActions,manualActions,possibleTargets,replay,newHistory,
  addManual,nextTurn,undo
-} from "./multi-core.js?v=1.9";
+} from "./multi-core.js?v=2.0";
+import {geometryFor,inMask,profileCoverage,MASK_LABELS} from "./spell-zones.js?v=2.0";
 
 const $=id=>document.getElementById(id);
 const deep=value=>JSON.parse(JSON.stringify(value));
@@ -17,7 +18,7 @@ const builds=(Array.isArray(profileList)&&profileList.length?profileList:INITIAL
  .filter(x=>CLASSES[x.classId]).map(normalizeBuild);
 let build=null,context=null,board=makeBoard(),history=newHistory(),settingsTurnCount=3,basePA=12;
 let tool="enemy",movingMonster=null,selectedSpell=null,hovered=null,lastResult=null,worker=null,requestNo=0,pip=null;
-let mainContextSignature="";
+let mainContextSignature="",sessionVariants=[];
 const storageKey=id=>MULTI_STORE+":"+id;
 const selectedId=new URLSearchParams(location.search).get("build")||get("ombre-multi-selected-v1",null)||get("ombre-active-build-v1","sram-air-pvm");
 
@@ -41,11 +42,12 @@ function setupContext(b){
     if(Number.isFinite(change.buff[name])&&change.buff[name]>=0)spell.status.buff[name]=change.buff[name];
   }
  }
+ sessionVariants=b.variants.slice();
  context={
   build:{id:b.id,name:b.name,character:b.character,classId:b.classId},
   spells:all,
   settings:cleanSettings({
-   ap:b.ap,turns:10,distance:2,beamWidth:7,resistance:0,
+   ap:b.ap,turns:10,distance:2,beamWidth:7,resistance:0,classId:b.classId,
    criticals:true,variants:b.variants,
    variantPairs:cls.pairs,defaultVariants:cls.defaultVariants,
    inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false
@@ -63,6 +65,11 @@ function loadBuild(id){
  board=validateBoard(snapshot?.board||makeBoard());
  history=oldSignature===mainContextSignature&&snapshot?.history
   ?sanitizedHistory(snapshot.history):newHistory();
+ const storedVariants=oldSignature===mainContextSignature&&Array.isArray(snapshot?.variants)?snapshot.variants:null;
+ if(storedVariants&&storedVariants.length===CLASSES[b.classId].pairs.length){
+  sessionVariants=CLASSES[b.classId].pairs.map((pair,i)=>pair.includes(storedVariants[i])?storedVariants[i]:b.variants[i]);
+ }
+ context.settings.variants=sessionVariants.slice();
  settingsTurnCount=num(snapshot?.turns,1,10,3);
  basePA=num(snapshot?.ap,6,20,b.ap);
  if(history.finished.length>=settingsTurnCount){
@@ -74,6 +81,7 @@ function loadBuild(id){
  $("ap").value=String(basePA);
  $("turns").value=String(settingsTurnCount);
  $("hp").value=String(board.monsters[0]?.hp||10000);
+ drawVariantOptions();
  drawShapeOptions();
  paint();
  requestPlan();
@@ -94,7 +102,7 @@ function sanitizedHistory(h){
 function save(){
  if(!build)return;
  put(storageKey(build.id),{
-  board,history,ap:basePA,turns:settingsTurnCount,signature:mainContextSignature
+  board,history,variants:sessionVariants.slice(),ap:basePA,turns:settingsTurnCount,signature:mainContextSignature
  });
 }
 function stopWorker(){requestNo++;if(worker){worker.terminate();worker=null;}}
@@ -118,7 +126,8 @@ function layoutClick(x,y){
  const isHero=board.hero.x===x&&board.hero.y===y;
  if(tool==="target"){
   if(!selectedSpell)return inform("Choisis d’abord un sort dans la liste à droite.");
-  if(!enemy)return inform("Choisis un monstre rouge comme cible de ce sort.");
+  // Cast centers can be EMPTY squares, including the center of
+  // Fourvoiement's four-cell cross.
   performAction(selectedSpell,{x,y});return;
  }
  if(tool==="hero"){
@@ -161,12 +170,15 @@ function changeCount(count){
 }
 function drawBoard(){
  const boardEl=$("board"),monsters=currentMonsterMap();
- let affectedCoords=new Set();
- if(selectedSpell&&hovered){
-  const spell=context.spells.find(s=>s.name===selectedSpell);
+ const ctx=workingContext();
+ let aim=hovered,legalCenters=new Set(),spell=null,mask="single";
+ if(selectedSpell){
+  spell=ctx.spells.find(s=>s.name===selectedSpell);
   if(spell){
-   for(const monster of board.monsters)if(shapeHits(hovered,monster,board.shapes[spell.name]||defaultShape(spell),board.hero))
-    affectedCoords.add(monster.x+","+monster.y);
+   mask=board.shapes[spell.name]||geometryFor(spell,build.classId).mask;
+   try{legalCenters=new Set(manualActions(currentState(),ctx).filter(a=>a.spell.name===selectedSpell&&a.center)
+    .map(a=>a.center.x+","+a.center.y));}catch{}
+   if(!aim){aim={...board.hero};}
   }
  }
  let markup="";
@@ -174,8 +186,11 @@ function drawBoard(){
   const enemy=board.monsters.find(m=>m.x===x&&m.y===y);
   const hero=board.hero.x===x&&board.hero.y===y;
   const hp=enemy&&monsters.get(enemy.id);
-  const preview=affectedCoords.has(x+","+y);
-  const classes=["board-cell",hero?"hero":"",enemy?"enemy":"",preview?"preview":"",enemy?.id===movingMonster?"targeted":""].filter(Boolean).join(" ");
+  const zone=!!spell&&aim&&inMask(aim,{x,y},mask,board.hero);
+  const canAim=legalCenters.has(x+","+y);
+  const isAim=!!aim&&aim.x===x&&aim.y===y&&!!spell;
+  const classes=["board-cell",hero?"hero":"",enemy?"enemy":"",zone?"zone":"",
+   canAim?"castable":"",isAim?"aim":"",enemy?.id===movingMonster?"targeted":""].filter(Boolean).join(" ");
   const label=hero?"Ton personnage":enemy?"Monstre "+enemy.id.slice(1)+(hp?" (PV "+Math.round(hp.hp)+")":""):"Case libre";
   markup+='<button type="button" class="'+classes+'" data-x="'+x+'" data-y="'+y+
    '" title="'+html(label)+' — '+(x+1)+","+(y+1)+'" aria-label="'+html(label)+', case '+(x+1)+','+(y+1)+'">'+
@@ -187,13 +202,37 @@ function drawBoard(){
 function currentMonsterMap(){
  try{return new Map(currentState().monsters.map(x=>[x.id,x]));}catch{return new Map();}
 }
+function drawVariantOptions(){
+ const cls=CLASSES[build.classId],holder=$("multi-variants");
+ holder.innerHTML=cls.pairs.map((pair,i)=>
+  '<label>Variante '+(i+1)+'<select data-variant-pair="'+i+'">'+
+   pair.map(name=>'<option value="'+html(name)+'"'+(name===sessionVariants[i]?' selected':'')+'>'+html(name)+'</option>').join("")+
+   '</select></label>'
+ ).join("");
+}
+function showShapeInfo(){
+ const name=$("shape-spell").value;
+ const spell=context.spells.find(x=>x.name===name);
+ if(!spell)return;
+ const profile=geometryFor(spell,build.classId);
+ const shape=board.shapes[name]||profile.mask;
+ const changed=shape!==profile.mask;
+ const confirmation=profile.confidence==="verified"?"Forme vérifiée":
+  profile.confidence==="approximate"?"Forme indicative":"Forme non vérifiée";
+ const node=$("shape-info");
+ node.classList.toggle("warning-zone",profile.confidence!=="verified"||changed);
+ node.textContent=confirmation+" : "+(MASK_LABELS[shape]||shape)+
+  (changed?" (gabarit personnalisé)":"")+". "+profile.notes+
+  " Source : "+(profile.source||"non renseignée")+".";
+}
 function drawShapeOptions(){
  const list=selectedSpells(workingContext());
  const el=$("shape-spell"),chosen=list.some(x=>x.name===el.value)?el.value:
   list.find(x=>x.name==="Fourvoiement"||x.name==="Furie")?.name||list[0]?.name;
  el.innerHTML=list.map(s=>'<option value="'+html(s.name)+'">'+html(s.name)+'</option>').join("");
  if(chosen)el.value=chosen;
- $("shape").value=board.shapes[el.value]||defaultShape(list.find(s=>s.name===el.value));
+ $("shape").value=board.shapes[el.value]||geometryFor(list.find(s=>s.name===el.value),build.classId).mask;
+ showShapeInfo();
 }
 function paint(){
  if(!context)return;
@@ -221,16 +260,17 @@ function paint(){
   '<span class="chip">'+html(a.name)+(a.center?" → M"+html(board.monsters.find(m=>m.x===a.center.x&&m.y===a.center.y)?.id.slice(1)||"?"):"")+
   ' · '+a.pa+' PA</span>').join(""):"Aucun sort joué pour ce tour.";
  drawBoard();
- const legal=done?[]:legalActions(state,ctx);
+ const legal=done?[]:manualActions(state,ctx);
  const byName=new Map();
  for(const action of legal)if(!byName.has(action.spell.name))byName.set(action.spell.name,action.spell);
  const q=$("search").value.trim().toLocaleLowerCase("fr");
  const choices=selectedSpells(ctx).filter(s=>!q||s.name.toLocaleLowerCase("fr").includes(q));
  $("spells").innerHTML=choices.map(s=>{
   const enabled=byName.has(s.name);
-  const explanation=s.isTrap||s.target==="tile"?
-   "Placement/piège non optimisé sans véritable carte":
-   !enabled?"Hors de portée, limite de lancer, relance ou PA insuffisants":"";
+  const profile=geometryFor(s,build.classId);
+  const explanation=!enabled?"Hors de portée, limite de lancer, relance ou PA insuffisants":
+   profile.confidence==="verified"?profile.notes:
+   "Géométrie non validée, aperçu prudent : "+profile.notes;
   return '<button data-spell="'+html(s.name)+'" type="button" class="'+(selectedSpell===s.name?"active":"")+
    '" '+(!enabled?"disabled":"")+' title="'+html(explanation||s.utility||"Choisir ce sort")+'"><span>'+html(s.name)+'</span><small>'+s.pa+' PA</small></button>';
  }).join("");
@@ -269,7 +309,7 @@ function requestPlan(){
  if(typeof Worker==="undefined"){$("status").textContent="Ce navigateur ne prend pas en charge le calcul en arrière-plan.";return;}
  const id=++requestNo;
  try{
-  worker=new Worker(new URL("./multi-worker.js?v=1.9",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./multi-worker.js?v=2.0",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==id)return;
    const data=e.data||{};
@@ -381,7 +421,16 @@ function bindEvents(){
  $("turns").addEventListener("change",updateSettings);
  $("shape-spell").addEventListener("change",()=>{
   const s=context.spells.find(x=>x.name===$("shape-spell").value);
-  $("shape").value=board.shapes[$("shape-spell").value]||defaultShape(s);
+  $("shape").value=board.shapes[$("shape-spell").value]||geometryFor(s,build.classId).mask;
+  showShapeInfo();
+ });
+ $("multi-variants").addEventListener("change",e=>{
+  const n=Number(e.target.dataset.variantPair),cls=CLASSES[build.classId],name=e.target.value;
+  if(!Number.isInteger(n)||!cls.pairs[n]?.includes(name))return;
+  if(!confirmLayout()){drawVariantOptions();return;}
+  sessionVariants[n]=name;
+  context.settings.variants=sessionVariants.slice();
+  save();drawVariantOptions();drawShapeOptions();paint();requestPlan();
  });
  $("shape").addEventListener("change",switchShape);
  $("turn-ap").addEventListener("change",e=>adjustPA(e.target.value));
@@ -391,9 +440,17 @@ function bindEvents(){
  $("spells").addEventListener("click",e=>{
   const b=e.target.closest("button[data-spell]");if(!b||b.disabled)return;
   const name=b.dataset.spell,spell=context.spells.find(s=>s.name===name);
-  if(spell?.target==="self"){performAction(name,null);return;}
+  const profile=geometryFor(spell,build.classId);
+  if(profile.mode==="self"){performAction(name,null);return;}
+  if(profile.mode==="selfArea"){performAction(name,board.hero);return;}
   selectedSpell=name;tool="target";hovered=null;
-  inform("Clique sur un monstre rouge pour cibler "+name+".");paint();
+  $("shape-spell").value=name;
+  $("shape").value=board.shapes[name]||profile.mask;
+  showShapeInfo();
+  inform(profile.mode==="enemy"?"Clique sur le monstre que tu vises.":
+   profile.mode==="free"?"Clique sur une case LIBRE pour poser le sort.":
+   "Clique sur une case centrale, même vide, pour voir et toucher la zone.");
+  paint();
  });
  $("recommendations").addEventListener("click",e=>{
   const b=e.target.closest("button[data-recommend]");
@@ -412,7 +469,14 @@ function bindEvents(){
  window.addEventListener("storage",e=>{
   if(e.key===storageKey(build?.id)){
    const saved=get(e.key,null);
-   if(saved){board=validateBoard(saved.board);history=sanitizedHistory(saved.history);paint();requestPlan();}
+   if(saved){
+    board=validateBoard(saved.board);history=sanitizedHistory(saved.history);
+    if(Array.isArray(saved.variants)&&saved.variants.length===sessionVariants.length){
+     sessionVariants=CLASSES[build.classId].pairs.map((pair,i)=>pair.includes(saved.variants[i])?saved.variants[i]:sessionVariants[i]);
+     context.settings.variants=sessionVariants.slice();
+    }
+    drawVariantOptions();drawShapeOptions();paint();requestPlan();
+   }
   }
  });
  if(new URLSearchParams(location.search).get("embedded")==="pip")$("pin").hidden=true;
