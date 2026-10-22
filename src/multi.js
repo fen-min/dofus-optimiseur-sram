@@ -6,6 +6,7 @@ import {
  addManual,nextTurn,undo
 } from "./multi-core.js?v=2.0";
 import {geometryFor,inMask,profileCoverage,MASK_LABELS} from "./spell-zones.js?v=2.0";
+import {MULTI_CONTEXT_KEY,getMultiContext} from "./multi-build-link.js?v=2.1";
 
 const $=id=>document.getElementById(id);
 const deep=value=>JSON.parse(JSON.stringify(value));
@@ -20,7 +21,7 @@ let build=null,context=null,board=makeBoard(),history=newHistory(),settingsTurnC
 let tool="enemy",movingMonster=null,selectedSpell=null,hovered=null,lastResult=null,worker=null,requestNo=0,pip=null;
 let mainContextSignature="",sessionVariants=[];
 const storageKey=id=>MULTI_STORE+":"+id;
-const selectedId=new URLSearchParams(location.search).get("build")||get("ombre-multi-selected-v1",null)||get("ombre-active-build-v1","sram-air-pvm");
+const selectedId=new URLSearchParams(location.search).get("build")||get("ombre-active-build-v1","sram-air-pvm");
 
 function currentState(){return replay(workingContext(),board,history);}
 function workingContext(){
@@ -30,55 +31,52 @@ function workingContext(){
  })};
 }
 function setupContext(b){
- build=b;
- const cls=CLASSES[b.classId];
- const all=cls.spells.map(spell=>({...spell,status:deep(spell.status||{})}));
- for(const spell of all){
-  const change=b.calibration?.[spell.id];if(!change)continue;
-  for(const name of ["min","max","critMin","critMax","summonBase"])
-   if(Number.isFinite(change[name])&&change[name]>=0)spell[name]=change[name];
-  if(change.buff&&spell.status.buff){
-   for(const name of ["value","duration"])
-    if(Number.isFinite(change.buff[name])&&change.buff[name]>=0)spell.status.buff[name]=change.buff[name];
-  }
- }
- sessionVariants=b.variants.slice();
+ const linked=getMultiContext(localStorage,b.id);
+ if(!linked||!linked.settings||!Array.isArray(linked.spells))
+  throw Error("Ce build n’a pas encore été transmis par OMBRE. Ouvre « Combat multi-cibles » depuis la page principale.");
+ build={...b,...linked.build,ap:linked.settings.ap,turns:linked.settings.turns};
+ sessionVariants=linked.settings.variants.slice();
  context={
-  build:{id:b.id,name:b.name,character:b.character,classId:b.classId},
-  spells:all,
-  settings:cleanSettings({
-   ap:b.ap,turns:10,distance:2,beamWidth:7,resistance:0,classId:b.classId,
-   criticals:true,variants:b.variants,
-   variantPairs:cls.pairs,defaultVariants:cls.defaultVariants,
-   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false
-  })
+  build:linked.build,
+  spells:linked.spells.map(sp=>({...sp,status:deep(sp.status||{})})),
+  settings:cleanSettings({...linked.settings,classId:linked.build.classId})
  };
- mainContextSignature=JSON.stringify([b.variants,b.calibration]);
+ mainContextSignature=linked.signature;
 }
 function loadBuild(id){
  const b=builds.find(x=>x.id===id)||builds[0];
  if(!b)return;
  stopWorker();
- setupContext(b);
+ try{setupContext(b);}
+ catch(error){
+  $("status").textContent=error.message;
+  $("message").textContent=error.message;
+  $("message").hidden=false;
+  $("next-turn").disabled=true;
+  $("recompute").disabled=true;
+  return;
+ }
  const snapshot=get(storageKey(b.id),null);
  const oldSignature=snapshot?.signature;
  board=validateBoard(snapshot?.board||makeBoard());
  history=oldSignature===mainContextSignature&&snapshot?.history
   ?sanitizedHistory(snapshot.history):newHistory();
- const storedVariants=oldSignature===mainContextSignature&&Array.isArray(snapshot?.variants)?snapshot.variants:null;
- if(storedVariants&&storedVariants.length===CLASSES[b.classId].pairs.length){
-  sessionVariants=CLASSES[b.classId].pairs.map((pair,i)=>pair.includes(storedVariants[i])?storedVariants[i]:b.variants[i]);
- }
+ // The OMBRE build is the only source of truth for stats, spell rows,
+ // variants and baseline PA. Only board, played actions and horizon are local.
  context.settings.variants=sessionVariants.slice();
- settingsTurnCount=num(snapshot?.turns,1,10,3);
- basePA=num(snapshot?.ap,6,20,b.ap);
+ settingsTurnCount=oldSignature===mainContextSignature
+  ?num(snapshot?.turns,1,10,context.settings.turns)
+  :context.settings.turns;
+ basePA=context.settings.ap;
  if(history.finished.length>=settingsTurnCount){
   history=newHistory();
  }
  selectedSpell=null;movingMonster=null;tool="enemy";lastResult=null;
  put("ombre-multi-selected-v1",b.id);
  $("build").value=b.id;
+ $("build").disabled=true;
  $("ap").value=String(basePA);
+ $("ap").disabled=true;
  $("turns").value=String(settingsTurnCount);
  $("hp").value=String(board.monsters[0]?.hp||10000);
  drawVariantOptions();
@@ -208,7 +206,7 @@ function currentMonsterMap(){
 function drawVariantOptions(){
  const cls=CLASSES[build.classId],holder=$("multi-variants");
  holder.innerHTML=cls.pairs.map((pair,i)=>
-  '<label>Variante '+(i+1)+'<select data-variant-pair="'+i+'">'+
+  '<label>Variante '+(i+1)+'<select disabled title="Modifiable dans OMBRE" data-variant-pair="'+i+'">'+
    pair.map(name=>'<option value="'+html(name)+'"'+(name===sessionVariants[i]?' selected':'')+'>'+html(name)+'</option>').join("")+
    '</select></label>'
  ).join("");
@@ -364,8 +362,8 @@ function restart(){
 }
 function updateSettings(){
  if(!confirmLayout()){paint();return;}
- basePA=num($("ap").value,6,20,build.ap);
- settingsTurnCount=num($("turns").value,1,10,3);
+ basePA=context.settings.ap; // controlled by OMBRE
+ settingsTurnCount=num($("turns").value,1,10,context.settings.turns);
  save();paint();requestPlan();
 }
 function resetBoard(){
@@ -401,7 +399,7 @@ function pin(){
  }).catch(e=>inform("Épinglage impossible : "+e.message));
 }
 function bindEvents(){
- $("build").addEventListener("change",e=>loadBuild(e.target.value));
+ // The build selector is read-only. Change characters in OMBRE itself.
  document.querySelectorAll("[data-tool]").forEach(b=>b.addEventListener("click",()=>setTool(b.dataset.tool)));
  $("layout-reset").addEventListener("click",resetBoard);
  $("board").addEventListener("click",event=>{
@@ -427,15 +425,7 @@ function bindEvents(){
   $("shape").value=board.shapes[$("shape-spell").value]||geometryFor(s,build.classId).mask;
   showShapeInfo();
  });
- $("multi-variants").addEventListener("change",e=>{
-  const n=Number(e.target.dataset.variantPair),cls=CLASSES[build.classId],name=e.target.value;
-  if(!Number.isInteger(n)||!cls.pairs[n]?.includes(name))return;
-  if(!confirmLayout()){drawVariantOptions();return;}
-  sessionVariants[n]=name;
-  context.settings.variants=sessionVariants.slice();
-  save();drawVariantOptions();drawShapeOptions();paint();requestPlan();
- });
- $("shape").addEventListener("change",switchShape);
+
  $("turn-ap").addEventListener("change",e=>adjustPA(e.target.value));
  $("pa-minus").addEventListener("click",()=>adjustPA(Number($("turn-ap").value)-1));
  $("pa-plus").addEventListener("click",()=>adjustPA(Number($("turn-ap").value)+1));
@@ -470,14 +460,19 @@ function bindEvents(){
  $("recompute").addEventListener("click",requestPlan);
  $("pin").addEventListener("click",pin);
  window.addEventListener("storage",e=>{
+  if(e.key===MULTI_CONTEXT_KEY&&build){
+   const fresh=getMultiContext(localStorage,build.id);
+   if(fresh?.signature!==mainContextSignature){
+    // Build changed in OMBRE while the multi-mode was open.
+    loadBuild(build.id);
+    inform("Build OMBRE actualisé. Les actions précédentes ont été réinitialisées si les réglages ont changé.");
+   }
+  }
   if(e.key===storageKey(build?.id)){
    const saved=get(e.key,null);
    if(saved){
     board=validateBoard(saved.board);history=sanitizedHistory(saved.history);
-    if(Array.isArray(saved.variants)&&saved.variants.length===sessionVariants.length){
-     sessionVariants=CLASSES[build.classId].pairs.map((pair,i)=>pair.includes(saved.variants[i])?saved.variants[i]:sessionVariants[i]);
-     context.settings.variants=sessionVariants.slice();
-    }
+    // Variants are always read from the live OMBRE context, not from a past multi session.
     drawVariantOptions();drawShapeOptions();paint();requestPlan();
    }
   }
