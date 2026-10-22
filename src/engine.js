@@ -1,4 +1,4 @@
-import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js";
+import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
 // Monocible, sans carte : estimation paramétrée, PAS simulateur du serveur DOFUS.
 // Un état contient PA, variantes, buffs, altérations, pièges et poisons.
