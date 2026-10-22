@@ -266,9 +266,12 @@ function paint(){
  $("pa-reset").disabled=done||budget===basePA;
  $("next-turn").disabled=done;
  $("undo").disabled=!history.current.length&&!history.finished.length;
- $("picked").innerHTML=state.actions.length?state.actions.map(a=>
-  '<span class="chip">'+html(a.name)+(a.center?" → M"+html(board.monsters.find(m=>m.x===a.center.x&&m.y===a.center.y)?.id.slice(1)||"?"):"")+
-  ' · '+a.pa+' PA</span>').join(""):"Aucun sort joué pour ce tour.";
+ $("picked").innerHTML=state.actions.length?state.actions.map(a=>{
+  const target=a.center&&board.monsters.find(m=>m.x===a.center.x&&m.y===a.center.y);
+  const at=a.center?" → "+(target?"M"+html(target.id.slice(1))+" ":"case ")+
+   "("+cellLabel(a.center.x,a.center.y)+")":"";
+  return '<span class="chip">'+html(a.name)+at+' · '+a.pa+' PA</span>';
+ }).join(""):"Aucun sort joué pour ce tour.";
  drawBoard();
  const legal=done?[]:manualActions(state,ctx);
  const byName=new Map();
