@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#151b2a">
 <title>OMBRE — Combat assisté multi-cibles (expérimental)</title>
-<link rel="stylesheet" href="./multi-combat.css?v=1.9">
+<link rel="stylesheet" href="./multi-combat.css?v=2.0">
 </head><body>
 <div class="multi-shell">
 <header class="multi-top">
@@ -28,7 +28,7 @@
   <button id="layout-reset" type="button">↺ Grille</button>
  </div>
  <div id="board" class="board" role="group" aria-label="Grille abstraite de combat"></div>
- <div class="legend"><span>🔵 Toi</span><span>🔴 Monstre</span><span class="muted">Distance en cases, sans obstacles</span></div>
+ <div class="legend"><span>🔵 Toi</span><span>🔴 Monstre</span><span>🟥 Zone de sort</span><span class="muted">Distance en cases, sans obstacles</span></div>
  <div class="separator"></div>
  <div class="options-row">
   <label class="field">PA de base <input id="ap" type="number" min="6" max="20" step="1" value="12"></label>
@@ -41,11 +41,13 @@
  <div class="options-row">
   <label class="field">Forme de zone du sort <select id="shape-spell"></select></label>
   <label class="field">Gabarit estimé <select id="shape">
-   <option value="single">Cible unique</option><option value="cross1">Croix 1 case</option>
-   <option value="square1">Carré 1 case</option><option value="circle2">Rayon 2 cases</option>
+   <option value="single">Cible unique</option><option value="cross1">Croix de 1 (centre inclus)</option><option value="crossNoCenter">Croix de 1 (sans centre)</option><option value="cross2">Croix de 2</option><option value="cross3NoCenter">Croix de 3 (sans centre)</option>
+   <option value="square1">Carré de 1</option><option value="circle3">Cercle de 3</option><option value="diagonal1">Diagonales de 1</option><option value="ring2">Anneau de 2</option><option value="half1">Demi-cercle de 1</option><option value="casterLine">Ligne depuis le lanceur</option><option value="circle2">Rayon 2 cases</option>
    <option value="line2">Ligne 2 cases</option>
   </select></label>
  </div>
+ <p id="shape-info" class="zone-info" role="status">Sélectionne un sort pour voir son gabarit et les conditions vérifiées.</p>
+ <details class="variant-panel"><summary>🪄 Variantes pour cette simulation (sans modifier ton build)</summary><div id="multi-variants" class="variants"></div></details>
  <p class="warning">⚠️ <strong>Zones personnalisables, non officielles.</strong> Les zones exactes, lignes de vue, obstacles, poussées, déplacements, propagation des poisons et pièges ne sont pas reproduits. Un point rouge = un ennemi supposé immobile. Vérifie en jeu les zones des sorts.</p>
 </section>
 <section class="panel combat-panel">
@@ -73,7 +75,7 @@
   <details><summary>Aperçu des tours suivants</summary><div id="future" class="future"></div></details>
  </div>
  <div class="heading minor"><h3>3. Sélectionner toi-même un sort</h3><span class="muted">Sorts des variantes équipées</span></div>
- <p class="muted">Choisis un sort, puis clique sur un <strong>monstre rouge</strong> sur la grille pour le cibler. Les sorts personnels se lancent directement. Les sorts proposés peuvent aussi être cliqués.</p>
+ <p class="muted">Choisis un sort, puis clique sur un <strong>monstre rouge</strong> sur la grille pour le cibler. Les sorts personnels se lancent directement. Les sorts proposés peuvent aussi être cliqués. Les zones sont prévisualisées en rouge avant le lancer, même autour d’une case vide.</p>
  <input id="search" type="search" placeholder="Rechercher un sort…">
  <div id="spells" class="spell-list"></div>
  <div class="bottom-actions">
@@ -85,5 +87,5 @@
 </section>
 </main>
 </div>
-<script type="module" src="./src/multi.js?v=1.9"></script>
+<script type="module" src="./src/multi.js?v=2.0"></script>
 </body></html>
