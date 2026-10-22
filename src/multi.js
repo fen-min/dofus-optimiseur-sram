@@ -21,6 +21,9 @@ let build=null,context=null,board=makeBoard(),history=newHistory(),settingsTurnC
 let tool="enemy",movingMonster=null,selectedSpell=null,hovered=null,lastResult=null,worker=null,requestNo=0,pip=null;
 let mainContextSignature="",sessionVariants=[];
 const storageKey=id=>MULTI_STORE+":"+id;
+const COORDINATES_KEY="ombre-multi-show-coordinates-v1";
+let showCoordinates=get(COORDINATES_KEY,true)!==false;
+const cellLabel=(x,y)=>(x+1)+","+(y+1);
 const selectedId=new URLSearchParams(location.search).get("build")||get("ombre-active-build-v1","sram-air-pvm");
 
 function currentState(){return replay(workingContext(),board,history);}
@@ -193,8 +196,10 @@ function drawBoard(){
   const classes=["board-cell",hero?"hero":"",enemy?"enemy":"",zone?"zone":"",spread?"spread":"",
    canAim?"castable":"",isAim?"aim":"",enemy?.id===movingMonster?"targeted":""].filter(Boolean).join(" ");
   const label=hero?"Ton personnage":enemy?"Monstre "+enemy.id.slice(1)+(hp?" (PV "+Math.round(hp.hp)+")":""):"Case libre";
+  const coords=cellLabel(x,y);
   markup+='<button type="button" class="'+classes+'" data-x="'+x+'" data-y="'+y+
-   '" title="'+html(label)+' — '+(x+1)+","+(y+1)+'" aria-label="'+html(label)+', case '+(x+1)+','+(y+1)+'">'+
+   '" title="'+html(label)+' — '+coords+'" aria-label="'+html(label)+', case '+coords+'">'+
+   (showCoordinates?'<span class="cell-coordinate" aria-hidden="true">'+coords+'</span>':"")+
    (hero?'<span class="marker">TOI</span>':enemy?'<span class="marker">'+html(enemy.id.slice(1))+'</span>':"")+ (onCell.length?'<span class="trap-mark">◇'+onCell.length+'</span>':'')+'</button>';
  }
  boardEl.innerHTML=markup;
@@ -403,6 +408,13 @@ function pin(){
  }).catch(e=>inform("Épinglage impossible : "+e.message));
 }
 function bindEvents(){
+ // One-based coordinates match the numbers on proposed cast buttons.
+ $("show-coordinates").checked=showCoordinates;
+ $("show-coordinates").addEventListener("change",event=>{
+  showCoordinates=!!event.target.checked;
+  put(COORDINATES_KEY,showCoordinates);
+  drawBoard(); // visual-only preference: does not reset a turn or rerun DPS
+ });
  // The build selector is read-only. Change characters in OMBRE itself.
  document.querySelectorAll("[data-tool]").forEach(b=>b.addEventListener("click",()=>setTool(b.dataset.tool)));
  $("layout-reset").addEventListener("click",resetBoard);
@@ -464,6 +476,11 @@ function bindEvents(){
  $("recompute").addEventListener("click",requestPlan);
  $("pin").addEventListener("click",pin);
  window.addEventListener("storage",e=>{
+  if(e.key===COORDINATES_KEY){
+   showCoordinates=get(COORDINATES_KEY,true)!==false;
+   $("show-coordinates").checked=showCoordinates;
+   drawBoard();
+  }
   if(e.key===MULTI_CONTEXT_KEY&&build){
    const fresh=getMultiContext(localStorage,build.id);
    if(fresh?.signature!==mainContextSignature){
