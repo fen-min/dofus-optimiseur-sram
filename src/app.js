@@ -1,13 +1,13 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {sanitizeCharacterStats} from "./character-stats.js";
-import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.2";
-import {optimize} from "./engine.js?v=1.7";
+import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
+import {optimize} from "./engine.js?v=1.8";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
-import {saveAssistContext} from "./assist-core.js?v=1.7";
+import {saveAssistContext} from "./assist-core.js?v=1.8";
 import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
-import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js";
+import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js?v=1.8";
 
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
@@ -259,7 +259,7 @@ function renderCharacterStats(){
   }).join("")+'</div></div>').join("");
  const note=document.querySelector("#character-stats-panel .microcopy");
  if(note)note.textContent=stats.source?.startsWith("capture-en-jeu")
-  ?"Capture du jeu du 21/10/2026. Les dommages DofusBook restent un calcul distinct ; évite de compter deux fois les caractéristiques."
+  ?`Capture du jeu du ${stats.source.endsWith("2026-10-22")?"22/10/2026":"21/10/2026"}. Les dommages DofusBook restent un calcul distinct ; évite de compter deux fois les caractéristiques.`
   :"Statistiques locales de ce build, non recalculées automatiquement depuis DofusBook. Les dommages du moteur restent approximatifs.";
 }
 function renderVariantPicker(){
