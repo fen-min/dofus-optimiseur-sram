@@ -74,4 +74,5 @@
 .team-slot-options input[type=number],.team-slot-options select{width:100%;max-width:100%;min-width:0;height:32px;padding:5px 7px;font-size:11px;border:1px solid #655163;background:#161827;color:#fff;border-radius:7px}
 .team-slot-options .team-slot-force{grid-column:1/-1;flex-direction:row;align-items:center;gap:7px;font-size:10px;color:#ead1cd}
 .team-slot-force input{margin:0;accent-color:#f18476}
+.team-spell-chip.is-buff-refreshed{border:1px solid #e2b46e;background:#513d27;color:#fff}
 @media(max-width:1120px){.team-slot-options{grid-template-columns:70px minmax(0,1fr)}}
