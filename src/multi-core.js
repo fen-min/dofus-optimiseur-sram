@@ -76,7 +76,7 @@ export function makeState(context,board){
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false});
  return {engine:initialState(settings),settings,board:b,
-  monsters:b.monsters.map(e=>({...e,maxHp:e.hp,dots:[],damage:0})),
+  monsters:b.monsters.map(e=>({...e,maxHp:e.hp,dots:[],damage:0,enemyDebuff:{multiplier:1,expires:0}})),
   targetUses:{},placedTraps:[],total:0,turnTotals:[],actions:[],warnings:[]};
 }
 function buffDamageFactor(before,spell,settings,enemy){
@@ -167,7 +167,11 @@ export function applyAction(original,spell,center,context){
  const engineState=clone(before);
  engineState.position=d;
  engineState.dots={};
- engineState.enemyDebuff={multiplier:1,expires:0};
+ // Preserve an enemy's vulnerability only on that enemy. A debuff on M1
+ // must not benefit an attack aimed at M2, unlike the old single-target proxy.
+ const focusMultiplier=target?.enemyDebuff?.expires>=before.turn
+  ?target.enemyDebuff.multiplier:1;
+ engineState.enemyDebuff={multiplier:focusMultiplier,expires:before.turn};
  // Per-target limits are tracked separately while per-turn limits stay global.
  const priorUses=before.used[spell.id]||0;
  // The mono engine uses a single target and therefore counts a per-target
@@ -211,7 +215,24 @@ export function applyAction(original,spell,center,context){
    // The native engine returns the baseline for a single target.
    // Extra targets in estimated AOE share its damage without inventing
    // attenuation values or the exact zone.
-   total+=applyHit(e,direct);
+   const multiplier=e.enemyDebuff?.expires>=before.turn
+    ?e.enemyDebuff.multiplier:1;
+   // The native cast is computed on the focus target; rescale only
+   // pre-existing vulnerabilities for each other monster in the same AOE.
+   total+=applyHit(e,direct*multiplier/focusMultiplier);
+  }
+ }
+ // Apply new vulnerability AFTER resolving this spell's immediate hits,
+ // matching the order of the common engine's castSpell implementation.
+ if(spell.status?.vulnerability){
+  const rate=spell.name==="Marque Mortuaire"
+   ?1.02+0.02*Math.min(4,before.charges):spell.status.vulnerability;
+  for(const e of touched){
+   const old=e.enemyDebuff?.expires>=before.turn?e.enemyDebuff.multiplier:1;
+   e.enemyDebuff={
+    multiplier:Math.max(old,rate),
+    expires:before.turn+(spell.status.vulnerabilityTurns||1)-1
+   };
   }
  }
  s.total=round(s.total+total);
@@ -251,6 +272,8 @@ export function finishTurn(original){
   direct:round(s.total-previous-poison),poison:round(poison),
   total:round(s.total-previous),cumulative:s.total});
  s.engine=endTurn({...s.engine,dots:{},enemyDebuff:{multiplier:1,expires:0}},s.settings);
+ for(const m of s.monsters)
+  if(m.enemyDebuff?.expires<s.engine.turn)m.enemyDebuff={multiplier:1,expires:0};
  s.actions=[];s.targetUses={};
  return s;
 }
@@ -293,7 +316,8 @@ function signature(s){
  const buffs=s.engine.buffs.map(b=>[b.key,b.amount,b.until]).sort().join("/");
  return [s.engine.turn,s.engine.pa,Object.entries(s.engine.used).sort(),
   Object.entries(s.engine.ready).sort(),buffs,
-  s.monsters.map(m=>[m.id,Math.round(m.hp/50),m.dots.map(d=>d.id+":"+d.left).join("/")]),
+  s.monsters.map(m=>[m.id,Math.round(m.hp/50),m.dots.map(d=>d.id+":"+d.left).join("/"),
+   m.enemyDebuff?.multiplier||1,m.enemyDebuff?.expires||0]),
   Object.entries(s.targetUses).sort()].join("|");
 }
 function potential(s){
