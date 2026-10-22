@@ -5,6 +5,7 @@ import {optimize} from "./engine.js?v=1.8";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
 import {saveAssistContext} from "./assist-core.js?v=1.8";
+import {saveMultiContext} from "./multi-build-link.js?v=2.1";
 import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js?v=1.8";
@@ -128,6 +129,39 @@ function closeAssistDrawer(){
  $("#assist-open").setAttribute("aria-expanded","false");
 }
 
+// New multi-target panel shares this build and calibrated rows, not the mono session.
+function multiIsOpen(){return $("#multi-drawer").classList.contains("is-open");}
+function refreshMultiContext(){
+ if(!current||!model)return;
+ try{return saveMultiContext(localStorage,current,appliedSettings(),spells);}
+ catch(err){$("#status").textContent="Combat multi-cibles : "+(err.message||String(err));return false;}
+}
+function openMultiDrawer(){
+ if(!current)return;
+ saveActiveSettings();refreshMultiContext();
+ const url=new URL("./multi-combat.html",window.location.href);
+ url.searchParams.set("build",current.id);
+ url.searchParams.set("embedded","ombre");
+ const frame=$("#multi-frame");
+ if(frame.src!==url.href)frame.src=url.href;
+ $("#multi-drawer").classList.add("is-open");
+ $("#multi-drawer").setAttribute("aria-hidden","false");
+ $("#multi-open").setAttribute("aria-expanded","true");
+}
+function closeMultiDrawer(){
+ $("#multi-drawer").classList.remove("is-open");
+ $("#multi-drawer").setAttribute("aria-hidden","true");
+ $("#multi-open").setAttribute("aria-expanded","false");
+}
+function openMultiPopout(){
+ if(!current)return;
+ saveActiveSettings();refreshMultiContext();
+ const url=new URL("./multi-combat.html",window.location.href);
+ url.searchParams.set("build",current.id);
+ const popup=window.open(url.href,"_blank","popup=yes,width=1290,height=880,resizable=yes,scrollbars=yes");
+ if(!popup){$("#status").textContent="Fenêtre bloquée : autorise les pop-ups pour OMBRE.";return;}
+ closeMultiDrawer();
+}
 function combatSnapshot(){return current?getCombatRotation(localStorage,current.id):null;}
 function updateCombatButtons(){
  const saved=combatSnapshot();
@@ -359,6 +393,7 @@ function invalidateRotationForVariant(){
  $("#copy-btn").disabled=true;
  $("#status").textContent="Variantes modifiées. Relance le calcul pour obtenir les meilleures rotations avec cette sélection.";
  if(assistIsOpen())refreshAssistContext();
+ if(multiIsOpen())refreshMultiContext();
 }
 function selectSpellVariant(index,name){
  if(!model.pairs[index]?.includes(name))return false;
@@ -406,7 +441,7 @@ function renderSpells(){
 }
 function activateBuild(id){
  const next=builds.find(b=>b.id===id);if(!next)return;
- cancelCalculation();closeCombatDrawer();closeAssistDrawer();pinnedCombat?.close();pinnedAssist?.close();activeId=id;current=next;model=CLASSES[current.classId];
+ cancelCalculation();closeCombatDrawer();closeAssistDrawer();closeMultiDrawer();pinnedCombat?.close();pinnedAssist?.close();activeId=id;current=next;model=CLASSES[current.classId];
  applyCalibration();result=null;
  store(ACTIVE,id);
  document.documentElement.style.setProperty("--class-accent",model.color);
@@ -546,6 +581,9 @@ function copyRotation(){
  navigator.clipboard?.writeText(output).then(()=>{$("#copy-btn").textContent="✓ Copié";setTimeout(()=>$("#copy-btn").textContent="⧉ Copier",1500)}).catch(()=>prompt("Copier",output));
 }
 $("#assist-open").addEventListener("click",openAssistDrawer);
+$("#multi-open").addEventListener("click",openMultiDrawer);
+$("#multi-close").addEventListener("click",closeMultiDrawer);
+$("#multi-popout").addEventListener("click",openMultiPopout);
 $("#assist-pin-top").addEventListener("click",toggleAssistTopPin);
 $("#assist-close").addEventListener("click",closeAssistDrawer);
 window.addEventListener("message",event=>{
@@ -567,6 +605,7 @@ $("#combat-pin-drawer").addEventListener("click",toggleCombatPin);
 document.addEventListener("keydown",e=>{
  if(e.key==="Escape" && $("#combat-drawer").classList.contains("is-open"))closeCombatDrawer();
  if(e.key==="Escape" && assistIsOpen())closeAssistDrawer();
+ if(e.key==="Escape" && multiIsOpen())closeMultiDrawer();
 });
 window.addEventListener("storage",e=>{
  if((e.key===COMBAT_TURNS||e.key===COMBAT_STORE)&&$("#combat-drawer").classList.contains("is-open"))renderCombatDrawer();
@@ -600,6 +639,7 @@ $("#character-stats-grid").addEventListener("change",event=>{
  current.stats=sanitizeCharacterStats(current.stats);
  saveBuilds();
  if(assistIsOpen())refreshAssistContext();
+ if(multiIsOpen())refreshMultiContext();
  renderCharacterStats();
 });
 $("#build-form").addEventListener("submit",e=>{
@@ -638,11 +678,11 @@ $("#spells-body").addEventListener("input",e=>{
  if(field==="buffDuration"&&s.status.buff)s.status.buff.duration=Math.max(1,val);
 });
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
-$("#tab-optimize .params-panel").addEventListener("change",()=>{invalidateCombatSnapshot();if(assistIsOpen())refreshAssistContext();});
+$("#tab-optimize .params-panel").addEventListener("change",()=>{invalidateCombatSnapshot();if(assistIsOpen())refreshAssistContext();if(multiIsOpen())refreshMultiContext();});
 $("#distance").addEventListener("change",e=>{if(current){current.distance=Number(e.target.value);saveBuilds();}});
 for(const id of ["ap","turns"])$("#"+id).addEventListener("input",e=>{
  $("#"+id+"-value").textContent=e.target.value+" "+(id==="ap"?"PA":"tours");
- if(current){current[id]=Number(e.target.value);saveBuilds();invalidateCombatSnapshot();if(assistIsOpen())refreshAssistContext();}
+ if(current){current[id]=Number(e.target.value);saveBuilds();invalidateCombatSnapshot();if(assistIsOpen())refreshAssistContext();if(multiIsOpen())refreshMultiContext();}
 });
 $("#calculate").addEventListener("click",calculate);
 $("#copy-btn").addEventListener("click",copyRotation);
