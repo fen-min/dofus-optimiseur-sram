@@ -99,3 +99,25 @@ test("invalid team PA cannot be stored or propagated",()=>withBrowser(({root,loc
  const saved=localStorage.getItem("ombre-team-dps-v1");
  assert.equal(saved,null);
 }));
+
+
+test("refreshable buff checkbox is present for each selected character and on by default",()=>withBrowser(({node})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const html=node("team-members").innerHTML;
+ assert.match(html,/data-team-refresh-buffs="sacri-air-pvm" checked/);
+ assert.match(html,/data-team-refresh-buffs="sram-air-pvm" checked/);
+ assert.equal((html.match(/data-team-refresh-buffs=/g)||[]).length,2);
+}));
+test("per-member buff maintenance toggle persists independently and can be disabled",()=>withBrowser(({root,node,localStorage})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ root.listeners.change({target:{closest(selector){
+  return selector==="input[data-team-refresh-buffs]"
+   ?{dataset:{teamRefreshBuffs:"sacri-air-pvm"},checked:false}:null;
+ }}});
+ const state=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(state.memberOptions["sacri-air-pvm"].refreshTimedBuffs,false);
+ assert.equal(state.memberOptions["sram-air-pvm"],undefined);
+ assert.match(node("team-members").innerHTML,/data-team-refresh-buffs="sacri-air-pvm"/);
+ assert.doesNotMatch(node("team-members").innerHTML,/data-team-refresh-buffs="sacri-air-pvm" checked/);
+ assert.match(node("team-members").innerHTML,/data-team-refresh-buffs="sram-air-pvm" checked/);
+}));
