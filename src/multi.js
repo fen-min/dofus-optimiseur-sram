@@ -4,7 +4,7 @@ import {
  SIZE,MAX_MONSTERS,MULTI_STORE,SHAPES,makeBoard,validateBoard,shapeHits,
  defaultShape,dist,selectedSpells,legalActions,manualActions,possibleTargets,replay,newHistory,
  addManual,nextTurn,undo
-} from "./multi-core.js?v=2.0";
+} from "./multi-core.js?v=2.1";
 import {geometryFor,inMask,profileCoverage,MASK_LABELS} from "./spell-zones.js?v=2.0";
 import {MULTI_CONTEXT_KEY,getMultiContext} from "./multi-build-link.js?v=2.1";
 
@@ -246,7 +246,11 @@ function paint(){
  }
  const turn=state.engine.turn,done=turn>settingsTurnCount||!state.monsters.some(m=>m.hp>0);
  const budget=turnActionPoints(state.settings,turn);
- $("build-label").textContent=build.character+" · "+build.name;
+ $("build-label").textContent=context.build.character+" · "+context.build.name;
+ $("linked-source").textContent="🔗 Build actif OMBRE · "+context.build.character+
+  " · "+basePA+" PA · "+sessionVariants.length+" variantes · "+
+  (context.settings.criticals?"critiques activés":"critiques désactivés")+
+  ". Les dégâts, buffs et résistances sont les mêmes paramètres que dans l'optimiseur principal.";
  $("turn-label").textContent="Tour "+Math.min(turn,settingsTurnCount)+" / "+settingsTurnCount+(done?" · terminé":"");
  $("pa-label").textContent=(done?0:state.engine.pa)+" / "+(done?basePA:budget)+" PA";
  $("pa-bar").style.width=done?"100%":Math.round((budget-state.engine.pa)/Math.max(1,budget)*100)+"%";
@@ -310,7 +314,7 @@ function requestPlan(){
  if(typeof Worker==="undefined"){$("status").textContent="Ce navigateur ne prend pas en charge le calcul en arrière-plan.";return;}
  const id=++requestNo;
  try{
-  worker=new Worker(new URL("./multi-worker.js?v=2.0",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./multi-worker.js?v=2.1",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==id)return;
    const data=e.data||{};
@@ -477,7 +481,12 @@ function bindEvents(){
    }
   }
  });
- if(new URLSearchParams(location.search).get("embedded")==="pip")$("pin").hidden=true;
+ const embedded=new URLSearchParams(location.search).get("embedded");
+ if(embedded==="pip"||embedded==="ombre"){
+  $("pin").hidden=true;
+  const standaloneLink=document.querySelector(".top-actions a");
+  if(standaloneLink)standaloneLink.hidden=true;
+ }
 }
 $("build").innerHTML=builds.map(b=>'<option value="'+html(b.id)+'">'+html(b.character+" · "+b.name)+'</option>').join("");
 bindEvents();
