@@ -1,7 +1,7 @@
 import {CLASSES} from "./classes.js?v=1.8";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
- teamMembers,createTeamContext
+ teamMembers,createTeamContext,cleanTeamMemberOptions,SACRIER_SUPPORT_SPELLS
 } from "./team-core.js?v=2.5";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
@@ -12,7 +12,7 @@ const readStore=()=>{
  try{const data=JSON.parse(localStorage.getItem(TEAM_STORAGE_KEY)||"null");return data&&typeof data==="object"?data:null;}
  catch{return null;}
 };
-const saveStore=(ids,target)=>{try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target}));}catch{}};
+const saveStore=(ids,target,memberOptions)=>{try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions}));}catch{}};
 
 export function mountTeamModule({getBuilds}){
  const root=document.getElementById("tab-team");
@@ -22,10 +22,13 @@ export function mountTeamModule({getBuilds}){
  let ids=Array.isArray(saved?.ids)?saved.ids.slice(0,TEAM_LIMIT):
   getBuilds().slice(0,2).map(b=>b.id);
  let target=cleanTeamTarget(saved?.target||defaultTeamTarget());
+ let memberOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
+  ?saved.memberOptions:{};
  let result=null,activeTurn=1,worker=null,job=0;
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
- const storeState=()=>saveStore(ids,target);
+ const storeState=()=>saveStore(ids,target,memberOptions);
+ const memberSettings=b=>cleanTeamMemberOptions(b,memberOptions[b.id]);
  const status=text=>{$("team-status").textContent=text;};
  function cancel(){
   job++;
@@ -39,17 +42,27 @@ export function mountTeamModule({getBuilds}){
   $("team-members").innerHTML=Array.from({length:TEAM_LIMIT},(_,i)=>{
    const b=roster[i];
    const cls=b?CLASSES[b.classId]:null;
+   const settings=b?memberSettings(b):null;
    const options=['<option value="">＋ Choisir un personnage</option>',...all.map(other=>
     '<option value="'+safe(other.id)+'"'+(b?.id===other.id?' selected':'')+
     (taken.has(other.id)&&b?.id!==other.id?' disabled':'')+'>'+
     safe(other.character+" — "+other.name)+'</option>')].join("");
+   const extra=b?'<div class="team-slot-options"><label>PA'+
+    '<input type="number" data-team-ap="'+safe(b.id)+'" min="6" max="20" step="1" value="'+settings.ap+'" aria-label="PA de '+safe(b.character)+'"></label>'+
+    (cls.id==="sacrieur"?
+      '<label>Buff équipé <select data-team-support="'+safe(b.id)+'" aria-label="Variante buff du Sacrieur">'+
+      SACRIER_SUPPORT_SPELLS.map(name=>'<option value="'+safe(name)+'"'+(name===settings.support?' selected':'')+'>'+safe(name)+'</option>').join("")+
+      '</select></label>'+
+      '<label class="team-slot-force"><input type="checkbox" data-team-force-buff="'+safe(b.id)+'"'+(settings.forceOpeningBuff?' checked':'')+
+      '> Buff au T1</label>':'')+
+    '</div>':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
     '<span class="team-slot-icon" aria-hidden="true">'+(cls?safe(cls.glyph):'＋')+'</span>'+
     '<div class="team-slot-body"><label for="team-pick-'+i+'">'+(b?safe(b.character):'Emplacement libre')+'</label>'+
     '<select id="team-pick-'+i+'" data-team-slot="'+i+'" aria-label="Personnage en position '+(i+1)+'">'+options+'</select>'+
     '<small>'+(b?(b.initiative===null?'Initiative non renseignée':fmt(b.initiative)+' initiative')+
-     ' · '+safe(cls.name)+' · '+safe(b.ap)+' PA':'Choisir parmi Personnages & builds')+'</small></div></article>';
+     ' · '+safe(cls.name)+' · '+safe(settings.ap)+' PA':'Choisir parmi Personnages & builds')+'</small>'+extra+'</div></article>';
   }).join("");
   $("team-count").textContent=roster.length+" / "+TEAM_LIMIT+" personnages";
  }
@@ -72,7 +85,10 @@ export function mountTeamModule({getBuilds}){
     '<span class="team-spell-chip">'+safe(s.name)+' <small>'+safe(s.pa)+' PA</small></span>').join(""):
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
-   ' · différés '+fmt(a.poison)+'</div></div>').join(""):
+   ' · différés '+fmt(a.poison)+
+   (activeTurn===1&&result.members.find(m=>m.id===a.id)?.forcedOpeningSpell?
+    ' · buff imposé : '+safe(result.members.find(m=>m.id===a.id).forcedOpeningSpell):'')+
+   '</div></div>').join(""):
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
   $("team-damage").innerHTML=present?
    '<div class="team-numbers"><div><small>Dégâts théoriques</small><strong>'+fmt(result.theoretical)+'</strong></div>'+
@@ -106,6 +122,22 @@ export function mountTeamModule({getBuilds}){
   ids=roster.filter(Boolean);storeState();cancel();result=null;activeTurn=1;render();
   status(ids.length?"Composition modifiée. Relance le calcul pour actualiser les recommandations.":"Ajoute au moins un personnage.");
  }
+ function changeMemberOption(id,field,value){
+  const build=getMembers().find(b=>b.id===id);
+  if(!build)return;
+  if(field==="ap"){
+   const pa=Number(value);
+   if(!Number.isInteger(pa)||pa<6||pa>20){
+    renderMembers();status("Choisis un nombre entier de PA entre 6 et 20.");return;
+   }
+   value=pa;
+  }
+  if(field==="support"&&(build.classId!=="sacrieur"||!SACRIER_SUPPORT_SPELLS.includes(value)))return;
+  if(field==="forceOpeningBuff"&&build.classId!=="sacrieur")return;
+  memberOptions={...memberOptions,[id]:{...memberOptions[id],[field]:value}};
+  storeState();cancel();result=null;activeTurn=1;renderMembers();renderResult();
+  status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
+ }
  function changeTarget(){
   target=cleanTeamTarget({
    hp:$("team-hp").value,turns:$("team-turns").value,criticals:$("team-critical").checked,
@@ -119,7 +151,7 @@ export function mountTeamModule({getBuilds}){
   if(!members.length){status("Ajoute au moins un personnage.");return;}
   cancel();
   if(typeof Worker==="undefined"){status("Le navigateur ne prend pas en charge les calculs en arrière-plan.");return;}
-  const contexts=members.map(b=>createTeamContext(b,target));
+  const contexts=members.map(b=>createTeamContext(b,target,memberOptions[b.id]));
   const currentJob=++job;
   $("team-calculate").disabled=true;
   status("Optimisation des rotations de "+members.length+" personnages…");
@@ -153,6 +185,12 @@ export function mountTeamModule({getBuilds}){
  root.addEventListener("change",event=>{
   const slot=event.target.closest("select[data-team-slot]");
   if(slot){changeSlot(Number(slot.dataset.teamSlot),slot.value);return;}
+  const pa=event.target.closest("input[data-team-ap]");
+  if(pa){changeMemberOption(pa.dataset.teamAp,"ap",pa.value);return;}
+  const support=event.target.closest("select[data-team-support]");
+  if(support){changeMemberOption(support.dataset.teamSupport,"support",support.value);return;}
+  const force=event.target.closest("input[data-team-force-buff]");
+  if(force){changeMemberOption(force.dataset.teamForceBuff,"forceOpeningBuff",force.checked);return;}
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);
@@ -178,7 +216,7 @@ export function mountTeamModule({getBuilds}){
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget(other.target);cancel();result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget(other.target);memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
