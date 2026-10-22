@@ -16,6 +16,23 @@ export const SACRIER_AIR_REFERENCE_STATS={
  lock:141,dodge:80,apRemoval:48,mpRemoval:38,apDodge:47,mpDodge:80,
  initiative:2272,heals:80,prospecting:171
 };
+/** Capture Sram Air Matryoshka, 22/10/2026 (rang Omega 60).
+ * Les stats sont celles du personnage en jeu. Ne pas les additionner une
+ * seconde fois aux dégâts de sorts déjà calculés sur DofusBook.
+ */
+export const SRAM_AIR_REFERENCE_STATS={
+ source:"capture-en-jeu-2026-10-22",
+ hitPoints:4065,actionPoints:12,movementPoints:5,rangeBonus:5,
+ strength:100,intelligence:2,chance:1,agility:1645,wisdom:430,
+ power:160,critical:17,summons:4,
+ flatDamage:{Neutre:0,Terre:0,Feu:0,Eau:0,Air:153},
+ criticalDamage:33,spellDamagePercent:0,
+ resistPercent:{Neutre:14,Terre:20,Feu:20,Eau:24,Air:27},
+ resistFixed:{Neutre:0,Terre:0,Feu:0,Eau:0,Air:0},
+ criticalResistance:32,pushResistance:43,
+ lock:141,dodge:159,apRemoval:46,mpRemoval:43,apDodge:49,mpDodge:93,
+ initiative:1748,heals:0,prospecting:207
+};
 const numericKeys=["hitPoints","actionPoints","movementPoints","rangeBonus",
  "strength","intelligence","chance","agility","wisdom","power","critical","summons",
  "criticalDamage","spellDamagePercent","criticalResistance","pushResistance",
