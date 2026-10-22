@@ -10,7 +10,6 @@ import {optimize,optimizeFromState,initialState,castSpell,eligible,cleanSettings
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
 export const RESIST_ELEMENTS=["Air","Terre","Feu","Eau","Neutre"];
-export const SACRIER_SUPPORT_SPELLS=["Mutilation","Pacte de Sang"];
 
 const clamp=(value,min,max,fallback)=>{
  const n=Number(value);
@@ -55,16 +54,9 @@ export function cleanTeamMemberOptions(build,raw={}){
   ?basePA:Number(options.ap);
  const ap=Number.isInteger(selectedPA)&&selectedPA>=6&&selectedPA<=20
   ?selectedPA:Number.isInteger(basePA)&&basePA>=6&&basePA<=20?basePA:12;
- const cls=CLASSES[build?.classId];
- const pairIndex=cls?.id==="sacrieur"
-  ?cls.pairs.findIndex(pair=>pair.includes("Pacte de Sang")):-1;
- const existing=pairIndex>=0?build?.variants?.[pairIndex]:null;
- const support=pairIndex>=0
-  ?SACRIER_SUPPORT_SPELLS.includes(options.support)?options.support:
-    SACRIER_SUPPORT_SPELLS.includes(existing)?existing:"Mutilation"
-  :null;
- return {ap,support,forceOpeningBuff:pairIndex>=0&&options.forceOpeningBuff===true,
-  refreshTimedBuffs:options.refreshTimedBuffs!==false};
+ // Old manually forced buff choices are no longer used in team calculations.
+ // Only a team-specific AP override survives; the build determines variants.
+ return {ap};
 }
 export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
@@ -72,10 +64,6 @@ export function createTeamContext(build,target,memberOptions={}){
  const input=cleanTeamTarget(target),calibration=build.calibration||{};
  const options=cleanTeamMemberOptions(build,memberOptions);
  const variants=[...(build.variants||cls.defaultVariants)];
- if(cls.id==="sacrieur"){
-  const supportIndex=cls.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
-  if(supportIndex>=0)variants[supportIndex]=options.support;
- }
  const spells=cls.spells.map(base=>{
   const s=JSON.parse(JSON.stringify(base));
   const edit=calibration[s.id];
@@ -94,22 +82,21 @@ export function createTeamContext(build,target,memberOptions={}){
   resistance:input.resistances.Air,resistanceTerre:input.resistances.Terre,
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
   resistanceNeutre:input.resistances.Neutre,
-  criticals:input.criticals,beamWidth:8,refreshTimedBuffs:options.refreshTimedBuffs,
+  criticals:input.criticals,beamWidth:8,refreshTimedBuffs:false,
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false
  });
  return {build:{id:build.id,character:build.character,name:build.name,
-  classId:build.classId,initiative:initiativeOf(build),ap:options.ap,
-  support:options.support,refreshTimedBuffs:options.refreshTimedBuffs},settings,spells,
-  forceOpeningSpell:options.forceOpeningBuff?options.support:null};
+  classId:build.classId,initiative:initiativeOf(build),ap:options.ap},settings,spells};
 }
 const round=n=>Math.round(n*10)/10;
 export function assembleTeamResult(results,target){
  const conf=cleanTeamTarget(target);
  const members=results.map(x=>({
   id:x.build.id,character:x.build.character,name:x.build.name,
-  initiative:x.build.initiative,ap:x.build.ap,support:x.build.support,
-  forcedOpeningSpell:x.forceOpeningSpell||null,estimated:round(x.result.total),
+  initiative:x.build.initiative,ap:x.build.ap,
+  strategy:x.strategy,strategiesTested:x.strategiesTested,
+  chosenOpening:x.chosenOpening||null,estimated:round(x.result.total),
   direct:round(x.result.immediate),poison:round(x.result.poison)
  }));
  const turns=[];
@@ -140,35 +127,76 @@ export function assembleTeamResult(results,target){
    "Les résistances sont prises en compte par élément. Les dégâts utilisent les valeurs du build calibrées dans OMBRE ; aucune caractéristique n'est ajoutée deux fois.",
    "Ordre par initiative enregistrée. Sans initiative connue, le personnage figure à la fin. Les égalités conservent l'ordre de sélection.",
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
-   "« Entretenir les buffs » réapplique les bonus offensifs précédemment utilisés après leur expiration, si les PA et les délais de relance le permettent. Cela ne garantit pas le meilleur DPS.",
-   "En mode automatique, un buff peut être ignoré par la recherche même s'il est équipé. L'option « Buff au T1 » l'impose au début du premier tour.",
+   "L'optimiseur compare la rotation libre, l'entretien des buffs expirés et les ouvertures avec les buffs disponibles, puis retient le scénario le plus dommageable parmi ceux testés.",
+   "Les variantes exclusives proviennent du build. La recherche reste heuristique : meilleur scénario testé, pas optimum mathématiquement garanti.",
    "Pièges non déclenchés automatiquement, carte/obstacles et Souffrance du Sacrieur non simulés. Optimum non garanti."],
   approximate:true};
+}
+/**
+ * Compare whole-rotation DPS, including the PA spent on each buff.
+ * The variant-equipped non-damaging offensive buffs are possible openers,
+ * but never mandatory: a normal no-maintenance rotation is always compared.
+ * The underlying search is beam-limited, so the result is best *tested*, not
+ * proof of the global optimum.
+ */
+const offensiveStats=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
+export function openingBuffCandidates(ctx){
+ const c=cleanSettings(ctx.settings),start=initialState(c);
+ return ctx.spells.filter(spell=>
+  spell.nonDirect&&spell.status?.buff&&
+  offensiveStats.has(spell.status.buff.stat)&&
+  Number(spell.status.buff.value)>0&&
+  Number(spell.status.buff.duration)>0&&
+  eligible(spell,start,c)
+ ).sort((a,b)=>{
+  const estimate=spell=>spell.status.buff.value*
+   Math.min(c.turns,spell.status.buff.duration)/Math.max(1,spell.pa);
+  return estimate(b)-estimate(a);
+ }).slice(0,2);
+}
+export function optimizeTeamMember(ctx,onProgress=()=>{}){
+ const config=cleanSettings({...ctx.settings,refreshTimedBuffs:false});
+ let trials=0;
+ let best=null;
+ const run=(strategy,settings,seed=null,chosenOpening=null)=>{
+  const label=chosenOpening?"Ouverture "+chosenOpening:strategy==="maintenance"?"Entretien des buffs":"Rotation libre";
+  const report=p=>onProgress({...p,scenario:label});
+  const result=seed?optimizeFromState(settings,ctx.spells,seed,report)
+   :optimize(settings,ctx.spells,report);
+  trials++;
+  if(!best||result.total>best.result.total+0.001)
+   best={result,strategy,chosenOpening};
+ };
+ run("libre",config);
+ // Refresh if a buff has been used during the optimization. Compare the
+ // full damage result before choosing this constrained maintenance strategy.
+ const maintained=cleanSettings({...config,refreshTimedBuffs:true});
+ if(config.turns>1 && ctx.spells.some(x=>x.status?.buff && offensiveStats.has(x.status.buff.stat)))
+  run("entretien",maintained);
+ for(const spell of openingBuffCandidates(ctx)){
+  // A buff already used in the first turn needs no forced-opening trial:
+  // the maintenance strategy evaluates its future refreshes.
+  if(best.result.turns[0]?.actions.some(a=>a.id===spell.id))continue;
+  const first=castSpell(initialState(maintained),spell,maintained);
+  run("ouverture",maintained,first,spell.name);
+ }
+ return {...best,strategiesTested:trials};
 }
 /** Run only in team-worker, never on the UI thread. */
 export function optimizeTeam(contexts,target,onProgress=()=>{}){
  if(!Array.isArray(contexts)||contexts.length<1||contexts.length>TEAM_LIMIT)
   throw Error("Sélectionne entre 1 et 8 builds.");
- const ids=new Set();
- const evaluated=[];
+ const ids=new Set(),evaluated=[];
  for(let i=0;i<contexts.length;i++){
   const ctx=contexts[i];
   if(!ctx?.build?.id||ids.has(ctx.build.id)||!Array.isArray(ctx.spells)||!ctx.settings)
    throw Error("Composition d'équipe invalide.");
   ids.add(ctx.build.id);
-  const report=progress=>onProgress({
+  const chosen=optimizeTeamMember(ctx,p=>onProgress({
    character:ctx.build.character,index:i+1,count:contexts.length,
-   turn:progress.turn,turns:ctx.settings.turns
-  });
-  let result;
-  if(ctx.forceOpeningSpell){
-   const forced=ctx.spells.find(spell=>spell.name===ctx.forceOpeningSpell);
-   const seed=initialState(ctx.settings);
-   if(!forced||!eligible(forced,seed,cleanSettings(ctx.settings)))
-    throw Error("Le buff imposé au tour 1 n'est pas disponible pour "+ctx.build.character+".");
-   result=optimizeFromState(ctx.settings,ctx.spells,castSpell(seed,forced,ctx.settings),report);
-  }else result=optimize(ctx.settings,ctx.spells,report);
-  evaluated.push({build:ctx.build,result,forceOpeningSpell:ctx.forceOpeningSpell||null});
+   turn:p.turn,turns:ctx.settings.turns,scenario:p.scenario
+  }));
+  evaluated.push({build:ctx.build,...chosen});
  }
  return assembleTeamResult(evaluated,target);
 }
