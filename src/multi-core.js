@@ -197,7 +197,7 @@ export function applyAction(original,spell,center,context){
    // is treated as the damage of ONE tick (not immediate damage).
    const amount=buffDamageFactor(before,spell,s.settings,e);
    e.dots=e.dots.filter(x=>x.id!==spell.id);
-   e.dots.push({id:spell.id,name:spell.name,amount:round(amount),left:pd.duration,phase:pd.phase});
+   e.dots.push({id:spell.id,name:spell.name,amount:round(amount),left:pd.duration,phase:pd.phase,generation:0});
   }else{
    // The native engine returns the baseline for a single target.
    // Extra targets in estimated AOE share its damage without inventing
@@ -224,9 +224,9 @@ export function finishTurn(original){
   if(m.hp<=0){m.dots=[];continue;}
   for(const dot of m.dots){
    poison+=applyHit(m,dot.amount);
-   if(dot.name==="Épidémie"&&m.hp>0){
+   if(dot.name==="Épidémie"&&m.hp>0&&(dot.generation||0)<2){
     for(const other of s.monsters)if(other.id!==m.id&&other.hp>0&&dist(m,other)<=2)
-     spread.push({id:other.id,dot:{...dot,left:1}});
+     spread.push({id:other.id,dot:{...dot,left:1,generation:(dot.generation||0)+1}});
    }
    dot.left-=1;
   }
