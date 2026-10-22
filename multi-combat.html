@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#151b2a">
+<title>OMBRE — Combat assisté multi-cibles (expérimental)</title>
+<link rel="stylesheet" href="./multi-combat.css?v=1.9">
+</head><body>
+<div class="multi-shell">
+<header class="multi-top">
+  <div><span class="eyebrow">OMBRE / NOUVEAU MODULE INDÉPENDANT</span><h1>⬡ Combat assisté <em>multi-cibles</em></h1><p>Grille de positions approximatives · choix des sorts · dégâts totaux sur plusieurs monstres</p></div>
+  <div class="top-actions"><button id="pin" title="Garder au premier plan (Chrome/Edge sur PC)">📌 Épingler</button><a href="./index.html" target="_blank" rel="noopener noreferrer">↗ Atelier principal</a></div>
+</header>
+<main class="multi-layout">
+<section class="panel config-panel">
+ <div class="heading"><h2>1. Construire la situation</h2><span class="muted">Grille fictive 9 × 9</span></div>
+ <label class="field">Personnage / build
+  <select id="build"></select>
+ </label>
+ <div class="options-row">
+  <label class="field">Monstres <input id="count" type="number" min="1" max="8" step="1" value="3"></label>
+  <label class="field">PV par monstre (approx.) <input id="hp" type="number" min="100" max="1000000" step="100" value="10000"></label>
+ </div>
+ <p class="muted">Clique sur les cases pour déplacer <strong>ton personnage bleu</strong> ou placer les <strong>monstres rouges</strong>. La grille ne reproduit pas les obstacles du jeu.</p>
+ <div class="toolset" role="group" aria-label="Modification de la grille">
+  <button data-tool="enemy" class="active" type="button">🔴 Placer monstre</button>
+  <button data-tool="hero" type="button">🔵 Personnage</button>
+  <button data-tool="erase" type="button">⌫ Effacer</button>
+  <button id="layout-reset" type="button">↺ Grille</button>
+ </div>
+ <div id="board" class="board" role="group" aria-label="Grille abstraite de combat"></div>
+ <div class="legend"><span>🔵 Toi</span><span>🔴 Monstre</span><span class="muted">Distance en cases, sans obstacles</span></div>
+ <div class="separator"></div>
+ <div class="options-row">
+  <label class="field">PA de base <input id="ap" type="number" min="6" max="20" step="1" value="12"></label>
+  <label class="field">Optimiser jusqu'au tour <select id="turns">
+   <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+   <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+   <option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+  </select></label>
+ </div>
+ <div class="options-row">
+  <label class="field">Forme de zone du sort <select id="shape-spell"></select></label>
+  <label class="field">Gabarit estimé <select id="shape">
+   <option value="single">Cible unique</option><option value="cross1">Croix 1 case</option>
+   <option value="square1">Carré 1 case</option><option value="circle2">Rayon 2 cases</option>
+   <option value="line2">Ligne 2 cases</option>
+  </select></label>
+ </div>
+ <p class="warning">⚠️ <strong>Zones personnalisables, non officielles.</strong> Les zones exactes, lignes de vue, obstacles, poussées, déplacements, propagation des poisons et pièges ne sont pas reproduits. Un point rouge = un ennemi supposé immobile. Vérifie en jeu les zones des sorts.</p>
+</section>
+<section class="panel combat-panel">
+ <div class="heading"><h2>2. Ton tour et les propositions</h2><span class="muted" id="build-label">—</span></div>
+ <div class="statusline">
+  <strong id="turn-label">Tour 1</strong>
+  <strong id="pa-label">12 / 12 PA</strong>
+ </div>
+ <div class="progress"><span id="pa-bar" style="width:0%"></span></div>
+ <div class="pa-adjust">
+  <label for="turn-ap">PA disponibles ce tour</label>
+  <button id="pa-minus" type="button">−</button>
+  <input id="turn-ap" type="number" min="1" max="30" step="1" value="12">
+  <button id="pa-plus" type="button">+</button>
+  <button id="pa-reset" type="button">↺ Base</button>
+ </div>
+ <div class="heading minor"><h3>Sorts que tu as joués</h3><button id="undo" type="button">↶ Annuler</button></div>
+ <div class="picked" id="picked">Aucun sort.</div>
+ <div class="suggestions">
+  <div class="heading minor"><h3>✦ Meilleure suite estimée</h3><button id="recompute" type="button">↻ Optimiser</button></div>
+  <p id="status" role="status" aria-live="polite">Place tes monstres, puis lance l'optimisation.</p>
+  <div id="recommendations" class="recommendations"></div>
+  <div class="heading minor"><h3>Dégâts par monstre (estimés)</h3><span class="muted">Sur l'horizon choisi</span></div>
+  <div id="damage-by-target" class="damage-by-target"></div>
+  <details><summary>Aperçu des tours suivants</summary><div id="future" class="future"></div></details>
+ </div>
+ <div class="heading minor"><h3>3. Sélectionner toi-même un sort</h3><span class="muted">Sorts des variantes équipées</span></div>
+ <p class="muted">Choisis un sort, puis clique sur un <strong>monstre rouge</strong> sur la grille pour le cibler. Les sorts personnels se lancent directement. Les sorts proposés peuvent aussi être cliqués.</p>
+ <input id="search" type="search" placeholder="Rechercher un sort…">
+ <div id="spells" class="spell-list"></div>
+ <div class="bottom-actions">
+  <button id="next-turn" class="primary" type="button">Tour suivant →</button>
+  <button id="restart" type="button">↺ Recommencer</button>
+ </div>
+ <p id="message" class="message" role="status" hidden></p>
+ <div class="disclaimer">Les dégâts proviennent des modèles DofusBook calibrés dans OMBRE, avec des effets et zones approximatifs. Cet outil ne calcule pas les lignes de vue exactes et ne remplace pas le Combat assisté monocible.</div>
+</section>
+</main>
+</div>
+<script type="module" src="./src/multi.js?v=1.9"></script>
+</body></html>
