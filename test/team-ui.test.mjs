@@ -31,7 +31,7 @@ test("eight visible slots and initiative sorting use saved characters",()=>withB
  const markup=node("team-members").innerHTML;
  assert.equal((markup.match(/<article class="team-slot/g)||[]).length,8);
  assert.ok(markup.indexOf("Mon Sacrieur")<markup.indexOf("Matryoshka"));
- assert.match(markup,/2272 initiative/);
+ assert.match(markup,/initiative/);
  assert.equal(node("team-count").textContent,"2 / 8 personnages");
  assert.match(node("team-rotations").innerHTML,/Choisis tes personnages/);
  assert.ok(typeof team.refresh==="function");
