@@ -32,10 +32,19 @@ export function contextFingerprint(context){
  return (h>>>0).toString(36);
 }
 export function emptyAssistHistory(context){return {fingerprint:contextFingerprint(context),finished:[],current:[],turnPA:{}};}
-export function readAssistHistory(storage,buildId,context){
+export function readAssistHistory(storage,buildId,context,onRecover=null){
  const saved=fetchMap(storage,ASSIST_HISTORY_STORE)[buildId];
  if(!saved||saved.fingerprint!==contextFingerprint(context))return emptyAssistHistory(context);
- return validateAssistHistory(saved,context.settings);
+ try{
+  const history=validateAssistHistory(saved,context.settings);
+  replayAssist(context,history); // also reject impossible spell sequences, not just malformed arrays
+  return history;
+ }catch(error){
+  // A broken session must not prevent OMBRE from opening. Only reset this build.
+  const history=resetAssistHistory(storage,buildId,context);
+  if(typeof onRecover==="function")onRecover(error);
+  return history;
+ }
 }
 export function writeAssistHistory(storage,buildId,history){
  const all=fetchMap(storage,ASSIST_HISTORY_STORE);
@@ -122,4 +131,8 @@ export function nextAssistTurn(context,history){
  replayAssist(context,h); // reject illegal history before commit
  return {...h,finished:[...h.finished,h.current],current:[]};
 }
-export function sameAssistHistory(a,b){return JSON.stringify([a.finished,a.current])===JSON.stringify([b.finished,b.current]);}
+const comparableHistory=h=>[h?.finished||[],h?.current||[],
+ Object.entries(h?.turnPA||{}).sort(([a],[b])=>Number(a)-Number(b))];
+export function sameAssistHistory(a,b){
+ return JSON.stringify(comparableHistory(a))===JSON.stringify(comparableHistory(b));
+}
