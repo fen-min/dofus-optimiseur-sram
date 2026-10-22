@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=1.8";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=2.9";
+} from "./team-core.js?v=3.0";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -43,6 +43,7 @@ export function mountTeamModule({getBuilds}){
   job++;
   if(worker){worker.terminate();worker=null;}
   $("team-calculate").disabled=false;
+  $("team-cancel").disabled=true;
  }
  function renderMembers(){
   const roster=getMembers(),all=getBuilds().filter(b=>CLASSES[b.classId]);
@@ -77,6 +78,10 @@ export function mountTeamModule({getBuilds}){
  function renderResult(){
   const present=!!result;
   const turn=result?.turns[activeTurn-1];
+  $("team-turn-select").disabled=!present;
+  $("team-turn-select").innerHTML=present?result.turns.map(t=>
+   '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+result.turns.length+'</option>').join(""):
+   '<option value="">Calcule d\'abord une rotation</option>';
   $("team-turn-buttons").innerHTML=present?result.turns.map(t=>
    '<button type="button" data-team-turn="'+t.number+'" class="'+(t.number===activeTurn?'is-current':'')+
    '" aria-pressed="'+(t.number===activeTurn)+'">Tour '+t.number+'</button>').join(""):"";
@@ -156,9 +161,10 @@ export function mountTeamModule({getBuilds}){
   const contexts=members.map(b=>createTeamContext(b,target,memberOptions[b.id]));
   const currentJob=++job;
   $("team-calculate").disabled=true;
-  status("Optimisation des rotations de "+members.length+" personnages…");
+  $("team-cancel").disabled=false;
+  status("Optimisation des rotations de "+members.length+" personnages sur "+target.turns+" tours…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=2.9",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.0",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -167,7 +173,7 @@ export function mountTeamModule({getBuilds}){
      status(p.character+" · "+(p.scenario||"Optimisation")+" · "+p.index+"/"+p.count+" · tour "+p.turn+"/"+p.turns);
     }
     if(data.type==="complete"||data.type==="error"){
-     worker?.terminate();worker=null;$("team-calculate").disabled=false;
+     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
      result=data.result;activeTurn=1;renderResult();
      status("Calcul terminé : "+fmt(result.theoretical)+" dégâts théoriques sur "+target.turns+" tour(s).");
@@ -175,12 +181,12 @@ export function mountTeamModule({getBuilds}){
    };
    worker.onerror=event=>{
     if(currentJob!==job)return;
-    worker?.terminate();worker=null;$("team-calculate").disabled=false;
+    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
     status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
    worker.postMessage({contexts,target});
   }catch(error){
-   worker?.terminate();worker=null;$("team-calculate").disabled=false;
+   worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
    status("Impossible de lancer le calcul : "+error.message);
   }
  }
@@ -192,6 +198,16 @@ export function mountTeamModule({getBuilds}){
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);
+ $("team-cancel").addEventListener("click",()=>{
+  if(!worker)return;
+  cancel();
+  status("Calcul interrompu. Tu peux relancer l’optimisation.");
+ });
+ $("team-turn-select").addEventListener("change",event=>{
+  const turn=Number(event.target.value);
+  if(!result||!Number.isInteger(turn)||turn<1||turn>result.turns.length)return;
+  activeTurn=turn;renderResult();
+ });
  $("team-turn-buttons").addEventListener("click",event=>{
   const button=event.target.closest("button[data-team-turn]");
   if(!button||!result)return;

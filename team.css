@@ -18,11 +18,19 @@
 .team-resistances{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
 .team-resistances label{text-align:center}
 .team-resistances input{text-align:center}
-.team-calculate{width:100%;margin-top:12px;padding:12px;background:#be8634;color:#160f0b;border:none;border-radius:11px;font-weight:850}
+.team-calc-actions{display:flex;align-items:stretch;gap:8px;margin-top:12px}
+.team-calculate{flex:1;width:auto;margin:0;padding:12px;background:#be8634;color:#160f0b;border:none;border-radius:11px;font-weight:850}
+.team-cancel{background:#2a2535;color:#f0d0cd;border:1px solid #655366;padding:8px 12px;border-radius:11px;font-weight:700}
+.team-cancel:disabled{opacity:.4;cursor:not-allowed}
+.team-cancel:not(:disabled):hover{border-color:#e99989}
 .team-calculate:hover{background:#edb758}
 .team-calculate:disabled{opacity:.55}
 .team-status{display:block;min-height:24px;margin:10px 0 0;color:#e2ceab;font-size:12px;overflow-wrap:anywhere}
-.team-turn-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.team-turn-buttons{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-top:10px;padding-bottom:8px;scrollbar-width:thin}
+.team-turn-buttons button{flex-shrink:0}
+.team-turn-navigation{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:12px;color:#c5cada}
+.team-turn-navigation select{min-width:125px;max-width:240px;background:#171c2b;color:#fff;border:1px solid #59506a;border-radius:8px;padding:6px 9px}
+.team-turn-navigation select:disabled{opacity:.6}
 .team-turn-buttons button{border:1px solid #5b5149;border-radius:8px;background:#24202b;padding:6px 10px;color:#d9d5da;font-size:11px}
 .team-turn-buttons button.is-current,.team-turn-buttons button:hover{border-color:#e5a02e;background:#513c26;color:#fff}
 .team-rotations{display:grid;gap:10px;max-height:600px;overflow:auto;min-width:0;margin-top:10px}

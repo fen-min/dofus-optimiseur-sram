@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=2.4">
-  <link rel="stylesheet" href="./team.css?v=2.8">
+  <link rel="stylesheet" href="./team.css?v=3.0">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -45,7 +45,7 @@
               <div id="team-settings" class="team-settings">
                 <div class="team-settings-row">
                   <label for="team-hp">PV de la cible<input id="team-hp" type="number" min="100" max="100000000" step="100" value="10000"></label>
-                  <label for="team-turns">Tours simulés (1–10)<input id="team-turns" type="number" min="1" max="10" step="1" value="3"></label>
+                  <label for="team-turns">Tours simulés (1–50)<input id="team-turns" type="number" min="1" max="50" step="1" value="3"></label>
                   <label class="team-critical" for="team-critical"><input id="team-critical" type="checkbox" checked> Inclure les critiques probables</label>
                 </div>
                 <div class="team-resistances">
@@ -56,8 +56,9 @@
                   <label for="team-res-Neutre">Rés. Neutre %<input id="team-res-Neutre" type="number" min="0" max="90" step="1" value="0"></label>
                 </div>
               </div>
-              <button id="team-calculate" class="team-calculate" type="button">⚡ Calculer le DPS de l'équipe</button>
+              <div class="team-calc-actions"><button id="team-calculate" class="team-calculate" type="button">⚡ Calculer le DPS de l'équipe</button><button id="team-cancel" class="team-cancel" type="button" disabled>Annuler</button></div>
               <p id="team-status" class="team-status" role="status" aria-live="polite"></p>
+              <div class="team-turn-navigation"><label for="team-turn-select">Afficher le tour</label><select id="team-turn-select" aria-label="Aller directement à un tour" disabled><option value="">Calcule d'abord une rotation</option></select></div>
               <nav id="team-turn-buttons" class="team-turn-buttons" aria-label="Sélection du tour"></nav>
               <div id="team-rotations" class="team-rotations" aria-live="polite"></div>
             </section>
@@ -274,6 +275,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=2.9"></script>
+  <script type="module" src="./src/app.js?v=3.0"></script>
 </body>
 </html>
