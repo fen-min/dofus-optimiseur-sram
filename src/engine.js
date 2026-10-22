@@ -20,6 +20,7 @@ export function cleanSettings(input={}){
  }
  c.beamWidth=clamp(c.beamWidth,8,80,24);c.resistance=clamp(c.resistance,0,90,0);
  c.resistances={Air:c.resistance,Terre:clamp(c.resistanceTerre,0,90,0),Feu:clamp(c.resistanceFeu,0,90,0),Eau:clamp(c.resistanceEau,0,90,0),Neutre:clamp(c.resistanceNeutre,0,90,0)};
+ c.refreshTimedBuffs=!!c.refreshTimedBuffs;
  c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
  c.triggerTraps=!!c.triggerTraps;c.triggerOnPush=!!c.triggerOnPush;c.comploteurContact=!!c.comploteurContact;
  c.variantPairs=Array.isArray(c.variantPairs)&&c.variantPairs.length===22?c.variantPairs:VARIANT_PAIRS;
@@ -269,6 +270,26 @@ function prune(states,width,c){
  const seen=new Map();for(const s of states){const k=signature(s);if(!seen.has(k)||s.total>seen.get(k).total)seen.set(k,s);}
  return [...seen.values()].sort((a,b)=>potential(b,c)-potential(a,c)).slice(0,width);
 }
+/**
+ * Optional team-only strategy: refresh offensive buffs previously cast by this actor.
+ * Recast only once the full buff expires and once eligible under PA/cooldown rules.
+ * Mono-character optimization behavior remains unchanged without the setting.
+ */
+export function refreshExpiredBuffs(seed,spells,settings={}){
+ const c=cleanSettings(settings);
+ if(!c.refreshTimedBuffs)return seed;
+ let state=seed;
+ const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
+ for(const spell of spells){
+  if(!spell.status?.buff||!offensive.has(spell.status.buff.stat))continue;
+  if(!state.turns.some(t=>t.actions.some(a=>a.id===spell.id)))continue;
+  if(state.buffs.some(b=>b.until>=state.turn&&(b.key===spell.name||b.key.startsWith(spell.name+":"))))continue;
+  if(!eligible(spell,state,c))continue;
+  state=castSpell(state,spell,c);
+  state.actions[state.actions.length-1].notes.push("Relance automatique : buff expiré");
+ }
+ return state;
+}
 export function optimizeFromState(input={},allSpells=SIM_SPELLS,seed=null,onProgress=null){
  const c=cleanSettings(input);
  const spells=allSpells.filter(x=>selected(x,c));
@@ -277,7 +298,7 @@ export function optimizeFromState(input={},allSpells=SIM_SPELLS,seed=null,onProg
  for(let turn=seed.turn;turn<=c.turns;turn++){
   const finished=[];
   for(const seed of beam){
-   let frontier=[seed];
+   let frontier=[refreshExpiredBuffs(seed,spells,c)];
    for(let step=0;step<Math.ceil(turnActionPoints(c,turn)/2)+1;step++){
     const grown=[];
     for(const current of frontier){
