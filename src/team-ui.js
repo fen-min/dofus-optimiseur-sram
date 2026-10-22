@@ -173,7 +173,7 @@ export function mountTeamModule({getBuilds}){
      status(p.character+" · "+(p.scenario||"Optimisation")+" · "+p.index+"/"+p.count+" · tour "+p.turn+"/"+p.turns);
     }
     if(data.type==="complete"||data.type==="error"){
-     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;$("team-cancel").disabled=true;$("team-cancel").disabled=true;
+     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
      result=data.result;activeTurn=1;renderResult();
      status("Calcul terminé : "+fmt(result.theoretical)+" dégâts théoriques sur "+target.turns+" tour(s).");
@@ -181,12 +181,12 @@ export function mountTeamModule({getBuilds}){
    };
    worker.onerror=event=>{
     if(currentJob!==job)return;
-    worker?.terminate();worker=null;$("team-calculate").disabled=false;
+    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
     status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
    worker.postMessage({contexts,target});
   }catch(error){
-   worker?.terminate();worker=null;$("team-calculate").disabled=false;
+   worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
    status("Impossible de lancer le calcul : "+error.message);
   }
  }
