@@ -98,6 +98,8 @@ function validCast(state,spell,center){
  if(spell.name==="Perfidie")return false; // variable cost by traps is not modeled
  // Traps are manual placements; automatic DPS never assumes a trigger.
  const geometry=geometryFor(spell,c.classId||"sram");
+ if(geometry.mode==="self"&&spell.perTarget&&
+    (e.used[spell.id]||0)>=spell.perTarget)return false;
  if(geometry.mode!=="self"){
   if(!center||!possibleTargets(state,spell).some(p=>p.x===center.x&&p.y===center.y))return false;
   const targets=affected(state,spell,center);
@@ -168,9 +170,14 @@ export function applyAction(original,spell,center,context){
  engineState.enemyDebuff={multiplier:1,expires:0};
  // Per-target limits are tracked separately while per-turn limits stay global.
  const priorUses=before.used[spell.id]||0;
- // Global number of casts and per-target caps are checked in validCast.
- // Never trick the original engine into ignoring its global cast limit.
- engineState.used[spell.id]=priorUses;
+ // The mono engine uses a single target and therefore counts a per-target
+ // cap globally. In multi mode we enforce that limit separately in
+ // state.targetUses; preserve the genuine max-per-turn limit globally.
+ // A spell with 2 casts per turn / 1 per target must still be able to
+ // hit a different monster on the second cast (e.g. Épidémie).
+ engineState.used[spell.id]=spell.perTarget
+  ?Math.min(priorUses,Math.max(0,spell.perTarget-1))
+  :priorUses;
  let result;
  try{result=castSpell(engineState,spell,forEngine);}
  catch(err){throw Error("Lancer non simulable : "+spell.name+" ("+err.message+")");}
