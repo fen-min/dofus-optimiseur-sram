@@ -18,7 +18,11 @@
 .team-resistances{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
 .team-resistances label{text-align:center}
 .team-resistances input{text-align:center}
-.team-calculate{width:100%;margin-top:12px;padding:12px;background:#be8634;color:#160f0b;border:none;border-radius:11px;font-weight:850}
+.team-calc-actions{display:flex;align-items:stretch;gap:8px;margin-top:12px}
+.team-calculate{flex:1;width:auto;margin:0;padding:12px;background:#be8634;color:#160f0b;border:none;border-radius:11px;font-weight:850}
+.team-cancel{background:#2a2535;color:#f0d0cd;border:1px solid #655366;padding:8px 12px;border-radius:11px;font-weight:700}
+.team-cancel:disabled{opacity:.4;cursor:not-allowed}
+.team-cancel:not(:disabled):hover{border-color:#e99989}
 .team-calculate:hover{background:#edb758}
 .team-calculate:disabled{opacity:.55}
 .team-status{display:block;min-height:24px;margin:10px 0 0;color:#e2ceab;font-size:12px;overflow-wrap:anywhere}
