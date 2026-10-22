@@ -21,7 +21,7 @@ export function defaultTeamTarget(){
 export function cleanTeamTarget(raw={}){
  const defaults=defaultTeamTarget(),r=raw&&typeof raw==="object"?raw:{};
  return {hp:Math.round(clamp(r.hp,100,100000000,defaults.hp)),
-  turns:Math.round(clamp(r.turns,1,10,defaults.turns)),
+  turns:Math.round(clamp(r.turns,1,50,defaults.turns)),
   criticals:r.criticals===undefined?true:!!r.criticals,
   resistances:Object.fromEntries(RESIST_ELEMENTS.map(element=>[
    element,Math.round(clamp(r.resistances?.[element],0,90,0))
@@ -77,7 +77,7 @@ export function createTeamContext(build,target,memberOptions={}){
   return s;
  });
  const settings=cleanSettings({...DEFAULT_SETTINGS,
-   classId:cls.id,ap:options.ap,turns:input.turns,distance:build.distance,
+   classId:cls.id,ap:options.ap,turns:input.turns,longHorizon:true,distance:build.distance,
   variantPairs:cls.pairs,variants,defaultVariants:cls.defaultVariants,
   resistance:input.resistances.Air,resistanceTerre:input.resistances.Terre,
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
