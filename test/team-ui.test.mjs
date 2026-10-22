@@ -110,3 +110,52 @@ test("legacy saved buff overrides are discarded while custom PA survives",()=>wi
  const persisted=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
  assert.deepEqual(persisted.memberOptions["sacri-air-pvm"],{ap:15});
 }));
+
+
+test("50-turn results expose direct turn navigation through the selector",()=>withBrowser(({root,node})=>{
+ const previousWorker=globalThis.Worker,previousURL=globalThis.URL;
+ const completed={
+  target:{hp:10000},theoretical:50,direct:50,poison:0,effective:50,averagePerTurn:1,overkill:0,
+  members:[{id:"sacri-air-pvm",character:"Mon Sacrieur",estimated:50}],
+  turns:Array.from({length:50},(_,index)=>({number:index+1,theoretical:1,remainingHp:10000-index-1,
+   actors:[{id:"sacri-air-pvm",character:"Mon Sacrieur",initiative:2272,actions:[],spent:0,direct:1,poison:0,damage:1}]})),
+  warnings:[]
+ };
+ class FakeWorker{
+  postMessage(){this.onmessage({data:{type:"complete",result:completed}});}
+  terminate(){}
+ }
+ globalThis.Worker=FakeWorker;
+ if(!globalThis.URL)globalThis.URL=class {constructor(p){this.href=p;}};
+ try{
+  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+  node("team-turns").value="50";
+  root.listeners.change({target:{closest(selector){return selector==="#team-settings"?{}:null;}}});
+  node("team-calculate").listeners.click();
+  assert.equal(node("team-turn-select").disabled,false);
+  assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,50);
+  node("team-turn-select").listeners.change({target:{value:"50"}});
+  assert.match(node("team-turn-buttons").innerHTML,/data-team-turn="50" class="is-current"/);
+  assert.match(node("team-damage").innerHTML,/9 950/);
+  assert.equal(node("team-cancel").disabled,true);
+ }finally{globalThis.Worker=previousWorker;globalThis.URL=previousURL;}
+}));
+test("long calculations can be cancelled without changing the selected builds",()=>withBrowser(({node,localStorage})=>{
+ const previousWorker=globalThis.Worker,previousURL=globalThis.URL;
+ let terminated=false;
+ class FakeWorker{postMessage(){} terminate(){terminated=true;}}
+ globalThis.Worker=FakeWorker;
+ if(!globalThis.URL)globalThis.URL=class {constructor(p){this.href=p;}};
+ try{
+  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+  node("team-calculate").listeners.click();
+  assert.equal(node("team-calculate").disabled,true);
+  assert.equal(node("team-cancel").disabled,false);
+  node("team-cancel").listeners.click();
+  assert.equal(terminated,true);
+  assert.equal(node("team-calculate").disabled,false);
+  assert.equal(node("team-cancel").disabled,true);
+  assert.match(node("team-status").textContent,/interrompu/);
+  assert.equal(node("team-count").textContent,"2 / 8 personnages");
+ }finally{globalThis.Worker=previousWorker;globalThis.URL=previousURL;}
+}));
