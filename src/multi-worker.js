@@ -1,4 +1,4 @@
-import {replay,optimizeMulti} from "./multi-core.js?v=1.9";
+import {replay,optimizeMulti} from "./multi-core.js?v=2.0";
 self.onmessage=event=>{
  try{
   const {context,board,history}=event.data||{};
