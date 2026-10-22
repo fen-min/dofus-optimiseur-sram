@@ -1,6 +1,7 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
+import {renderBuildCards} from "./build-cards.js?v=2.4";
 import {optimize} from "./engine.js?v=1.8";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
@@ -253,17 +254,7 @@ function detachCombatWindow(){
 }
 
 function renderBuilds(){
- const root=$("#build-cards");
- root.innerHTML=builds.map(b=>{
-  const cls=CLASSES[b.classId],active=b.id===current.id;
-  return '<article class="build-card '+(active?'is-active':'')+'"><div class="build-avatar" style="--card-accent:'+cls.color+'">'+cls.glyph+'</div>'+
-   '<div class="build-data"><span class="build-label">'+escapeHtml(cls.name)+' · '+escapeHtml(b.element)+' · Niv. '+b.level+'</span>'+
-   '<h3>'+escapeHtml(b.character)+'</h3><p>'+escapeHtml(b.name)+'</p>'+
-   '<small>'+b.ap+' PA · '+b.turns+' tours · '+b.variants.length+' variantes sélectionnées</small></div>'+
-   '<div class="build-card-actions"><button type="button" data-open-build="'+escapeHtml(b.id)+'">'+(active?'Actif ✓':'Sélectionner')+'</button>'+
-   '<button type="button" data-clone-build="'+escapeHtml(b.id)+'" aria-label="Dupliquer le build">⧉</button>'+
-   '<button type="button" data-rename-build="'+escapeHtml(b.id)+'">Renommer</button></div></article>';
- }).join("");
+ $("#build-cards").innerHTML=renderBuildCards(builds,current.id,CLASSES);
 }
 
 function renderCharacterStats(){
