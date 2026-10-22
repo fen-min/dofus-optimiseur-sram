@@ -2,7 +2,7 @@ import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
-import {mountTeamModule} from "./team-ui.js?v=2.6";
+import {mountTeamModule} from "./team-ui.js?v=2.7";
 import {optimize} from "./engine.js?v=1.8";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
