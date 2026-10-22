@@ -78,7 +78,8 @@ export function mountTeamModule({getBuilds}){
    '<div class="team-numbers"><div><small>Dégâts théoriques</small><strong>'+fmt(result.theoretical)+'</strong></div>'+
    '<div><small>Dégâts directs</small><strong>'+fmt(result.direct)+'</strong></div>'+
    '<div><small>Poison / différés</small><strong>'+fmt(result.poison)+'</strong></div>'+
-   '<div><small>Dégâts limités aux PV</small><strong>'+fmt(result.effective)+'</strong></div></div>'+
+   '<div><small>Dégâts limités aux PV</small><strong>'+fmt(result.effective)+'</strong></div>'+
+   '<div><small>Moyenne / tour</small><strong>'+fmt(result.averagePerTurn)+'</strong></div></div>'+
    '<div class="team-target-life"><div><span>PV de la cible</span><strong>'+fmt(turn.remainingHp)+' / '+fmt(result.target.hp)+'</strong></div>'+
     '<meter min="0" max="'+result.target.hp+'" value="'+turn.remainingHp+'">'+fmt(turn.remainingHp)+'</meter>'+
    '</div><div class="team-contributions"><h3>Contribution par personnage</h3>'+
