@@ -1,6 +1,8 @@
-/** Référentiel d'effets en jeu : 44 Sacrieur, 44 Sram. Vérification au 21/10/2026.
- * Un effet décrit n'est pas forcément simulé ; attention aux différences de rang.
- * Source principale : https://openddb.dev/spells */
+/** Référentiel d'effets de classe : 44 Sram + 44 Sacrieur.
+ * Mise à jour Sram : 22 octobre 2026, OpenDofusDB 3.7.12.12
+ * Une description répertoriée ne signifie pas que le moteur reproduit cet effet.
+ * Les liens vers la page classe sont utilisés lorsqu'une URL précise n'a pas été vérifiée.
+ */
 export const SPELL_EFFECTS_AUDIT = {
   "sacrieur": {
     "Supplice": {
@@ -402,268 +404,488 @@ export const SPELL_EFFECTS_AUDIT = {
   },
   "sram": {
     "Truanderie": {
-      "description": "Vol de Puissance sur ennemi ; dégâts Terre ; bonus de Puissance au lanceur.",
+      "description": "Rang 3 : vole 80 Puissance pendant 3 tours et inflige des dommages Terre. La cible perd la Puissance volée.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12902-truanderie",
+      "simulation": "+80 Puissance simulé au rang 3 ; vol à l’ennemi absent",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Chausse-trappe": {
-      "description": "Dégâts Terre renforcés pour chaque piège déclenché ; charges dépensées au lancer.",
+      "description": "Dommages Terre renforcés par les pièges déclenchés (+8 dégâts de base par charge au rang supérieur). Charges consommées au lancer.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Sournoiserie": {
-      "description": "Dégâts Feu et repousse de 3 cases.",
+      "description": "Dommages Feu et repousse la cible de 3 cases ; lancer en ligne.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Coupe-gorge": {
-      "description": "Dégâts Feu et augmentation des dommages subis par la cible.",
+      "description": "Dommages Feu puis augmentation des dommages subis par la cible (jusqu’à x110 % au rang supérieur).",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "vulnérabilité simulée de manière simplifiée, durée/cible à vérifier",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Arsenic": {
-      "description": "Poison Air de début de tour ; retrait de Portée.",
+      "description": "Poison Air au début du tour de la cible, avec retrait de Portée. Lancer en ligne et effet différé.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "poison différé simulé ; retrait de PO absent",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Toxines": {
-      "description": "Poison Air de fin de tour ; dégâts de base cumulables (5) et réapplication sur activation de piège une fois par tour.",
+      "description": "Poison Air de fin de tour. Si la cible subit des dégâts de piège pendant le poison, celui-ci est réappliqué et gagne jusqu’à 5 charges (+6 dégâts de base par charge au rang 2), une fois par tour.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "poison différé simulé ; croissance et réapplications sur pièges encore approximatives",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Cruauté": {
-      "description": "Dégâts Eau en zone et gain de PM.",
+      "description": "Dommages Eau en zone et +1 PM au lanceur, dans les limites de cumul du sort.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Poisse": {
-      "description": "Vol de vie Eau ; minimise les dégâts aléatoires, soigne les alliés et impose un état limitant la minimisation.",
+      "description": "Vol de vie Eau ; minimise les effets aléatoires de la cible, applique l’état Poisse. Les soins au lanceur ne sont pas simulés.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Invisibilité": {
-      "description": "Invisibilité de la cible, gain de PM sur allié ; relance réinitialisée après avoir achevé une cible.",
+      "description": "Rend invisible ; +2 PM si cible alliée. Relance globale. Quand elle prend fin, le passif L’Ombre de Sram peut donner +15 % Critique au lanceur.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "invisibilité simplifiée ; passif +15 % Critique non simulé",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Brume": {
-      "description": "Glyphe-aura cachant des alliés, réduisant la Portée des ennemis ; recharge raccourcie sur coup fatal.",
+      "description": "Pose un glyphe-aura qui rend les alliés invisibles et retire de la Portée aux ennemis (−4 PO au rang 2). Relance diminuée après un coup fatal.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "aura, perte de Portée et passif de coup fatal non simulés",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Double": {
-      "description": "Double contrôlable ; meurt à la fin de son deuxième tour, échange de place et donne des PM.",
+      "description": "Invoque un double contrôlable ; à sa mort (fin de son 2e tour) échange de place avec le Sram et lui donne +2 PM.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "invocation simplifiée ; échange de place, PM et IA absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Comploteur": {
-      "description": "Double contrôlable ; meurt au troisième tour et inflige dégâts de contact dans le meilleur élément, renforcés par les pièges déclenchés.",
+      "description": "Invoque un double contrôlable, qui inflige des dégâts dans le meilleur élément à son contact à la fin de son 3e tour ; +8 dégâts de base par piège déclenché depuis son invocation.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "dégâts si contact supposé ; invocation et position absentes",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Sournois": {
-      "description": "Piège Feu avec attirance en zone au déclenchement.",
+      "description": "Piège Feu qui attire les entités vers son centre en zone au déclenchement.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12906-piege-sournois",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Guet-apens": {
-      "description": "Vol de vie Eau ; attire cible vers soi ou Double et applique un soin sur les attaquants.",
+      "description": "Vol de vie Eau et attirance de 2 cases, éventuellement depuis le Double. OpenDofusDB indique actuellement soin sur l’attaquant : 0 % (et non 25 %).",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12939-guet-apens",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Fangeux": {
-      "description": "Piège Eau avec retrait de PM.",
+      "description": "Piège Eau avec retrait de PM dans la zone du piège.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12916-piege-fangeux",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Épidémie": {
-      "description": "Poison Air de fin de tour propagé aux ennemis proches ; le Sram et son Double peuvent relayer la propagation.",
+      "description": "Poison Air de fin de tour et état de propagation aux ennemis voisins ; peut se propager via le Sram et son Double, sauf invocations statiques.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "poison monocible simplifié ; propagation multi-cible absente",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Funeste": {
-      "description": "Piège Terre renforcé selon le nombre d'ennemis autour du piège.",
+      "description": "Piège Terre augmenté selon le nombre d’ennemis autour du piège avant son déclenchement.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12948-piege-funeste",
+      "simulation": "bonus selon les ennemis autour du piège non simulé",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Effraction": {
-      "description": "Dégâts Feu et transfert de résistances aux poussées.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Dommages Feu ; vole 30 résistances Poussée à la cible et les octroie au Sram.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Répulsif": {
-      "description": "Piège Air qui repousse les entités depuis son centre.",
+      "description": "Piège Air repoussant les entités depuis son centre de 2 cases.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12914-piege-repulsif",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Effroyable": {
-      "description": "Piège de contrôle/peur : conditions exactes à approfondir.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Piège Terre mono-cellule ; dommages Terre aux ennemis et repousse les entités de 2 cases depuis le centre. Deux lancers par tour.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège d'Immobilisation": {
-      "description": "Piège qui retire les PM aux ennemis de la zone.",
+      "description": "Piège de zone qui retire jusqu’à 4 PM au dernier rang ; relance 4 tours.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12910-piege-d-immobilisation",
+      "simulation": "relance suivie ; retrait de PM et zone absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Fosse Commune": {
-      "description": "Piège de contrôle : effets précis à approfondir.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Piège mono-cellule appliquant l’état Pesanteur aux entités de la zone, alliés compris ; relance 3 tours.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "relance suivie ; état Pesanteur et zone absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Extorsion": {
-      "description": "Vol de Force et de vie Terre.",
+      "description": "Rang 3 : vole 100 Force pendant 3 tours et vole de la vie en Terre.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12938-extorsion",
+      "simulation": "+100 Force simulée ; soins et retrait adverse absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Perquisition": {
-      "description": "Dégâts Feu et repousse la cible.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Dommages Feu et repousse la cible de 2 cases ; si le Double est présent, la poussée peut partir de lui.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Arnaque": {
-      "description": "Vol de 40 Agilité sur 3 tours ; vol de vie Air.",
+      "description": "Rang 3 : vole de l’Agilité (100 au rang 3 selon le guide 3.7) et vole de la vie dans l’élément Air.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12911-arnaque",
+      "simulation": "+100 Agilité (vol) appliquée au lanceur dans le modèle ; soins et retrait chez la cible absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Larcin": {
-      "description": "Érosion en zone et dégâts Eau.",
+      "description": "Dommages Eau en zone et 13 % Érosion, sans affecter le lanceur.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Pillage": {
-      "description": "Vol de Chance et de vie Eau.",
+      "description": "Rang 3 : vole 100 Chance et vole de la vie Eau.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "+100 Chance simulée ; soins et retrait adverse absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Attaque Mortelle": {
-      "description": "Dégâts Terre plus élevés si la cible a moins de 50 % de ses PV.",
+      "description": "Dommages Terre renforcés lorsque la cible a moins de 50 % de ses PV.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Fourberie": {
-      "description": "Vol d'Intelligence et vol de vie Feu en zone.",
+      "description": "Rang 3 : vol de 100 Intelligence et vol de vie Feu dans un anneau de zone.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "+100 Intelligence simulée ; vol de vie et zone absents",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Injection Toxique": {
-      "description": "-1 PM, poison Air de début de tour ; relance raccourcie pour chaque piège déclenché.",
+      "description": "Retire 1 PM et applique un poison Air de début de tour. Relance raccourcie à chaque piège déclenché du lanceur.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Peur": {
-      "description": "Repousse une cible ; dégâts de poussée/obstacles non intégrés.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Repousse une cible jusqu’à la case visée (pas toujours 2 cases) ; nécessite le placement exact.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "placement réduit à une approximation de distance, pas de grille",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Méprise": {
-      "description": "Échange de positions/placement : conditions exactes à approfondir.",
-      "checked": false,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "description": "Échange de place avec la cible, ou entre la cible et le Double si présent ; dissipe l’invisibilité.",
+      "checked": true,
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "échange de cases et interaction du Double non simulés",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège de Dérive": {
-      "description": "Piège Feu qui repousse depuis son centre.",
+      "description": "Piège Feu de zone, repousse les entités de 2 cases.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12942-piege-de-derive",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Insidieux": {
-      "description": "Piège Air : poison Air de fin de tour et attirance en zone.",
+      "description": "Piège Air infligeant des dommages Air, appliquant un poison Air de fin de tour et attirant vers le centre.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12918-piege-insidieux",
+      "simulation": "placement et poison conditionnel au piège approximatifs",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Scélérat": {
-      "description": "Piège Eau mono-cellule : attire vers le centre et inflige dégâts en zone.",
+      "description": "Piège Eau mono-cellule, attirance vers le centre et dommages Eau en zone.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12931-piege-scelerat",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège à Fragmentation": {
-      "description": "Piège Feu de zone à plusieurs anneaux ; dommages variables selon la distance.",
+      "description": "Piège Feu multi-anneaux : dégâts différents selon la distance au centre, peut affecter des alliés.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "zones et distances des anneaux non simulées",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Concentration de Chakra": {
-      "description": "État déclenché par les dégâts de pièges ; vole de la vie dans le meilleur élément ; dévoile le lanceur.",
+      "description": "Place un effet sur une cible : chaque piège qui l’affecte déclenche un vol de vie dans le meilleur élément. Dissipe l’invisibilité.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "vol de vie proxy lors d’un déclenchement ; pas de modèle de cible",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Manigance": {
-      "description": "Vol de Fuite et de Dommages contre un ennemi, bonus de Fuite et Dommages sur soi ou allié.",
+      "description": "Vole Fuite et Dommages à un ennemi ; accorde des bonus de Fuite et Dommages sur allié / lanceur.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "bonus Dommages approximé sur soi ; vol de Fuite et ciblage non simulés",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Piège Mortel": {
-      "description": "Piège Terre plus puissant sur cibles sous 50 % PV.",
+      "description": "Piège Terre ; dégâts accrus contre une cible sous 50 % PV.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12921-piege-mortel",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Calamité": {
-      "description": "Piège Eau en zone avec vol de Fuite.",
+      "description": "Piège Eau de zone qui vole la Fuite des ennemis dans la zone.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12950-calamite",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Fourvoiement": {
-      "description": "Dégâts Air en zone et Érosion.",
+      "description": "Dommages Air en zone avec Érosion sur les cibles.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Perfidie": {
-      "description": "Dégâts Terre, coût en PA réduit par piège déclenché ; charges dépensées.",
+      "description": "Dommages Terre, coût diminué de 1 PA par piège déclenché (maximum 4, minimum 2 PA). Charges dépensées au lancer.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/spells/12949-perfidie",
+      "simulation": "réduction des PA selon pièges déclenchés modélisée, placements non simulés",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Dérobade": {
-      "description": "Réduction des dégâts subis, Intaclable ; recul sans dégâts et gain de PM déclenchés sur attaque ennemie.",
+      "description": "Réduit les dégâts subis par l’allié ciblé, le rend Intaclable ; lorsqu’il est attaqué, le repousse et lui donne des PM (effet réactif).",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "Dégâts directs ou effets du sort partiellement simulés ; placements, zones, vol de vie et états non garantis",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     },
     "Marque Mortuaire": {
-      "description": "Érosion et augmentation des dégâts subis selon les pièges déclenchés ; dévoile le Sram.",
+      "description": "Applique Érosion et dégâts reçus augmentés selon les pièges déclenchés, jusqu’à x110 % et 30 % Érosion à 5 charges. Dissipe l’invisibilité.",
       "checked": true,
-      "source": "https://dofus-grimoire.fr/classes/sram/",
-      "simulation": "partielle"
+      "source": "https://openddb.dev/classes/4-sram",
+      "simulation": "vulnérabilité initiale simplifiée ; paliers, érosion et réinitialisation d’invisibilité incomplets",
+      "additionalSource": "https://dofus-grimoire.fr/classes/sram/",
+      "sourceClass": "OpenDofusDB / DOFUS 3.7.12.12 ; rang supérieur recoupé avec Dofus Grimoire",
+      "sourceRank": "Description des effets au dernier rang pour les nombres précisés ; contrôle du sort en jeu recommandé",
+      "verified": "Relecture des effets généraux au 22/10/2026 ; vérification exhaustive des conditions et déclenchements en jeu non effectuée",
+      "verificationDate": "2026-10-22"
     }
   }
 };
