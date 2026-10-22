@@ -71,7 +71,9 @@ function loadBuild(id){
   ?num(snapshot?.turns,1,10,context.settings.turns)
   :context.settings.turns;
  basePA=context.settings.ap;
- if(history.finished.length>=settingsTurnCount){
+ // A finished combat (exactly N completed turns) must remain visible after
+ // reload; only a history longer than the selected horizon is invalid.
+ if(history.finished.length>settingsTurnCount){
   history=newHistory();
  }
  selectedSpell=null;movingMonster=null;tool="enemy";lastResult=null;
