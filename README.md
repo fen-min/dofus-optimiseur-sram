@@ -236,3 +236,21 @@ Dans **⚡ Combat assisté**, juste sous le compteur du tour, le champ **PA disp
 **Technique :** `turnActionPoints(settings,turn)` contrôle les PA au début de chaque tour, le comptage des PA dépensés et la recherche. `setAssistTurnPA()` valide et sauvegarde la modification, et `replayAssist()` rejoue l'historique avec les budgets spécifiques. Le nouveau champ de l'historique n'affecte pas l'identité du build ni la migration des anciennes sessions.
 
 Test ajouté : `test/assist-pa.test.mjs`. Les limites de simulation des mécaniques DOFUS restent inchangées.
+
+## v1.8 — Matryoshka, Sram Air : caractéristiques et audit des 44 sorts (22 octobre 2026)
+
+Le build Sram de référence est renommé **Matryoshka** (si le nom existant était encore « Mon Sram ») et récupère les caractéristiques de la capture : **4 065 PV, 12 PA, 5 PM, 5 de Portée, 1 645 Agilité, 160 Puissance, +17 Critique, +153 dommages Air, +33 dommages critiques et 430 Sagesse**. Toutes les autres résistances et statistiques secondaires de la capture sont stockées dans `src/character-stats.js`.
+
+Les **22 variantes activées** visibles avec le fond clair sur la capture ont été consignées dans `SRAM_SCREENSHOT_VARIANTS` dans `src/sim-spells.js`. Le build de référence utilise cette sélection ; seule une ancienne sélection DofusBook inchangée est migrée automatiquement. Les variantes déjà personnalisées ne sont jamais remplacées. Les autres builds Sram sont indépendants.
+
+### 44 effets de sorts relus
+
+Voir [l'audit complet](./SRAM_OPENDB_AUDIT_2026-10-22.md) : **44 descriptions Sram**, avec 15 liens individuels confirmés vers OpenDofusDB et la page classe OpenDofusDB pour les 29 autres. Source secondaire : guide Dofus Grimoire 3.7. Chaque fiche indique aussi ce que le calculateur sait réellement simuler.
+
+Corrections principales : **Arnaque (+100 Agilité), Extorsion (+100 Force), Pillage (+100 Chance), Fourberie (+100 Intelligence)** au dernier rang à la place des anciens buffs +40. Détails revus notamment pour Toxines, Guet-apens, Méprise, Fosse Commune, Piège Effroyable et Perquisition.
+
+**Limite importante :** ces quatre vols de caractéristiques sont représentés comme buffs offensifs du lanceur, mais le vol adverse et les PV soignés ne sont pas pris en compte. La progression de Toxines sur déclenchement de pièges reste partiellement approximative ; le passif de fin d'Invisibilité, les déplacements, les réseaux et zones restent non fiables sans carte. Il ne faut pas considérer 44 fiches relues comme 44 simulations mécaniques exactes.
+
+**Calculs :** les statistiques du personnage NE sont PAS réappliquées sur les dégâts DofusBook déjà pré-calculés (évite le double comptage). Le moteur conserve son modèle de critique approximatif en attendant un calcul depuis les dégâts de base réels de chaque sort, du rang et de l'équipement.
+
+Tests : `test/character-stats.test.mjs`, `test/sram-2026-10-22.test.mjs` et `test/spell-effects-audit.test.mjs`.
