@@ -29,7 +29,7 @@ function withBrowser(run){
 test("eight visible slots and initiative sorting use saved characters",()=>withBrowser(({node})=>{
  const team=mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  const markup=node("team-members").innerHTML;
- assert.equal((markup.match(/class="team-slot/g)||[]).length,8);
+ assert.equal((markup.match(/<article class="team-slot/g)||[]).length,8);
  assert.ok(markup.indexOf("Mon Sacrieur")<markup.indexOf("Matryoshka"));
  assert.match(markup,/2272 initiative/);
  assert.equal(node("team-count").textContent,"2 / 8 personnages");
