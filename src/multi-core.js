@@ -105,6 +105,21 @@ function validCast(state,spell,center){
  }
  return true;
 }
+/** Every chosen spell may be inspected and cast manually.
+ * Automatic optimization still excludes traps and free-cell summons:
+ * a hypothetical enemy movement must not count as guaranteed damage.
+ */
+export function manualActions(state,context){
+ const actions=[];
+ for(const spell of selectedSpells(context)){
+  const shape=geometryFor(spell,state.settings.classId||"sram");
+  for(const center of possibleTargets(state,spell)){
+   if(validCast(state,spell,center))
+    actions.push({spell,center,targets:center?affected(state,spell,center).map(e=>e.id):[],shape});
+  }
+ }
+ return actions;
+}
 export function legalActions(state,context){
  const moves=[];
  for(const spell of selectedSpells(context)){
@@ -125,7 +140,7 @@ export function legalActions(state,context){
    seen.add(hash);
    const hits=geometryFor(spell,state.settings.classId||"sram").mode==="self"?[]:affected(state,spell,center);
    moves.push({spell,center,targets:hits.map(t=>t.id)});
-   if(moves.length>=85)break;
+   if(seen.size>=10)break; // enough geometrically distinct aim points per spell
   }
  }
  return moves;
