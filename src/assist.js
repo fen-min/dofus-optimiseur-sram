@@ -3,7 +3,7 @@ import {
  getAssistContext,readAssistHistory,writeAssistHistory,resetAssistHistory,
  replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,setAssistTurnPA,
  contextFingerprint,escaped
-} from "./assist-core.js?v=1.7";
+} from "./assist-core.js?v=1.8";
 import {canPinAssist,openAssistPin,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 
 const root=document.getElementById("assist-root");
@@ -145,7 +145,7 @@ function plan(){
   return;
  }
  try{
-  worker=new Worker(new URL("./assist-worker.js?v=1.7",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./assist-worker.js?v=1.8",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==request)return;
    const data=e.data||{};
