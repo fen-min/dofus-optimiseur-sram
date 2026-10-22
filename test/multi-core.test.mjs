@@ -124,3 +124,51 @@ test("Manual trap casts are possible on free cells without inventing immediate h
  assert.equal(out.engine.pa,10);
  assert.ok(!legalActions(makeState(c,b),c).some(a=>a.spell.name===trap.name));
 });
+
+test("Épidémie can be cast on two DIFFERENT monsters even with 1 cast per target",()=>{
+ const c=conf(),b={hero:{x:3,y:4},monsters:[
+  {id:"m1",x:5,y:4,hp:10000},{id:"m2",x:6,y:4,hp:10000}
+ ],shapes:{}};
+ const spell=c.spells.find(s=>s.name==="Épidémie");
+ let state=makeState(c,b);
+ state=applyAction(state,spell,{x:5,y:4},c);
+ assert.ok(manualActions(state,c).some(a=>a.spell.name==="Épidémie"&&a.center.x===6));
+ assert.equal(manualActions(state,c).some(a=>a.spell.name==="Épidémie"&&a.center.x===5),false);
+ state=applyAction(state,spell,{x:6,y:4},c);
+ assert.equal(state.engine.used[spell.id],2);
+ assert.equal(state.engine.pa,4);
+ assert.deepEqual(state.monsters.map(m=>m.dots.filter(d=>d.name==="Épidémie").length),[1,1]);
+ assert.ok(!manualActions(state,c).some(a=>a.spell.name==="Épidémie"));
+});
+test("A spell with two casts per enemy and three per turn can hit a new enemy on cast three",()=>{
+ const c=conf(),b={hero:{x:3,y:4},monsters:[
+  {id:"m1",x:4,y:4,hp:10000},{id:"m2",x:5,y:4,hp:10000}
+ ],shapes:{}};
+ const spell=c.spells.find(s=>s.name==="Truanderie");
+ let state=makeState(c,b);
+ state=applyAction(state,spell,{x:4,y:4},c);
+ state=applyAction(state,spell,{x:4,y:4},c);
+ assert.ok(!manualActions(state,c).some(a=>a.spell.name==="Truanderie"&&a.center.x===4));
+ assert.ok(manualActions(state,c).some(a=>a.spell.name==="Truanderie"&&a.center.x===5));
+ state=applyAction(state,spell,{x:5,y:4},c);
+ assert.equal(state.engine.used[spell.id],3);
+ assert.equal(state.engine.pa,3);
+});
+test("Vulnerability belongs to a MONSTER and expires after its turn",()=>{
+ const c=conf(),b={hero:{x:3,y:4},monsters:[
+  {id:"m1",x:4,y:4,hp:10000},{id:"m2",x:5,y:4,hp:10000}
+ ],shapes:{}};
+ const vulnerableSpell=c.spells.find(s=>s.name==="Coupe-gorge");
+ const hitSpell=c.spells.find(s=>s.name==="Arnaque");
+ let state=makeState(c,b);
+ state=applyAction(state,vulnerableSpell,{x:4,y:4},c);
+ assert.equal(state.monsters[0].enemyDebuff.multiplier,1.1);
+ assert.equal(state.monsters[1].enemyDebuff.multiplier,1);
+ const onM1=applyAction(state,hitSpell,{x:4,y:4},c);
+ const onM2=applyAction(state,hitSpell,{x:5,y:4},c);
+ const extraM1=onM1.monsters[0].damage-state.monsters[0].damage;
+ const extraM2=onM2.monsters[1].damage-state.monsters[1].damage;
+ assert.ok(extraM1>extraM2*1.09);
+ const next=finishTurn(state);
+ assert.equal(next.monsters[0].enemyDebuff.multiplier,1);
+});
