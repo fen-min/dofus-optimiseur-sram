@@ -9,10 +9,10 @@ export const DEFAULT_VARIANTS=[
 "Piège Scélérat","Manigance","Piège Mortel","Fourvoiement","Marque Mortuaire"
 ];
 const EXTRA={
-"Arnaque":{buff:{stat:"Air",value:40,duration:3,stacks:2},target:"enemy"},
-"Extorsion":{buff:{stat:"Terre",value:40,duration:3,stacks:2}},
-"Pillage":{buff:{stat:"Eau",value:40,duration:3,stacks:2}},
-"Fourberie":{buff:{stat:"Feu",value:40,duration:3,stacks:2}},
+"Arnaque":{buff:{stat:"Air",value:100,duration:3,stacks:2},target:"enemy",utility:"Rang 3 : vole 100 Agilité. Vol de vie et retrait de caractéristiques à l’ennemi non simulés."},
+"Extorsion":{buff:{stat:"Terre",value:100,duration:3,stacks:2},utility:"Rang 3 : vole 100 Force. Vol de vie non modélisé."},
+"Pillage":{buff:{stat:"Eau",value:100,duration:3,stacks:2},utility:"Rang 3 : vole 100 Chance. Vol de vie non modélisé."},
+"Fourberie":{buff:{stat:"Feu",value:100,duration:3,stacks:2},utility:"Rang 3 : vole 100 Intelligence. Vol de vie et zone non modélisés."},
 "Truanderie":{buff:{stat:"Puissance",value:80,duration:3,stacks:2}},
 "Manigance":{target:"self",buff:{stat:"Dommages",value:20,duration:3,stacks:1}},
 "Invisibilité":{target:"self",invisible:1,utility:"Invisible jusqu'à la fin du tour de la cible (modèle simplifié)"},
@@ -28,11 +28,11 @@ const EXTRA={
 "Épidémie":{target:"enemy",poison:{phase:"end",duration:1},utility:"Propagation multi-cible non calculée"},
 "Injection Toxique":{target:"enemy",poison:{phase:"start",duration:3}},
 "Piège Insidieux":{poisonOnTrap:{phase:"end",duration:1}},
-"Peur":{target:"enemy",move:2,utility:"Repousse de 2 cases (sans obstacle)"},
+"Peur":{target:"enemy",move:2,utility:"Repousse jusqu’à la case ciblée ; modèle de distance +2 cases approximatif, sans carte."},
 "Dérobade":{target:"self",utility:"Protection et désengagement (aucun bonus DPS direct)"},
 "Méprise":{target:"enemy",utility:"Échange de place avec la cible ; carte nécessaire"},
 "Piège d'Immobilisation":{target:"tile",utility:"Piège retrait PM, sans dégât direct"},
-"Fosse Commune":{target:"tile",utility:"Piège de contrôle, sans dégât direct"},
+"Fosse Commune":{target:"tile",utility:"Piège mono-cellule : applique Pesanteur en zone ; l’état et les cibles ne sont pas modélisés."},
 "Sournoiserie":{move:3},
 "Perfidie":{spendTrapCharges:true},
 "Chausse-trappe":{spendTrapCharges:true}
