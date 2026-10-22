@@ -254,3 +254,27 @@ Corrections principales : **Arnaque (+100 Agilité), Extorsion (+100 Force), Pil
 **Calculs :** les statistiques du personnage NE sont PAS réappliquées sur les dégâts DofusBook déjà pré-calculés (évite le double comptage). Le moteur conserve son modèle de critique approximatif en attendant un calcul depuis les dégâts de base réels de chaque sort, du rang et de l'équipement.
 
 Tests : `test/character-stats.test.mjs`, `test/sram-2026-10-22.test.mjs` et `test/spell-effects-audit.test.mjs`.
+
+## v1.9 — Combat assisté multi-cibles (module autonome)
+
+**Le mode existant Combat assisté monocible et la Rotation rapide restent inchangés.** Le bouton **⬡ Combat multi-cibles ↗** dans les résultats ouvre une page indépendante : [multi-combat.html](./multi-combat.html).
+
+### Fonctions
+
+- Grille **9 × 9 approximative**, personnage bleu et jusqu'à **8 monstres rouges**. Choix du nombre de monstres, des positions et de leurs PV.
+- Sélection des builds existants Sram / Sacrieur (variantes exclusives et calibrations du navigateur conservées).
+- Gabarits de zones **personnalisables** pour chaque sort : cible unique, croix 1 case, carré 1 case, rayon 2 ou ligne 2. Les formes par défaut sont **des hypothèses**, et non les formes officielles du jeu.
+- Sorts joués manuellement, sélection d'un monstre ciblé sur la grille, suivi des PA, buffs, poisons par cible et relances.
+- Calcul d'une suite estimée maximisant les **dégâts cumulés sur l'ensemble des ennemis**, sur 1 à 10 tours (3 par défaut). Proposition après chaque sort, possibilité d'annuler ou de passer au tour suivant.
+- PA du tour ajustables, dégâts théoriques par monstre et limite des dégâts aux PV estimés saisis.
+- Sauvegarde indépendante des placements et de l'historique par build ; épingle Picture-in-Picture sur navigateur PC compatible.
+
+### Architecture
+
+Les nouveaux fichiers sont **src/multi-core.js**, **src/multi-worker.js**, **src/multi.js**, **multi-combat.html** et **multi-combat.css**. Le code de l'assistant monocible n'est pas modifié : un seul lien supplémentaire est ajouté dans index.html. Les tests de régression sont dans **test/multi-core.test.mjs**.
+
+### Limites importantes
+
+Les positions sont des repères approximatifs et les monstres sont considérés immobiles. Pas d'obstacles, de vrai calcul de ligne de vue, de carte DOFUS, de mouvements dynamiques ou de formes de zones officielles. La recherche vise seulement les cases occupées par un monstre (pas les centres sur cases libres). Les sorts de piège et autres invocations placées sur une case libre sont **exclus des propositions automatiques** : aucune activation fictive de piège n'est ajoutée aux dégâts. La propagation réelle d'Épidémie, les interactions du Double, les soins, le vol de vie, les dégâts de zone dégressifs et la Souffrance du Sacrieur restent incomplets. Chaque ennemi pris dans un gabarit reçoit provisoirement la même estimation de dommages directs, sans modélisation d'atténuation spatiale.
+
+**Les propositions sont expérimentales : les valeurs ne garantissent pas le meilleur tour DOFUS réel.**
