@@ -2,6 +2,7 @@ import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
+import {mountTeamModule} from "./team-ui.js?v=2.5";
 import {optimize} from "./engine.js?v=1.8";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
@@ -33,6 +34,7 @@ function loadBuilds(){
  return initial;
 }
 let builds=loadBuilds(),activeId=get(ACTIVE,"sram-air-pvm"),current=null,model=null,spells=[],result=null,currentJob=null;
+let teamModule=null;
 const calculateLabel=$("#calculate").innerHTML;
 function saveBuilds(){store(STORE,builds);}
 function cancelCalculation(){
@@ -548,7 +550,7 @@ function calculate(){
   }
  }catch(e){finish(e)}
 }
-function tab(name){$$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));$$(".tab-panel").forEach(el=>el.classList.toggle("hidden",el.id!=="tab-"+name));}
+function tab(name){$$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));$$(".tab-panel").forEach(el=>el.classList.toggle("hidden",el.id!=="tab-"+name));if(name==="team")teamModule?.refresh();}
 function cloneBuild(id){
  const from=builds.find(b=>b.id===id);if(!from)return;
  saveActiveSettings();
@@ -681,5 +683,6 @@ $("#copy-btn").addEventListener("click",copyRotation);
 $("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();tab("optimize");if(currentJob)cancelCalculation();calculate();});
 $("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
+teamModule=mountTeamModule({getBuilds:()=>builds});
 updatePinButton();
 updateAssistTopPin();
