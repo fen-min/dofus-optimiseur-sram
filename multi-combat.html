@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#151b2a">
 <title>OMBRE — Combat assisté multi-cibles (expérimental)</title>
-<link rel="stylesheet" href="./multi-combat.css?v=2.1">
+<link rel="stylesheet" href="./multi-combat.css?v=2.2">
 </head><body>
 <div class="multi-shell">
 <header class="multi-top">
@@ -26,6 +26,9 @@
   <button data-tool="hero" type="button">🔵 Personnage</button>
   <button data-tool="erase" type="button">⌫ Effacer</button>
   <button id="layout-reset" type="button">↺ Grille</button>
+ </div>
+ <div class="board-options">
+  <label class="coordinate-visibility" for="show-coordinates"><input id="show-coordinates" type="checkbox" checked> Afficher les coordonnées (x,y)</label>
  </div>
  <div id="board" class="board" role="group" aria-label="Grille abstraite de combat"></div>
  <div class="legend"><span>🔵 Toi</span><span>🔴 Monstre</span><span>🟥 Zone de sort</span><span class="muted">Distance en cases, sans obstacles</span></div>
@@ -88,5 +91,5 @@
 </section>
 </main>
 </div>
-<script type="module" src="./src/multi.js?v=2.1"></script>
+<script type="module" src="./src/multi.js?v=2.2"></script>
 </body></html>
