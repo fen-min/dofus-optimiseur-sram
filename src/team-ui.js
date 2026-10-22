@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=1.8";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=2.9";
+} from "./team-core.js?v=3.0";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -77,6 +77,10 @@ export function mountTeamModule({getBuilds}){
  function renderResult(){
   const present=!!result;
   const turn=result?.turns[activeTurn-1];
+  $("team-turn-select").disabled=!present;
+  $("team-turn-select").innerHTML=present?result.turns.map(t=>
+   '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+result.turns.length+'</option>').join(""):
+   '<option value="">Calcule d\'abord une rotation</option>';
   $("team-turn-buttons").innerHTML=present?result.turns.map(t=>
    '<button type="button" data-team-turn="'+t.number+'" class="'+(t.number===activeTurn?'is-current':'')+
    '" aria-pressed="'+(t.number===activeTurn)+'">Tour '+t.number+'</button>').join(""):"";
@@ -158,7 +162,7 @@ export function mountTeamModule({getBuilds}){
   $("team-calculate").disabled=true;
   status("Optimisation des rotations de "+members.length+" personnages…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=2.9",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.0",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -192,6 +196,11 @@ export function mountTeamModule({getBuilds}){
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);
+ $("team-turn-select").addEventListener("change",event=>{
+  const turn=Number(event.target.value);
+  if(!result||!Number.isInteger(turn)||turn<1||turn>result.turns.length)return;
+  activeTurn=turn;renderResult();
+ });
  $("team-turn-buttons").addEventListener("click",event=>{
   const button=event.target.closest("button[data-team-turn]");
   if(!button||!result)return;
