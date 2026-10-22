@@ -170,6 +170,7 @@ function changeCount(count){
 }
 function drawBoard(){
  const boardEl=$("board"),monsters=currentMonsterMap();
+ const placed=(()=>{try{return currentState().placedTraps||[]}catch{return []}})();
  const ctx=workingContext();
  let aim=hovered,legalCenters=new Set(),spell=null,mask="single";
  if(selectedSpell){
@@ -187,14 +188,16 @@ function drawBoard(){
   const hero=board.hero.x===x&&board.hero.y===y;
   const hp=enemy&&monsters.get(enemy.id);
   const zone=!!spell&&aim&&inMask(aim,{x,y},mask,board.hero);
+  const spread=!!spell&&spell.name==="Épidémie"&&aim&&Math.abs(aim.x-x)+Math.abs(aim.y-y)<=2&&!(aim.x===x&&aim.y===y);
+  const onCell=placed.filter(t=>t.center.x===x&&t.center.y===y);
   const canAim=legalCenters.has(x+","+y);
   const isAim=!!aim&&aim.x===x&&aim.y===y&&!!spell;
-  const classes=["board-cell",hero?"hero":"",enemy?"enemy":"",zone?"zone":"",
+  const classes=["board-cell",hero?"hero":"",enemy?"enemy":"",zone?"zone":"",spread?"spread":"",
    canAim?"castable":"",isAim?"aim":"",enemy?.id===movingMonster?"targeted":""].filter(Boolean).join(" ");
   const label=hero?"Ton personnage":enemy?"Monstre "+enemy.id.slice(1)+(hp?" (PV "+Math.round(hp.hp)+")":""):"Case libre";
   markup+='<button type="button" class="'+classes+'" data-x="'+x+'" data-y="'+y+
    '" title="'+html(label)+' — '+(x+1)+","+(y+1)+'" aria-label="'+html(label)+', case '+(x+1)+','+(y+1)+'">'+
-   (hero?'<span class="marker">TOI</span>':enemy?'<span class="marker">'+html(enemy.id.slice(1))+'</span>':"")+'</button>';
+   (hero?'<span class="marker">TOI</span>':enemy?'<span class="marker">'+html(enemy.id.slice(1))+'</span>':"")+ (onCell.length?'<span class="trap-mark">◇'+onCell.length+'</span>':'')+'</button>';
  }
  boardEl.innerHTML=markup;
  $("count").value=String(board.monsters.length);
