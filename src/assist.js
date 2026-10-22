@@ -3,7 +3,7 @@ import {
  getAssistContext,readAssistHistory,writeAssistHistory,resetAssistHistory,
  replayAssist,legalAssistSpells,addAssistSpell,undoAssistSpell,nextAssistTurn,setAssistTurnPA,
  contextFingerprint,escaped
-} from "./assist-core.js?v=1.8";
+} from "./assist-core.js?v=1.9";
 import {canPinAssist,openAssistPin,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 
 const root=document.getElementById("assist-root");
@@ -19,6 +19,12 @@ function halt(){
  requestNo++;
  if(worker){worker.terminate();worker=null;}
 }
+function restoreHistory(){
+ let recovered=false;
+ const history=readAssistHistory(localStorage,buildId,context,()=>{recovered=true;});
+ if(recovered)message("Une sauvegarde de combat invalide a été réinitialisée pour ce build. Les autres builds sont conservés.");
+ return {history,recovered};
+}
 function loadSession(){
  context=buildId?getAssistContext(localStorage,buildId):null;
  if(!context){
@@ -28,7 +34,7 @@ function loadSession(){
   $("assist-next").disabled=true;$("assist-undo").disabled=true;
   $("assist-refresh").disabled=true;return false;
  }
- history=readAssistHistory(localStorage,buildId,context);
+ history=restoreHistory().history;
  return true;
 }
 function render(){
@@ -242,14 +248,17 @@ $("assist-popout").addEventListener("click",openSmallWindow);
 $("assist-pin").addEventListener("click",togglePin);
 window.addEventListener("storage",e=>{
  if(e.key===ASSIST_HISTORY_STORE && context){
-  history=readAssistHistory(localStorage,buildId,context);
+  history=restoreHistory().history;
   render();plan();
  }
  if(e.key===ASSIST_CONTEXT_STORE){
   const newContext=getAssistContext(localStorage,buildId);
   if(newContext && (!context||contextFingerprint(newContext)!==contextFingerprint(context))){
-   context=newContext;history=readAssistHistory(localStorage,buildId,context);
-   message("Les paramètres du build ont changé : la rotation libre est repartie du tour 1.");
+   context=newContext;
+   const restored=restoreHistory();
+   history=restored.history;
+   if(!restored.recovered)
+    message("Les paramètres du build ont changé : la rotation libre est repartie du tour 1.");
    render();plan();
   }
  }
