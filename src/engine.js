@@ -8,7 +8,12 @@ const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
 const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
- c.ap=clamp(c.ap,6,20,12);c.turns=clamp(c.turns,1,10,10);c.distance=clamp(c.distance,0,30,3);
+ c.ap=clamp(c.ap,6,20,12);
+ // The base/solo optimizer remains capped at 10 turns. Only the team module
+ // explicitly opts in to the longer 50-turn simulation horizon.
+ c.longHorizon=c.longHorizon===true;
+ c.turns=clamp(c.turns,1,c.longHorizon?50:10,10);
+ c.distance=clamp(c.distance,0,30,3);
  // Chaque tour peut recevoir des PA différents (bonus PA, retrait, etc).
  // Les autres tours conservent les PA normaux du build.
  const rawPA=c.apByTurn&&typeof c.apByTurn==="object"?c.apByTurn:{};
