@@ -5,11 +5,12 @@
  */
 import {CLASSES} from "./classes.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {optimize,cleanSettings} from "./engine.js?v=1.8";
+import {optimize,optimizeFromState,initialState,castSpell,eligible,cleanSettings} from "./engine.js?v=1.8";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
 export const RESIST_ELEMENTS=["Air","Terre","Feu","Eau","Neutre"];
+export const SACRIER_SUPPORT_SPELLS=["Mutilation","Pacte de Sang"];
 
 const clamp=(value,min,max,fallback)=>{
  const n=Number(value);
@@ -43,10 +44,37 @@ export function teamMembers(builds,selectedIds){
   .sort((a,b)=> (a.initiative===null?1:0)-(b.initiative===null?1:0)||
    (b.initiative??0)-(a.initiative??0)||a.selectionIndex-b.selectionIndex);
 }
-export function createTeamContext(build,target){
+/**
+ * Team-only per-character choices. Keep original builds untouched.
+ * The 6–20 PA interval matches the OMBRE mono-target engine.
+ */
+export function cleanTeamMemberOptions(build,raw={}){
+ const options=raw&&typeof raw==="object"?raw:{};
+ const basePA=Number(build?.ap);
+ const selectedPA=options.ap===null||options.ap===undefined||options.ap===""
+  ?basePA:Number(options.ap);
+ const ap=Number.isInteger(selectedPA)&&selectedPA>=6&&selectedPA<=20
+  ?selectedPA:Number.isInteger(basePA)&&basePA>=6&&basePA<=20?basePA:12;
+ const cls=CLASSES[build?.classId];
+ const pairIndex=cls?.id==="sacrieur"
+  ?cls.pairs.findIndex(pair=>pair.includes("Pacte de Sang")):-1;
+ const existing=pairIndex>=0?build?.variants?.[pairIndex]:null;
+ const support=pairIndex>=0
+  ?SACRIER_SUPPORT_SPELLS.includes(options.support)?options.support:
+    SACRIER_SUPPORT_SPELLS.includes(existing)?existing:"Mutilation"
+  :null;
+ return {ap,support,forceOpeningBuff:pairIndex>=0&&options.forceOpeningBuff===true};
+}
+export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
  if(!cls)throw Error("Classe indisponible pour le build sélectionné.");
  const input=cleanTeamTarget(target),calibration=build.calibration||{};
+ const options=cleanTeamMemberOptions(build,memberOptions);
+ const variants=[...(build.variants||cls.defaultVariants)];
+ if(cls.id==="sacrieur"){
+  const supportIndex=cls.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+  if(supportIndex>=0)variants[supportIndex]=options.support;
+ }
  const spells=cls.spells.map(base=>{
   const s=JSON.parse(JSON.stringify(base));
   const edit=calibration[s.id];
@@ -60,8 +88,8 @@ export function createTeamContext(build,target){
   return s;
  });
  const settings=cleanSettings({...DEFAULT_SETTINGS,
-  classId:cls.id,ap:build.ap,turns:input.turns,distance:build.distance,
-  variantPairs:cls.pairs,variants:build.variants,defaultVariants:cls.defaultVariants,
+   classId:cls.id,ap:options.ap,turns:input.turns,distance:build.distance,
+  variantPairs:cls.pairs,variants,defaultVariants:cls.defaultVariants,
   resistance:input.resistances.Air,resistanceTerre:input.resistances.Terre,
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
   resistanceNeutre:input.resistances.Neutre,
@@ -70,14 +98,17 @@ export function createTeamContext(build,target){
   comploteurContact:false
  });
  return {build:{id:build.id,character:build.character,name:build.name,
-  classId:build.classId,initiative:initiativeOf(build)},settings,spells};
+  classId:build.classId,initiative:initiativeOf(build),ap:options.ap,
+  support:options.support},settings,spells,
+  forceOpeningSpell:options.forceOpeningBuff?options.support:null};
 }
 const round=n=>Math.round(n*10)/10;
 export function assembleTeamResult(results,target){
  const conf=cleanTeamTarget(target);
  const members=results.map(x=>({
   id:x.build.id,character:x.build.character,name:x.build.name,
-  initiative:x.build.initiative,estimated:round(x.result.total),
+  initiative:x.build.initiative,ap:x.build.ap,support:x.build.support,
+  forcedOpeningSpell:x.forceOpeningSpell||null,estimated:round(x.result.total),
   direct:round(x.result.immediate),poison:round(x.result.poison)
  }));
  const turns=[];
@@ -108,6 +139,7 @@ export function assembleTeamResult(results,target){
    "Les résistances sont prises en compte par élément. Les dégâts utilisent les valeurs du build calibrées dans OMBRE ; aucune caractéristique n'est ajoutée deux fois.",
    "Ordre par initiative enregistrée. Sans initiative connue, le personnage figure à la fin. Les égalités conservent l'ordre de sélection.",
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
+   "En mode automatique, un buff peut être ignoré par la recherche même s'il est équipé. L'option « Buff au T1 » l'impose au début du premier tour.",
    "Pièges non déclenchés automatiquement, carte/obstacles et Souffrance du Sacrieur non simulés. Optimum non garanti."],
   approximate:true};
 }
@@ -122,11 +154,19 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
   if(!ctx?.build?.id||ids.has(ctx.build.id)||!Array.isArray(ctx.spells)||!ctx.settings)
    throw Error("Composition d'équipe invalide.");
   ids.add(ctx.build.id);
-  const result=optimize(ctx.settings,ctx.spells,progress=>onProgress({
+  const report=progress=>onProgress({
    character:ctx.build.character,index:i+1,count:contexts.length,
    turn:progress.turn,turns:ctx.settings.turns
-  }));
-  evaluated.push({build:ctx.build,result});
+  });
+  let result;
+  if(ctx.forceOpeningSpell){
+   const forced=ctx.spells.find(spell=>spell.name===ctx.forceOpeningSpell);
+   const seed=initialState(ctx.settings);
+   if(!forced||!eligible(forced,seed,cleanSettings(ctx.settings)))
+    throw Error("Le buff imposé au tour 1 n'est pas disponible pour "+ctx.build.character+".");
+   result=optimizeFromState(ctx.settings,ctx.spells,castSpell(seed,forced,ctx.settings),report);
+  }else result=optimize(ctx.settings,ctx.spells,report);
+  evaluated.push({build:ctx.build,result,forceOpeningSpell:ctx.forceOpeningSpell||null});
  }
  return assembleTeamResult(evaluated,target);
 }
