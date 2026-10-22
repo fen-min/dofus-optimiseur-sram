@@ -63,7 +63,8 @@ export function cleanTeamMemberOptions(build,raw={}){
   ?SACRIER_SUPPORT_SPELLS.includes(options.support)?options.support:
     SACRIER_SUPPORT_SPELLS.includes(existing)?existing:"Mutilation"
   :null;
- return {ap,support,forceOpeningBuff:pairIndex>=0&&options.forceOpeningBuff===true};
+ return {ap,support,forceOpeningBuff:pairIndex>=0&&options.forceOpeningBuff===true,
+  refreshTimedBuffs:options.refreshTimedBuffs!==false};
 }
 export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
@@ -93,13 +94,13 @@ export function createTeamContext(build,target,memberOptions={}){
   resistance:input.resistances.Air,resistanceTerre:input.resistances.Terre,
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
   resistanceNeutre:input.resistances.Neutre,
-  criticals:input.criticals,beamWidth:8,
+  criticals:input.criticals,beamWidth:8,refreshTimedBuffs:options.refreshTimedBuffs,
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false
  });
  return {build:{id:build.id,character:build.character,name:build.name,
   classId:build.classId,initiative:initiativeOf(build),ap:options.ap,
-  support:options.support},settings,spells,
+  support:options.support,refreshTimedBuffs:options.refreshTimedBuffs},settings,spells,
   forceOpeningSpell:options.forceOpeningBuff?options.support:null};
 }
 const round=n=>Math.round(n*10)/10;
@@ -118,7 +119,7 @@ export function assembleTeamResult(results,target){
    const t=entry.result.turns[i];
    return {id:entry.build.id,character:entry.build.character,
     initiative:entry.build.initiative,actions:(t?.actions||[]).map(a=>({
-     name:a.name,pa:a.pa
+     name:a.name,pa:a.pa,autoRefreshed:!!a.notes?.includes("Relance automatique : buff expiré")
     })),spent:t?.spent||0,direct:round(t?.immediate||0),
     poison:round(t?.poison||0),damage:round(t?.total||0)};
   });
@@ -139,6 +140,7 @@ export function assembleTeamResult(results,target){
    "Les résistances sont prises en compte par élément. Les dégâts utilisent les valeurs du build calibrées dans OMBRE ; aucune caractéristique n'est ajoutée deux fois.",
    "Ordre par initiative enregistrée. Sans initiative connue, le personnage figure à la fin. Les égalités conservent l'ordre de sélection.",
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
+   "« Entretenir les buffs » réapplique les bonus offensifs précédemment utilisés après leur expiration, si les PA et les délais de relance le permettent. Cela ne garantit pas le meilleur DPS.",
    "En mode automatique, un buff peut être ignoré par la recherche même s'il est équipé. L'option « Buff au T1 » l'impose au début du premier tour.",
    "Pièges non déclenchés automatiquement, carte/obstacles et Souffrance du Sacrieur non simulés. Optimum non garanti."],
   approximate:true};
