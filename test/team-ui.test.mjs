@@ -56,3 +56,46 @@ test("target changes persist and enforce resistance and turn limits",()=>withBro
  assert.equal(stored.target.resistances.Air,25);
  assert.equal(node("team-turns").value,"2");
 }));
+
+test("individual PA selector persists its value without changing the saved build",()=>withBrowser(({root,node,localStorage})=>{
+ const baseAP=INITIAL_BUILDS[1].ap;
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const markup=node("team-members").innerHTML;
+ assert.match(markup,/data-team-ap="sacri-air-pvm"/);
+ assert.match(markup,/data-team-support="sacri-air-pvm"/);
+ assert.match(markup,/data-team-force-buff="sacri-air-pvm"/);
+ root.listeners.change({target:{closest(selector){
+  if(selector==="input[data-team-ap]")return {dataset:{teamAp:"sacri-air-pvm"},value:"14"};
+  return null;
+ }}});
+ const store=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(store.memberOptions["sacri-air-pvm"].ap,14);
+ assert.match(node("team-members").innerHTML,/value="14"/);
+ assert.equal(INITIAL_BUILDS[1].ap,baseAP);
+}));
+test("Sacrier Pacte de Sang override and forced buff setting survive changes",()=>withBrowser(({root,node,localStorage})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ root.listeners.change({target:{closest(selector){
+  if(selector==="select[data-team-support]")return {dataset:{teamSupport:"sacri-air-pvm"},value:"Pacte de Sang"};
+  return null;
+ }}});
+ root.listeners.change({target:{closest(selector){
+  if(selector==="input[data-team-force-buff]")return {dataset:{teamForceBuff:"sacri-air-pvm"},checked:true};
+  return null;
+ }}});
+ const store=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(store.memberOptions["sacri-air-pvm"].support,"Pacte de Sang");
+ assert.equal(store.memberOptions["sacri-air-pvm"].forceOpeningBuff,true);
+ assert.match(node("team-members").innerHTML,/value="Pacte de Sang" selected/);
+ assert.match(node("team-members").innerHTML,/data-team-force-buff="sacri-air-pvm" checked/);
+}));
+test("invalid team PA cannot be stored or propagated",()=>withBrowser(({root,localStorage,node})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ root.listeners.change({target:{closest(selector){
+  if(selector==="input[data-team-ap]")return {dataset:{teamAp:"sacri-air-pvm"},value:"30"};
+  return null;
+ }}});
+ assert.match(node("team-status").textContent,/entre 6 et 20/);
+ const saved=localStorage.getItem("ombre-team-dps-v1");
+ assert.equal(saved,null);
+}));
