@@ -123,27 +123,37 @@ a{color:var(--class-accent)}
 .variant-choice.is-selected{background:color-mix(in srgb,var(--class-accent) 20%,#1a2130);border-color:var(--class-accent);color:#fff;box-shadow:inset 0 2px 0 var(--class-accent)}
 .variant-choice.is-selected:before{content:"✓";color:var(--class-accent);font-size:10px}
 .variant-choice:hover{border-color:var(--class-accent)}
-.build-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:22px 0}
-.build-card{border:1px solid #3d4656;border-radius:15px;padding:16px;display:flex;align-items:flex-start;gap:13px;background:#1a2030;min-width:0}
-.build-card.is-active{border-color:var(--class-accent);box-shadow:inset 0 3px color-mix(in srgb,var(--class-accent) 60%,transparent)}
-.build-avatar{--class-accent:var(--card-accent);width:54px;height:54px;font-size:27px;border-radius:13px}
-.build-data{flex:1;min-width:0}
-.build-data h3{font-size:16px;white-space:normal;margin:3px 0 0}
-.build-data p{font-size:13px;margin:3px 0 10px;color:#d5d3e6;overflow-wrap:anywhere}
-.build-data small{color:#9199b1;font-size:11px}
-.build-label{font-size:10px;color:#b8b0c8;text-transform:uppercase;letter-spacing:.06em}
-.build-card-actions{display:grid;gap:7px}
-.build-card-actions button{font-size:11px;white-space:nowrap;border:1px solid #485166;border-radius:8px;background:#293244;padding:6px 10px;color:#e1e3ef}
-.build-card-actions button:hover{border-color:var(--class-accent)}
+/* Portrait cards: one selectable slot per character/build (images added later). */
+.build-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:24px 0}
+.build-card{--class-accent:var(--card-accent);min-width:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #495065;border-radius:24px;background:#171d2b;box-shadow:0 8px 24px #0002;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.build-card:hover{border-color:var(--card-accent);transform:translateY(-2px);box-shadow:0 12px 28px #0005}
+.build-card.is-active{border-color:var(--card-accent);box-shadow:0 0 0 1px var(--card-accent),0 12px 28px #0004}
+.build-card-select{display:flex;flex-direction:column;width:100%;flex:1;min-width:0;text-align:left;border:0;background:none;padding:0;color:inherit;cursor:pointer}
+.build-card-select:focus-visible{outline:3px solid var(--card-accent);outline-offset:-4px;border-radius:22px}
+.build-card-portrait{position:relative;display:block;overflow:hidden;height:190px;width:100%;background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--card-accent) 16%,#1b2233),#121724 75%);border-bottom:1px solid #3b4254}
+.build-card-portrait-frame{position:absolute;inset:13px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;border:1px dashed color-mix(in srgb,var(--card-accent) 52%,#576076);border-radius:18px;transition:border-color .18s ease,background .18s ease}
+.build-card-select:hover .build-card-portrait-frame,.build-card-select:focus-visible .build-card-portrait-frame{border-color:var(--card-accent);background:color-mix(in srgb,var(--card-accent) 7%,transparent)}
+.build-card-portrait-symbol{display:block;color:var(--card-accent);font-size:61px;line-height:1;text-shadow:0 4px 22px #0008}
+.build-card-portrait-hint{display:block;color:#a6aec5;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.build-card-current{position:absolute;top:22px;right:22px;padding:4px 9px;background:color-mix(in srgb,var(--card-accent) 20%,#151c2a);border:1px solid var(--card-accent);border-radius:999px;color:#fff;font-size:10px;font-weight:800}
+.build-card-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:138px;width:100%;padding:16px 17px 13px}
+.build-card-class{font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--card-accent)}
+.build-card-character{font-size:18px;font-weight:800;line-height:1.3;color:#fff;overflow-wrap:anywhere}
+.build-card-name{font-size:13px;line-height:1.4;color:#d2d7e9;overflow-wrap:anywhere}
+.build-card-details{margin-top:auto;font-size:11px;color:#99a6bf;overflow-wrap:anywhere}
+.build-card-actions{display:flex;gap:8px;margin-top:auto;padding:0 16px 16px}
+.build-card-actions button{flex:1;min-width:0;font-size:11px;font-weight:650;border:1px solid #485166;border-radius:10px;background:#283146;padding:9px 6px;color:#e4e7f6;cursor:pointer}
+.build-card-actions button:hover,.build-card-actions button:focus-visible{border-color:var(--card-accent);background:#313c52}
 .build-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
 .build-form>label{display:grid;gap:7px;font-size:12px;color:#bdc5d4;margin:0}
 .build-form>label input,.build-form>label select{width:100%;min-height:43px}
 .build-form-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 .catalog-tag.tag-live{background:#244c45;border-color:#69bea9;color:#aef5d9}
 #bar-chart .bar-column{flex:1 0 62px}
-@media(max-width:1100px){.build-cards{grid-template-columns:1fr}.variant-grid{grid-template-columns:1fr}}
+@media(max-width:1180px){.build-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.variant-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.build-cards{grid-template-columns:1fr}.build-card-portrait{height:210px}}
 @media(max-width:850px){.sidebar{height:auto;position:static;width:100%;padding:14px 17px}.brand{border:0;padding:4px}.profile-switch{margin:12px 0}.side-nav{display:flex;flex-wrap:wrap}.side-bottom{display:none}.main-content,main{padding:18px 13px}.selected-build{flex-wrap:wrap}.profile-clone{margin-left:auto}}
-@media(max-width:520px){.build-form{grid-template-columns:1fr}.build-cards{grid-template-columns:1fr}.selected-build-avatar{width:55px;height:55px;font-size:30px}.topbar{flex-wrap:wrap}.hero{padding:20px}.build-card{flex-wrap:wrap}.build-card-actions{grid-template-columns:repeat(3,auto);width:100%}}
+@media(max-width:520px){.build-form{grid-template-columns:1fr}.selected-build-avatar{width:55px;height:55px;font-size:30px}.topbar{flex-wrap:wrap}.hero{padding:20px}.build-card-portrait{height:188px}}
 
 
 /* v0.6 — Grimoire à variantes : dispositions inspirées du menu de sorts DOFUS */
