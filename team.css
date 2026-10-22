@@ -22,7 +22,11 @@
 .team-calculate:hover{background:#edb758}
 .team-calculate:disabled{opacity:.55}
 .team-status{display:block;min-height:24px;margin:10px 0 0;color:#e2ceab;font-size:12px;overflow-wrap:anywhere}
-.team-turn-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.team-turn-buttons{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-top:10px;padding-bottom:8px;scrollbar-width:thin}
+.team-turn-buttons button{flex-shrink:0}
+.team-turn-navigation{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:12px;color:#c5cada}
+.team-turn-navigation select{min-width:125px;max-width:240px;background:#171c2b;color:#fff;border:1px solid #59506a;border-radius:8px;padding:6px 9px}
+.team-turn-navigation select:disabled{opacity:.6}
 .team-turn-buttons button{border:1px solid #5b5149;border-radius:8px;background:#24202b;padding:6px 10px;color:#d9d5da;font-size:11px}
 .team-turn-buttons button.is-current,.team-turn-buttons button:hover{border-color:#e5a02e;background:#513c26;color:#fff}
 .team-rotations{display:grid;gap:10px;max-height:600px;overflow:auto;min-width:0;margin-top:10px}
