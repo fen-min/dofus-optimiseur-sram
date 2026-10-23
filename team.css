@@ -84,3 +84,14 @@
 .team-slot-pa{display:flex;align-items:center;gap:7px;width:max-content;font-size:10px!important;color:#d8c3cc!important;font-weight:700!important}
 .team-slot-pa input{width:54px!important;min-height:28px;padding:3px 5px;font-size:12px;border-radius:6px;background:#141725;color:#fff;border:1px solid #675266}
 .team-spell-chip.is-buff-refreshed{border:1px solid #e2b46e;background:#513d27;color:#fff}
+
+/* Lecture chronologique du tour courant dans la colonne de droite. */
+.team-order{border:1px solid #795966;background:#221e2d;border-radius:11px;padding:11px;margin:10px 0 14px}
+.team-order-heading{display:flex;justify-content:space-between;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:7px}
+.team-order-heading strong{font-size:12px;color:#fff}
+.team-order-heading small{font-size:10px;color:#c1afbb}
+.team-order-row{display:flex;align-items:center;gap:8px;min-height:32px;padding:5px 6px;border-top:1px solid #4f3e4e}
+.team-order-row.is-last{background:#3c2831;border-radius:6px}
+.team-order-number{font-size:11px;font-weight:800;color:#f0a0a0;min-width:22px}
+.team-order-name{font-size:11px;flex:1;overflow-wrap:anywhere;color:#f4e9ef}
+.team-order-hp{font-size:10px;color:#d9bdbd;white-space:nowrap}
