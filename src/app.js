@@ -12,6 +12,7 @@ import {saveMultiContext} from "./multi-build-link.js?v=2.1";
 import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js?v=1.8";
+import {WEAPONS,normalizedWeaponId} from "./weapons.js?v=1";
 
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
@@ -286,6 +287,51 @@ function renderCharacterStats(){
   ?"Sacrieur : les dégâts des sorts sont recalculés automatiquement à partir des statistiques ci-dessus (Agilité, Puissance, dommages élémentaires, critiques et % dommages aux sorts). Les données DofusBook servent uniquement à retrouver les jets de base. Les ajustements manuels des sorts restent prioritaires. Champs manquants : conservation des dégâts de référence."
   :"Sram : les caractéristiques sont enregistrées par build, mais la conversion automatique des lignes DofusBook nécessite encore les statistiques de la fiche source. Les dégâts de référence ou les calibrages manuels restent utilisés.";
 }
+function renderEquippedWeapon(){
+ const picker=$("#spellbook-weapon-select"),detail=$("#spellbook-weapon-detail");
+ if(!picker||!detail||!current)return;
+ const selected=normalizedWeaponId(current.weapon);
+ picker.innerHTML='<option value="">Aucune arme renseignée</option>'+
+  Object.values(WEAPONS).map(item=>
+   '<option value="'+escapeHtml(item.id)+'"'+(selected===item.id?' selected':'')+'>'+
+    escapeHtml(item.name+' · '+item.type+' · Niv. '+item.level)+'</option>'
+  ).join("");
+ if(!selected){
+  detail.innerHTML='<p class="spellbook-weapon-empty">Aucune attaque d’arme ajoutée à ce build. Tu pourras choisir une arme ici.</p>';
+  return;
+ }
+ const item=WEAPONS[selected],attack=spells.find(s=>s.id==="weapon:"+selected);
+ detail.innerHTML='<div class="spellbook-weapon-name"><strong>'+escapeHtml(item.name)+
+  '</strong><span class="spellbook-weapon-equipped">✓ Équipée sur '+escapeHtml(current.character)+'</span></div>'+
+  '<div class="spellbook-weapon-badges">'+[
+   item.type,'Niv. '+item.level,item.ap+' PA','PO '+item.range,
+   '1 lancer/tour','CC '+item.criticalChance+' % (+'+item.criticalBonus+')',
+   'Lancer en '+item.direction
+  ].map(label=>'<span>'+escapeHtml(label)+'</span>').join("")+'</div>'+
+  '<div class="spellbook-weapon-hits">'+item.hits.map(hit=>
+   '<span>'+escapeHtml(hit.min+' à '+hit.max+' '+(hit.lifeSteal?'vol de vie ':'dommages ')+hit.element)+'</span>'
+  ).join("")+'</div>'+
+  '<p class="spellbook-weapon-note">'+
+  (attack?.damageSource==="weapon-stats-missing"?
+    'Renseigne Agilité, Puissance et dommages Air dans les statistiques du build actif pour estimer l’attaque.':
+    'Dégâts théoriques du build actif : '+fmt(attack?.min)+'–'+fmt(attack?.max)+
+    ' (critique '+fmt(attack?.critMin)+'–'+fmt(attack?.critMax)+').')+
+  ' Les bonus de l’objet sont déjà compris dans le build ; ils ne sont pas ajoutés une seconde fois. La diagonale et le soin de vol de vie ne sont pas simulés géométriquement.</p>';
+}
+function equipWeapon(value){
+ if(!current)return;
+ const weapon=normalizedWeaponId(value);
+ if(current.weapon===weapon)return;
+ current.weapon=weapon;
+ saveBuilds();
+ applyCalibration();
+ invalidateRotationForVariant();
+ renderEquippedWeapon();
+ renderSpellbook();
+ renderSpells();
+ teamModule?.refresh();
+ $("#spellbook-selection-message").textContent=(weapon?WEAPONS[weapon].name+" équipée":"Arme retirée")+" · build enregistré";
+}
 function renderVariantPicker(){
  const picker=$("#variant-picker");
  picker.innerHTML=model.pairs.map((pair,i)=>{
@@ -456,7 +502,7 @@ function activateBuild(id){
  $("#turn-results").innerHTML='<p class="muted">Aucune simulation pour ce build. Lance le calcul pour commencer.</p>';
  $("#explored-count").textContent="";
  $("#status").textContent=model.id==="sacrieur"?"Sacrieur : dégâts recalculés depuis les statistiques du build actif lorsque renseignées. Souffrance et PV estimés ; carte et certains effets restent incomplets.":"Mode Sram expérimental : dégâts DofusBook de référence, carte et certaines interactions de pièges non simulées.";
- renderProfileSelect();renderBuilds();renderCharacterStats();renderVariantPicker();renderSpellbook();renderSpells();
+ renderProfileSelect();renderBuilds();renderCharacterStats();renderVariantPicker();renderSpellbook();renderEquippedWeapon();renderSpells();
  updateCombatButtons();
  $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
 }
@@ -669,6 +715,7 @@ $("#variant-picker").addEventListener("click",e=>{
  if(!model.pairs[i]?.includes(choice))return;
  selectSpellVariant(i,choice);
 });
+$("#spellbook-weapon-select").addEventListener("change",e=>equipWeapon(e.target.value));
 $("#spell-pair-grid").addEventListener("click",e=>{
  const choice=e.target.closest("button[data-spell-variant]");
  if(!choice)return;
