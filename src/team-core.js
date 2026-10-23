@@ -3,7 +3,7 @@
  * Order is from the saved in-game initiative stat; no ally spell interactions,
  * movement or shared target effects are simulated.
  */
-import {CLASSES} from "./classes.js?v=3.2";
+import {CLASSES} from "./classes.js?v=3.3";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.3";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
