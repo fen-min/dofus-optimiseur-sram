@@ -51,10 +51,10 @@ export function initialState(input={}){
  return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
-function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
+function selected(spell,c){return spell.isWeapon===true||c.variants[spell.variantGroup]===spell.name;}
 function effectivePA(spell,s){return spell.name==="Perfidie"?Math.max(2,spell.pa-Math.min(4,s.charges)):spell.pa;}
 export function eligible(spell,s,c){
- if(!selected(spell,c)||effectivePA(spell,s)>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
+ if((spell.isWeapon&&spell.damageSource==="weapon-stats-missing")||!selected(spell,c)||effectivePA(spell,s)>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
  const dist=spell.target==="self"||spell.target==="tile"?Math.max(spell.minRange,Math.min(s.position,spell.range)):s.position;
  if(dist<spell.minRange||dist>spell.range)return false;
  if(spell.lineOnly&&!c.inLine)return false;
@@ -76,7 +76,37 @@ function directRow(spell,c,s){
  const p=c.criticals?Math.min(1,Math.max(0,spell.critChance+extraCritical/100)):0;
  return (1-p)*norm+p*crit;
 }
+/**
+ * Compute an equipped weapon's normal and critical damage per hit.
+ * Passive item characteristics are already included in the active build.
+ */
+function equippedWeaponDamage(spell,s,c){
+ const buffs=buffsNow(s);
+ const extraCritical=buffs.reduce((n,b)=>n+(b.stat==="Critique"?b.amount:0),0);
+ const probability=c.criticals?Math.max(0,Math.min(1,spell.critChance+extraCritical/100)):0;
+ const vulnerability=s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1;
+ const finalBonus=buffs.reduce((n,b)=>n+(b.stat==="Dommages finaux"?b.amount:0),0);
+ const suffering=s.sacrierHealth?sufferingFinalBonus(s.sacrierHealth.hp,s.sacrierHealth.maxHp):0;
+ const berserk=s.berserkActive&&s.sacrierHealth?.suffering>=6?1.1:1;
+ const line=(hit,critical)=>{
+  const basis=critical?hit.crit:hit.normal;
+  if(!basis)return 0;
+  const extra=buffs.reduce((n,b)=>{
+   if(b.stat==="Dommages")return n+b.amount;
+   if(b.stat==="Puissance"||b.stat===hit.element)
+    return n+b.amount*(hit.min+hit.max)/200;
+   return n;
+  },0);
+  const fixedRes=c.fixedResistances[hit.element]||0;
+  const res=c.resistances[hit.element]||0;
+  return Math.max(0,((basis.min+basis.max)/2+extra-fixedRes)*(1-res/100));
+ };
+ const average=critical=>spell.weaponHits.reduce((n,hit)=>n+line(hit,critical),0);
+ return Math.max(0,((1-probability)*average(false)+probability*average(true))*
+  vulnerability*(1+finalBonus/100)*(1+suffering/100)*berserk);
+}
 function damage(spell,s,c,override=null){
+ if(spell.isWeapon)return equippedWeaponDamage(spell,s,c);
  const row=override??directRow(spell,c,s);
  const element=spell.element||"Air";
  const buff=buffsNow(s).reduce((tot,b)=>{
@@ -158,6 +188,8 @@ export function castSpell(origin,spell,input={}){
  else if(!spell.nonDirect&&spell.min>0){
   const dealt=damage(spell,s,c);
   addDamage(s,dealt);
+  if(spell.isWeapon&&spell.weaponHits?.some(hit=>hit.lifeSteal))
+   action.notes.push("Vol de vie Air : soin non simulé (dégâts inclus)");
   if(spell.lifeSteal&&s.sacrierHealth){
    // Real-game benchmark (Désolation): 811 damage -> +405 PV,
    // 819 -> +409 PV even with Berserk active and "soins reçus ×30%".
