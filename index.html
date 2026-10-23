@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=2.4">
-  <link rel="stylesheet" href="./team.css?v=3.0">
+  <link rel="stylesheet" href="./team.css?v=3.4">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -38,7 +38,7 @@
         <section id="tab-team" class="tab-panel hidden" aria-label="Optimisation de DPS en équipe">
           <div class="panel-eyebrow">NOUVEAU MODULE / ÉQUIPE JUSQU'À 8 PERSONNAGES</div>
           <h2>Optimiseur DPS en équipe</h2>
-          <p class="muted">Choisis jusqu’à 8 personnages et règle leurs PA. OMBRE compare automatiquement les ouvertures, les buffs et leurs relances pour proposer la meilleure rotation trouvée. Les variantes viennent du build enregistré et les effets entre alliés ne sont pas encore simulés.</p>
+          <p class="muted">Choisis jusqu’à 8 personnages et leurs PA. OMBRE joue chaque tour dans l’ordre d’initiative : les décisions de chaque personnage tiennent compte des actions précédentes, des PV de la cible et des effets persistants. Les effets de soutien entre alliés ne sont pas encore tous simulés.</p>
           <div class="team-shell">
             <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
               <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
@@ -69,6 +69,7 @@
             <section class="team-panel team-roster-panel" aria-label="Personnages classés par initiative">
               <div class="team-panel-top"><h2>♜ L'équipe</h2><span id="team-count" class="team-count">0 / 8 personnages</span></div>
               <p class="microcopy">Triés par initiative. Choisis un build et ajuste ses PA : les buffs et leurs relances sont gérés automatiquement.</p>
+              <div id="team-order" class="team-order" aria-live="polite"></div>
               <div id="team-members" class="team-members"></div>
             </section>
           </div>
