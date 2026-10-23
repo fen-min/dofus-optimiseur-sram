@@ -100,8 +100,15 @@ function planCurrentTurn(entry,remainingHp,following=[]){
  for(const spell of ctx.spells.filter(x=>!!paTeamBuff(x)&&eligible(x,state,settings)).slice(0,3)){
   const bonus=paTeamBuff(spell);
   const recipients=following.filter(x=>targetsTeamBuff(bonus,entry,x));
-  if(!recipients.length)continue;
-  const gain=recipients.reduce((sum,ally)=>sum+estimatePaGain(ally,bonus.value,remainingHp),0);
+  const alreadyPlayed=entry.everyone.filter(x=>x!==entry&&
+   !following.includes(x)&&targetsTeamBuff(bonus,entry,x));
+  // Les alliés déjà passés ne bénéficient du buff qu'à leur prochain
+  // tour. On n'anticipe PAS ce tour : c'est une simple estimation
+  // tirée des valeurs des sorts disponibles et de la durée du buff.
+  const currentGain=recipients.reduce((sum,ally)=>sum+estimatePaGain(ally,bonus.value,remainingHp),0);
+  const nextGain=turn<ctx.settings.turns&&bonus.duration>1?
+   alreadyPlayed.reduce((sum,ally)=>sum+roughPaValue(ally,bonus.value),0):0;
+  const gain=currentGain+nextGain;
   if(gain<=0)continue;
   const trial=evaluateTrial(ctx,state,settings,spell);
   entry.trials++;
@@ -145,6 +152,14 @@ function estimatePaGain(ally,bonus,remainingHp){
  };
  return Math.max(0,Math.min(remainingHp,run(bonus)-run(0)));
 }
+function roughPaValue(entry,bonus){
+ // Aucun tour futur n'est exécuté. Valeur indicative d'un PA sur la base
+ // des sorts déjà connus du build ; elle ne garantit pas la rotation optimale.
+ const allowed=entry.ctx.spells.filter(s=>!s.nonDirect&&
+  entry.ctx.settings.variants[s.variantGroup]===s.name&&s.pa>0&&s.max>0);
+ const best=Math.max(0,...allowed.map(s=>((s.min+s.max)/2)/s.pa));
+ return Math.max(0,bonus*best*.5);
+}
 function grantPaBuff(source,spell,entries,turn){
  const buff=paTeamBuff(spell);
  if(!buff)return;
@@ -175,6 +190,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{}){
   strategy:"séquentiel",strategiesTested:0,chosenOpening:null,
   estimated:0,direct:0,poison:0
  }));
+ for(const entry of entries)entry.everyone=entries;
  const turns=[];
  let remainingHp=target.hp,theoretical=0,directTotal=0,poisonTotal=0,shared=emptyDebuff();
  let effective=0;
