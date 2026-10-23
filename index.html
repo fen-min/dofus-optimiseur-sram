@@ -213,6 +213,21 @@
               </div>
             </div>
 
+            <section class="spellbook-weapon-panel" aria-label="Arme équipée du build actif">
+              <div class="spellbook-weapon-intro">
+                <span class="spellbook-weapon-glyph" aria-hidden="true">⚔</span>
+                <div>
+                  <h3>Arme équipée</h3>
+                  <p>Une arme par build, indépendante des 22 variantes de classe.</p>
+                </div>
+                <label class="spellbook-weapon-select-label" for="spellbook-weapon-select">Choisir l'arme
+                  <select id="spellbook-weapon-select" aria-label="Choisir l'arme du build actif">
+                    <option value="">Aucune arme renseignée</option>
+                  </select>
+                </label>
+              </div>
+              <div id="spellbook-weapon-detail" class="spellbook-weapon-detail" aria-live="polite"></div>
+            </section>
             <div id="spell-pair-grid" class="spell-pair-grid" role="group" aria-label="Variantes de sorts à choisir"></div>
             <div id="spellbook-empty" class="spellbook-empty" hidden>Aucune paire ne correspond à cette recherche.</div>
             <div class="spellbook-bottom">
