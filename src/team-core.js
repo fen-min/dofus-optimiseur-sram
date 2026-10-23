@@ -3,7 +3,7 @@
  * HP, target vulnerabilities and per-character effects persist between turns.
  */
 import {CLASSES} from "./classes.js?v=3.3";
-import {playSequentialTeam} from "./team-sequential.js?v=3.4";
+import {playSequentialTeam} from "./team-sequential.js?v=3.5";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.3";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
