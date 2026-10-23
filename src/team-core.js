@@ -85,6 +85,47 @@ export function createTeamContext(build,target,memberOptions={}){
 const round=n=>Math.round(n*10)/10;
 export function assembleTeamResult(results,target){
  const conf=cleanTeamTarget(target);
+ // Legacy analysis tests sometimes provide precomputed rotations with no
+ // replay context. Summarize those directly; live team simulations use
+ // optimizeTeamTurn/playSequentialTeam instead of this compatibility branch.
+ if(results.some(entry=>!entry.ctx)){
+  const members=results.map(entry=>({
+   id:entry.build.id,character:entry.build.character,name:entry.build.name,
+   initiative:entry.build.initiative,ap:entry.build.ap,
+   strategy:entry.strategy||"historique",strategiesTested:entry.strategiesTested||0,
+   chosenOpening:entry.chosenOpening||null,estimated:0,direct:0,poison:0
+  }));
+  let theoretical=0,direct=0,poison=0,effective=0;
+  const turns=[];
+  for(let i=0;i<conf.turns;i++){
+   const actors=results.map((entry,j)=>{
+    const turn=entry.result?.turns?.[i];
+    const damage=round(Number(turn?.total)||0);
+    const immediate=round(Number(turn?.immediate)||0);
+    const delayed=round(Number(turn?.poison)||0);
+    members[j].estimated=round(members[j].estimated+damage);
+    members[j].direct=round(members[j].direct+immediate);
+    members[j].poison=round(members[j].poison+delayed);
+    return {id:entry.build.id,character:entry.build.character,
+     initiative:entry.build.initiative,
+     actions:(turn?.actions||[]).map(a=>({
+      name:a.name,pa:a.pa,autoRefreshed:!!a.autoRefreshed||
+       !!a.notes?.includes("Relance automatique : buff expiré")
+     })),spent:turn?.spent||0,direct:immediate,poison:delayed,damage,health:turn?.sacrierEndHealth||null};
+   });
+   const current=round(actors.reduce((n,a)=>n+a.damage,0));
+   theoretical=round(theoretical+current);
+   direct=round(direct+actors.reduce((n,a)=>n+a.direct,0));
+   poison=round(poison+actors.reduce((n,a)=>n+a.poison,0));
+   effective=Math.min(conf.hp,theoretical);
+   turns.push({number:i+1,actors,theoretical:current,
+    remainingHp:round(Math.max(0,conf.hp-effective)),cappedDamage:round(effective)});
+  }
+  return {target:conf,members,turns,theoretical,direct,poison,
+   effective:round(effective),overkill:round(Math.max(0,theoretical-conf.hp)),
+   averagePerTurn:round(theoretical/conf.turns),
+   warnings:["Historique de rotations précalculées : sans contexte de replay."],approximate:true};
+ }
  const members=results.map(x=>({
   id:x.build.id,character:x.build.character,name:x.build.name,
   initiative:x.build.initiative,ap:x.build.ap,
