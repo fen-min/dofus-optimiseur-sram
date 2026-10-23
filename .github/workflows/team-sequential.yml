@@ -1,0 +1,22 @@
+name: OMBRE - Vérification des tours en équipe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team*.js"
+      - "src/engine.js"
+      - "src/build-damage.js"
+      - "test/team-sequential.test.mjs"
+      - ".github/workflows/team-sequential.yml"
+  workflow_dispatch:
+jobs:
+  team-sequential:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Simulations chronologiques et mémoire des états
+        run: node --test test/team-sequential.test.mjs
