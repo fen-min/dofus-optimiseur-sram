@@ -1,8 +1,8 @@
-import {CLASSES} from "./classes.js?v=1.8";
+import {CLASSES} from "./classes.js?v=3.1";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.0";
+} from "./team-core.js?v=3.1";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -94,6 +94,8 @@ export function mountTeamModule({getBuilds}){
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
+   (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
+    ' · Souffrance '+safe(a.health.suffering):'')+
    (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
     ' · ouverture choisie : '+safe(result.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
@@ -164,7 +166,7 @@ export function mountTeamModule({getBuilds}){
   $("team-cancel").disabled=false;
   status("Optimisation des rotations de "+members.length+" personnages sur "+target.turns+" tours…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.0",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.1",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};

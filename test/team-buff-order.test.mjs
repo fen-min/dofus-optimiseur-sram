@@ -3,7 +3,15 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {SACRIER_VARIANTS} from "../src/sacrier-catalog.js";
 import {optimize,eligible,initialState,castSpell,endTurn,cleanSettings} from "../src/engine.js";
-import {createTeamContext,optimizeTeamMember,improveTeamBuffOrder,assembleTeamResult} from "../src/team-core.js";
+import {createTeamContext as createHealthAwareContext,optimizeTeamMember,improveTeamBuffOrder,assembleTeamResult} from "../src/team-core.js";
+// Preserve the pre-health-regression fixtures explicitly: these tests check
+// historical beam-search buff ordering with HP simulation disabled.
+// New Sacrieur PV/Souffrance tests live in sacrier-health-damage.test.mjs.
+const createTeamContext=(...args)=>{
+ const ctx=createHealthAwareContext(...args);
+ return {...ctx,settings:{...ctx.settings,sacrierHealthSimulation:false}};
+};
+
 
 const sacri=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
 const sram=INITIAL_BUILDS.find(b=>b.classId==="sram");
