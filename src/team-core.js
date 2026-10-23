@@ -89,46 +89,66 @@ export function assembleTeamResult(results,target){
   id:x.build.id,character:x.build.character,name:x.build.name,
   initiative:x.build.initiative,ap:x.build.ap,
   strategy:x.strategy,strategiesTested:x.strategiesTested,
-  chosenOpening:x.chosenOpening||null,estimated:round(x.result.total),
-  direct:round(x.result.immediate),poison:round(x.result.poison)
+  chosenOpening:x.chosenOpening||null,estimated:0,direct:0,poison:0
  }));
  const turns=[];
- let theoreticalTotal=0;
+ let theoreticalTotal=0, directTotal=0, poisonTotal=0, effective=0;
+ // Every round proceeds actor-by-actor in initiative order. Each actor's
+ // engine state survives to their next turn (cooldowns, buffs, HP, poison).
+ const actorsState=results.map(entry=>({
+  entry,state:initialState(entry.ctx.settings),
+  byId:new Map(entry.ctx.spells.map(spell=>[String(spell.id),spell]))
+ }));
  for(let i=0;i<conf.turns;i++){
-  const actors=results.map(entry=>{
-   const t=entry.result.turns[i];
-   return {id:entry.build.id,character:entry.build.character,
-    initiative:entry.build.initiative,actions:(t?.actions||[]).map(a=>({
+  const actors=[];
+  for(let j=0;j<actorsState.length;j++){
+   const {entry,byId}=actorsState[j],saved=actorsState[j];
+   const cfg=entry.ctx.settings;
+   const planned=entry.result.turns[i]?.actions||[];
+   const alive=effective<conf.hp;
+   if(alive){
+    for(const action of planned){
+     const spell=byId.get(String(action.id));
+     if(!spell||!eligible(spell,saved.state,cfg))continue;
+     saved.state=castSpell(saved.state,spell,cfg);
+    }
+   }
+   saved.state=endTurn(saved.state,cfg);
+   const played=saved.state.turns[i];
+   const damage=alive?round(played?.total||0):0;
+   const direct=alive?round(played?.immediate||0):0;
+   const poison=alive?round(played?.poison||0):0;
+   theoreticalTotal=round(theoreticalTotal+damage);
+   directTotal=round(directTotal+direct);
+   poisonTotal=round(poisonTotal+poison);
+   effective=round(Math.min(conf.hp,theoreticalTotal));
+   members[j].estimated=round(members[j].estimated+damage);
+   members[j].direct=round(members[j].direct+direct);
+   members[j].poison=round(members[j].poison+poison);
+   actors.push({id:entry.build.id,character:entry.build.character,
+    initiative:entry.build.initiative,
+    actions:alive?(played?.actions||[]).map(a=>({
      name:a.name,pa:a.pa,autoRefreshed:!!a.notes?.includes("Relance automatique : buff expiré")
-    })),spent:t?.spent||0,direct:round(t?.immediate||0),
-    poison:round(t?.poison||0),damage:round(t?.total||0),
-    health:t?.sacrierEndHealth||null};
-  });
-  const theoretical=round(actors.reduce((sum,a)=>sum+a.damage,0));
-  theoreticalTotal=round(theoreticalTotal+theoretical);
-  turns.push({number:i+1,actors,theoretical,
-   remainingHp:round(Math.max(0,conf.hp-theoreticalTotal)),
-   cappedDamage:round(Math.min(conf.hp,theoreticalTotal))});
+    })):[],
+    spent:alive?(played?.spent||0):0,direct,poison,damage,
+    health:played?.sacrierEndHealth||null});
+  }
+  turns.push({number:i+1,actors,
+   theoretical:round(actors.reduce((sum,a)=>sum+a.damage,0)),
+   remainingHp:round(Math.max(0,conf.hp-effective)),
+   cappedDamage:effective});
  }
  return {target:conf,members,turns,
-  theoretical:round(theoreticalTotal),
-  direct:round(members.reduce((n,b)=>n+b.direct,0)),
-  poison:round(members.reduce((n,b)=>n+b.poison,0)),
-  effective:round(Math.min(conf.hp,theoreticalTotal)),
-  overkill:round(Math.max(0,theoreticalTotal-conf.hp)),
+  theoretical:round(theoreticalTotal),direct:round(directTotal),
+  poison:round(poisonTotal),effective,overkill:round(Math.max(0,theoreticalTotal-conf.hp)),
   averagePerTurn:round(theoreticalTotal/conf.turns),
-  warnings:["Estimations monocibles indépendantes : pas de buffs, soins, érosion ni vulnérabilités partagés entre personnages.",
-   "Les résistances sont prises en compte par élément. Les dégâts utilisent les valeurs du build calibrées dans OMBRE ; aucune caractéristique n'est ajoutée deux fois.",
-   "Ordre par initiative enregistrée. Sans initiative connue, le personnage figure à la fin. Les égalités conservent l'ordre de sélection.",
-   "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
-   "L'optimiseur compare la rotation libre, l'entretien des buffs expirés et les ouvertures avec les buffs disponibles, puis retient le scénario le plus dommageable parmi ceux testés.",
-   "Les variantes exclusives proviennent du build. La recherche reste heuristique : meilleur scénario testé, pas optimum mathématiquement garanti.",
-   "Sacrieur : Pacte de Sang (+25 % Vitalité) modifie les PV actuels et maximum, puis les sacrifices et la Souffrance. Le retrait de PV à l’expiration du Pacte reste provisoire, non vérifié en jeu.",
-   "Le vol de vie de Désolation rend 50 % des dégâts même sous Berserk selon les logs observés ; les soins classiques restent une mécanique distincte.",
-   "Dégâts ennemis, boucliers, érosion et soins alliés non simulés : estimations seulement.",
-   "Dommages : valeurs DofusBook du build, sans double comptage des caractéristiques, résistances fixes facultatives (0 par défaut) puis résistances %. Précision des arrondis à vérifier en jeu.",
-   "Pièges non déclenchés automatiquement, carte et obstacles non simulés. Optimum non garanti."],
-  approximate:true};
+  warnings:[
+   "Simulation exécutée par tours complets, en ordre d'initiative. Les buffs, durées, relances et PV personnels sont conservés d'un tour au suivant.",
+   "La cible possède des PV communs et les actions s'arrêtent lorsqu'elle est vaincue.",
+   "Les rotations proposées restent planifiées individuellement : les buffs et vulnérabilités entre alliés ne sont pas encore partagés.",
+   "Les dégâts par sort sont estimés depuis les statistiques du build actif ; jets, critiques et arrondis peuvent rester approximatifs.",
+   "Pas de déplacement, attaques ennemies, soins alliés, érosion ou boucliers partagés. Optimum non garanti."
+  ],approximate:true};
 }
 /**
  * Compare whole-rotation DPS, including the PA spent on each buff.
@@ -256,7 +276,7 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
    character:ctx.build.character,index:i+1,count:contexts.length,
    turn:p.turn,turns:ctx.settings.turns,scenario:p.scenario
   }));
-  evaluated.push({build:ctx.build,...chosen});
+  evaluated.push({build:ctx.build,ctx,...chosen});
  }
  return assembleTeamResult(evaluated,target);
 }
