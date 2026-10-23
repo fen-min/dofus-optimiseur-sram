@@ -1,4 +1,4 @@
-import {initialState,castSpell,endTurn,eligible,cleanSettings,turnActionPoints} from "./engine.js?v=3.2";
+import {initialState,castSpell,endTurn,eligible,cleanSettings,turnActionPoints} from "./engine.js?v=3.11";
 
 /** The player chooses spells. Rebuild state from choices, never from guessed actions. */
 export const ASSIST_CONTEXT_STORE="ombre-assist-context-v1";
