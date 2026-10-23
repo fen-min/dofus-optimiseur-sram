@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=3.3";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.3";
+} from "./team-core.js?v=3.4";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -85,6 +85,18 @@ export function mountTeamModule({getBuilds}){
   $("team-turn-buttons").innerHTML=present?result.turns.map(t=>
    '<button type="button" data-team-turn="'+t.number+'" class="'+(t.number===activeTurn?'is-current':'')+
    '" aria-pressed="'+(t.number===activeTurn)+'">Tour '+t.number+'</button>').join(""):"";
+  const ordered=present?turn.actors:getMembers();
+  $("team-order").innerHTML='<div class="team-order-heading"><strong>Ordre de jeu'+
+   (present?' · Tour '+activeTurn:'')+'</strong><small>'+
+   (present?'PV cible au début : '+fmt(turn.roundStartHp??result.target.hp):
+    'Les personnages joueront dans cet ordre')+'</small></div>'+
+   ordered.map((actor,index)=>'<div class="team-order-row'+
+    (actor.defeated?' is-last':'')+'">'+
+    '<span class="team-order-number">'+String(index+1).padStart(2,"0")+'</span>'+
+    '<span class="team-order-name">'+safe(actor.character)+'</span>'+
+    (present&&Number.isFinite(actor.remainingHp)?
+      '<span class="team-order-hp">'+fmt(actor.remainingHp)+' PV</span>':'')+
+    '</div>').join("");
   $("team-rotations").innerHTML=present?turn.actors.map((a,i)=>
    '<div class="team-rotation-item"><div class="team-rotation-heading"><span>'+
    '<b>'+String(i+1).padStart(2,"0")+'</b> '+safe(a.character)+'</span><strong>'+fmt(a.damage)+' dégâts</strong></div>'+
@@ -94,6 +106,7 @@ export function mountTeamModule({getBuilds}){
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
+   (Number.isFinite(a.remainingHp)?' · cible '+fmt(a.remainingHp)+' PV':'')+
    (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
     ' · Souffrance '+safe(a.health.suffering):'')+
    (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
@@ -119,7 +132,7 @@ export function mountTeamModule({getBuilds}){
    '<p class="team-placeholder">Le bilan des dégâts et des PV restants de la cible apparaîtra ici après le calcul.</p>';
   const info=$("team-assumptions");
   info.textContent=present?result.warnings.join(" "):
-   "Les rotations sont calculées indépendamment pour chaque personnage. Les buffs et vulnérabilités entre alliés ne sont pas encore pris en compte.";
+   "Chaque personnage joue après le précédent, avec les PV de cible communs et les buffs et relances personnels. Les buffs de soutien entre alliés ne sont pas encore entièrement modélisés.";
  }
  function render(){renderMembers();renderTarget();renderResult();}
  function changeSlot(index,value){
@@ -166,7 +179,7 @@ export function mountTeamModule({getBuilds}){
   $("team-cancel").disabled=false;
   status("Optimisation des rotations de "+members.length+" personnages sur "+target.turns+" tours…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.3",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.4",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -178,7 +191,7 @@ export function mountTeamModule({getBuilds}){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
      result=data.result;activeTurn=1;renderResult();
-     status("Calcul terminé : "+fmt(result.theoretical)+" dégâts théoriques sur "+target.turns+" tour(s).");
+     status("Simulation chronologique terminée : "+fmt(result.theoretical)+" dégâts théoriques sur "+result.turns.length+" tour(s) joué(s)."+(result.turns.length<target.turns?" Cible vaincue avant le dernier tour.":""));
     }
    };
    worker.onerror=event=>{
