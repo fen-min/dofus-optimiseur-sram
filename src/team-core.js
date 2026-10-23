@@ -262,21 +262,18 @@ export function optimizeTeamMember(ctx,onProgress=()=>{}){
  }
  return {...best,strategiesTested:trials};
 }
-/** Run only in team-worker, never on the UI thread. */
+/** Run only in team-worker, never on the UI thread.
+ * Contrairement à optimizeTeamMember, cette méthode planifie chaque ACTEUR
+ * au moment de son tour. Les futurs tours ne sont jamais figés à l'avance.
+ */
 export function optimizeTeam(contexts,target,onProgress=()=>{}){
  if(!Array.isArray(contexts)||contexts.length<1||contexts.length>TEAM_LIMIT)
   throw Error("Sélectionne entre 1 et 8 builds.");
- const ids=new Set(),evaluated=[];
- for(let i=0;i<contexts.length;i++){
-  const ctx=contexts[i];
+ const ids=new Set();
+ for(const ctx of contexts){
   if(!ctx?.build?.id||ids.has(ctx.build.id)||!Array.isArray(ctx.spells)||!ctx.settings)
    throw Error("Composition d'équipe invalide.");
   ids.add(ctx.build.id);
-  const chosen=optimizeTeamMember(ctx,p=>onProgress({
-   character:ctx.build.character,index:i+1,count:contexts.length,
-   turn:p.turn,turns:ctx.settings.turns,scenario:p.scenario
-  }));
-  evaluated.push({build:ctx.build,ctx,...chosen});
  }
- return assembleTeamResult(evaluated,target);
+ return playSequentialTeam(contexts,cleanTeamTarget(target),onProgress);
 }
