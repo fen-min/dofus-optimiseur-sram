@@ -94,6 +94,8 @@ export function mountTeamModule({getBuilds}){
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+' PA utilisés · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
+   (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
+    ' · Souffrance '+safe(a.health.suffering):'')+
    (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
     ' · ouverture choisie : '+safe(result.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
