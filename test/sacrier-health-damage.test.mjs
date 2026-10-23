@@ -167,3 +167,21 @@ test("Permanent Mutilation remains eligible as an offensive opening candidate",(
  const names=openingBuffCandidates(ctx).map(spell=>spell.name);
  assert.ok(names.includes("Mutilation"),"Mutilation must not be filtered due to its non-expiring buff");
 });
+
+
+test("Berserk reduces received life-steal healing to 30% while active",()=>{
+ const ctx=getCtx(2);
+ const berserk=ctx.spells.find(spell=>spell.name==="Berserk");
+ const steal=ctx.spells.find(spell=>spell.name==="Désolation");
+ assert.ok(berserk&&steal&&steal.lifeSteal);
+ const active=castSpell(initialState(ctx.settings),berserk,ctx.settings);
+ const inactive={...active,berserkActive:false};
+ const gainedActive=castSpell(active,steal,ctx.settings);
+ const gainedInactive=castSpell(inactive,steal,ctx.settings);
+ const activeHeal=gainedActive.sacrierHealth.hp-active.sacrierHealth.hp;
+ const inactiveHeal=gainedInactive.sacrierHealth.hp-inactive.sacrierHealth.hp;
+ assert.ok(inactiveHeal>0);
+ assert.ok(activeHeal>0);
+ assert.ok(activeHeal<inactiveHeal);
+ assert.ok(Math.abs(activeHeal/(gainedActive.total/2)-0.3)<0.02);
+});
