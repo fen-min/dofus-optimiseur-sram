@@ -15,8 +15,10 @@
  * source matches all 60 elemental rows (normal and critical) in the catalog.
  * Effects with unknown additional lines/conditional rules remain approximate.
  */
+import {SACRIER_CATALOG} from "./sacrier-catalog.js";
+
 export const SACRIER_DOFUSBOOK_GEAR_STATS={
- agility:1368,chance:410,strength:100,intelligence:100,power:160,
+ agility:1368,chance:410,strength:100,intelligence:100,power:160,critical:-44,
  flatDamage:{Air:172,Eau:82,Terre:25,Feu:25,Neutre:25},
  criticalDamage:25,spellDamagePercent:0
 };
@@ -61,6 +63,13 @@ export function prepareBuildSpells(build,cls){
    if(inferred.every(n=>n!==null)){
     [spell.min,spell.max,spell.critMin,spell.critMax]=inferred.map((n,i)=>calculatedLine(n,e,i>=2,stats));
     spell.baseDamage=(inferred[0]+inferred[1])/2;
+    // A spell's source critChance is the underlying probability after
+    // DofusBook's reference critical modifier. Undo that modifier before
+    // applying the current build's modifier. DOFUS has a 5% minimum chance.
+    const catalog=SACRIER_CATALOG.find(x=>x.id===spell.id);
+    if(Number.isFinite(stats.critical)&&Number.isFinite(catalog?.critChance))
+     spell.critChance=Math.max(.05,Math.min(1,
+      (catalog.critChance+stats.critical-SACRIER_DOFUSBOOK_GEAR_STATS.critical)/100));
     spell.damageSource="active-build-stats";
    }
   }
