@@ -12,6 +12,7 @@ const activeDebuff=(effect,turn)=>effect&&effect.expires>=turn?effect:emptyDebuf
 
 function orderContexts(contexts){
  return contexts.map((ctx,index)=>({ctx,index,state:initialState(ctx.settings),trials:0,
+  teamBuffs:[],currentPA:ctx.settings.ap,
   spells:new Map(ctx.spells.map(s=>[String(s.id),s]))}))
  .sort((a,b)=>{
   const ai=a.ctx.build.initiative,bi=b.ctx.build.initiative;
@@ -71,32 +72,88 @@ function improveCurrentBuffOrder(actions,ctx,state){
  }
  return best;
 }
-function planCurrentTurn(entry,remainingHp){
+function planCurrentTurn(entry,remainingHp,following=[]){
  const {ctx,state}=entry;
  const turn=state.turn;
- // Court horizon pour valoriser les buffs, mais seul CE tour est joué.
- // En fin de combat, une ouverture inutile ne doit pas être forcée.
- const depth=turn===1?3:2;
- const settings=cleanSettings({...ctx.settings,
-  turns:Math.min(ctx.settings.turns,turn+depth-1),
+ // STRICT : la recherche est bornée au tour en train d'être joué.
+ // Les prochains tours gardent leur état mais ne participent pas à la décision.
+ const settings=cleanSettings({...ctx.settings,turns:turn,
+  apByTurn:{...ctx.settings.apByTurn,[turn]:entry.currentPA},
   beamWidth:8,refreshTimedBuffs:false});
  let best=evaluateTrial(ctx,state,settings);
  entry.trials++;
  if(turn>1){
-  const kept=cleanSettings({...settings,refreshTimedBuffs:true});
-  const maintenance=evaluateTrial(ctx,state,kept);
+  const maintained=evaluateTrial(ctx,state,cleanSettings({...settings,refreshTimedBuffs:true}));
   entry.trials++;
-  if(better(maintenance,best,remainingHp))best=maintenance;
+  if(better(maintained,best,remainingHp))best=maintained;
  }
- if(turn===1&&ctx.settings.turns>1){
-  for(const spell of selectedBuffs(ctx,state,settings)){
-   const trial=evaluateTrial(ctx,state,settings,spell);
-   entry.trials++;
-   if(better(trial,best,remainingHp))best=trial;
-  }
+ // Les buffs personnels peuvent être lancés si rentables sur CE tour.
+ // Aucun calcul du tour suivant pour choisir une ouverture.
+ for(const spell of selectedBuffs(ctx,state,settings)){
+  const trial=evaluateTrial(ctx,state,settings,spell);
+  entry.trials++;
+  if(better(trial,best,remainingHp))best=trial;
+ }
+ // Un soutien +PA s'évalue sur les personnages qui joueront PLUS TARD
+ // dans le même tour. Il ne simule jamais les tours T+1.
+ let bestScore=Math.min(remainingHp,Math.max(0,best?.score||0));
+ for(const spell of ctx.spells.filter(x=>!!paTeamBuff(x)&&eligible(x,state,settings)).slice(0,3)){
+  const bonus=paTeamBuff(spell);
+  const recipients=following.filter(x=>targetsTeamBuff(bonus,entry,x));
+  if(!recipients.length)continue;
+  const gain=recipients.reduce((sum,ally)=>sum+estimatePaGain(ally,bonus.value,remainingHp),0);
+  if(gain<=0)continue;
+  const trial=evaluateTrial(ctx,state,settings,spell);
+  entry.trials++;
+  if(!trial)continue;
+  const score=Math.min(remainingHp,Math.max(0,trial.score))+gain;
+  if(score>bestScore+.01){best=trial;bestScore=score;}
  }
  return {actions:improveCurrentBuffOrder(best?.actions||[],ctx,state),
-  label:best?.label||"Rotation dynamique"};
+  label:best?.label||"Rotation dynamique",settings};
+}
+function paTeamBuff(spell){
+ const buff=spell.status?.teamBuff||spell.status?.allyBuff;
+ const stat=String(buff?.stat||"").toUpperCase();
+ if(!["PA","AP","ACTIONPOINTS"].includes(stat))return null;
+ const value=Number(buff.value),duration=Number(buff.duration);
+ if(!Number.isInteger(value)||value<=0||value>20||
+    !Number.isInteger(duration)||duration<=0||duration>50)return null;
+ return {value,duration,targets:buff.targets||"allies"};
+}
+function targetsTeamBuff(buff,source,recipient){
+ if(source===recipient)return buff.targets==="team"||buff.targets==="all";
+ return ["allies","team","all","others"].includes(buff.targets);
+}
+function activePaBonus(entry,turn){
+ entry.teamBuffs=entry.teamBuffs.filter(b=>b.until>=turn);
+ return entry.teamBuffs.reduce((sum,b)=>sum+b.value,0);
+}
+function basePa(entry,turn){return Number(entry.ctx.settings.apByTurn?.[turn]??entry.ctx.settings.ap);}
+function appliedPa(entry,turn,extra=0){
+ return Math.max(1,Math.min(30,basePa(entry,turn)+activePaBonus(entry,turn)+extra));
+}
+function estimatePaGain(ally,bonus,remainingHp){
+ const turn=ally.state.turn;
+ if(turn<1||turn>ally.ctx.settings.turns)return 0;
+ const run=extra=>{
+  const pa=appliedPa(ally,turn,extra);
+  const settings=cleanSettings({...ally.ctx.settings,turns:turn,
+   apByTurn:{...ally.ctx.settings.apByTurn,[turn]:pa},beamWidth:8,refreshTimedBuffs:false});
+  const result=optimizeFromState(settings,ally.ctx.spells,{...ally.state,pa});
+  return result.turns[turn-1]?.total||0;
+ };
+ return Math.max(0,Math.min(remainingHp,run(bonus)-run(0)));
+}
+function grantPaBuff(source,spell,entries,turn){
+ const buff=paTeamBuff(spell);
+ if(!buff)return;
+ const key=source.ctx.build.id+":"+spell.id;
+ for(const ally of entries){
+  if(!targetsTeamBuff(buff,source,ally))continue;
+  ally.teamBuffs=ally.teamBuffs.filter(x=>x.key!==key&&x.until>=turn);
+  ally.teamBuffs.push({key,value:buff.value,until:turn+buff.duration-1});
+ }
 }
 function blankActor(entry,remainingHp){
  const b=entry.ctx.build;
@@ -130,14 +187,19 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{}){
     // L'effet placé sur la cible par un allié profite aux suivants.
     // Les effets de soutien sur les alliés ne sont pas encore modélisés.
     entry.state.enemyDebuff={...activeDebuff(shared,turn)};
-    const plan=planCurrentTurn(entry,remainingHp);
+    entry.currentPA=appliedPa(entry,turn);
+    entry.state.pa=entry.currentPA;
+    actor.availablePA=entry.currentPA;
+    actor.paBonus=entry.currentPA-basePa(entry,turn);
+    const plan=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
     let played=0;
     for(const action of plan.actions){
      if(remainingHp<=0)break;
      const spell=entry.spells.get(String(action.id));
      if(!spell||!eligible(spell,entry.state,entry.ctx.settings))continue;
      const before=entry.state.total;
-     entry.state=castSpell(entry.state,spell,entry.ctx.settings);
+     entry.state=castSpell(entry.state,spell,plan.settings);
+     grantPaBuff(entry,spell,entries,turn);
      const delta=round(Math.max(0,entry.state.total-before));
      actor.direct=round(actor.direct+delta);
      actor.damage=round(actor.damage+delta);
@@ -151,7 +213,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{}){
     // Les poisons en attente évoluent après le tour de leur lanceur.
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
     const beforeEnd=entry.state.total;
-    entry.state=endTurn(entry.state,entry.ctx.settings);
+    entry.state=endTurn(entry.state,plan.settings);
     const delayed=remainingHp>0?round(Math.max(0,entry.state.total-beforeEnd)):0;
     actor.poison=delayed;
     actor.damage=round(actor.damage+delayed);
@@ -187,8 +249,8 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{}){
    "Tours joués dans l’ordre d’initiative, puis passage au tour suivant. Chaque personnage recalcule ses sorts lorsque vient son tour.",
    "PV de la cible communs : la simulation s’arrête à sa défaite. Buffs, relances, PV et effets personnels restent mémorisés d’un tour à l’autre.",
    "Les vulnérabilités modélisées de la cible sont transmises aux personnages suivants.",
-   "L’optimisation utilise un horizon court pour valoriser les buffs : meilleur choix estimé, pas optimum mathématique garanti.",
-   "Les buffs et soins lancés sur les alliés, le placement, les attaques ennemies et le calendrier exact des déclenchements de poisons ne sont pas encore simulés.",
+   "Chaque décision utilise UNIQUEMENT le tour courant : aucun tour futur n’est calculé à l’avance. Les bonus de PA entre alliés sont pris en compte lorsqu’ils sont définis dans les métadonnées des sorts.",
+   "Les autres buffs et soins alliés, le placement, les attaques ennemies et le calendrier exact des déclenchements de poisons ne sont pas encore simulés.",
    "Les dégâts sont des estimations fondées sur les statistiques du build actif ; les jets de base et arrondis peuvent encore différer du jeu."
   ],approximate:true};
 }
