@@ -56,6 +56,7 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
    utility="Rang 2 : frappe Feu en zone et +60 Puissance pendant 3 tours (2 lancers par tour).";
  }
  if(cat.name==="Berserk"){
+   status.berserk=true;
    status.hpCostPercent=70;
    status.conditionalBonus={stat:"Dommages aux sorts",value:10,unit:"%",condition:"Souffrance ≥ 6"};
    utility="Rang 2 : -70% PV, Intaclable, +10% dommages aux sorts, soins reçus ×30%. État retiré si Souffrance ≤ 5 ou relance. Non simulé sans PV.";
