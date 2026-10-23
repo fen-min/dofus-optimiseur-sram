@@ -94,7 +94,9 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
  critChance:Math.max(0,(cat.critChance||0)/100),
  baseDamage:dmg&&dmg.element?(min+max)/2/(ratio[dmg.element]||5):0,
  nonDirect:isUtility,isTrap:false,target,variantGroup,
- lifeSteal:!!cat.effects.some(effect=>!effect.cc&&effect.kind==="Vol"),
+ // Only the first modeled damage line is simulated. Do not treat a
+ // secondary life-steal effect as healing from an unrelated primary hit.
+ lifeSteal:!!dmg&&dmg.kind==="Vol",
  icon:cat.type==="Invocation"?"♟":isUtility?"✦":"⚔",
  status,utility,damagePrecision:cat.effects.filter(x=>!x.cc).length>1?"conditionnel":"direct",
  classId:"sacrieur",
