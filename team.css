@@ -95,3 +95,25 @@
 .team-order-number{font-size:11px;font-weight:800;color:#f0a0a0;min-width:22px}
 .team-order-name{font-size:11px;flex:1;overflow-wrap:anywhere;color:#f4e9ef}
 .team-order-hp{font-size:10px;color:#d9bdbd;white-space:nowrap}
+
+/* Tableau bleu : course aux dégâts cumulés, un classement par personnage. */
+.team-dps-board{padding:2px 0 8px}
+.team-dps-intro{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:4px 0 16px;font-size:13px;color:#e3eeff;font-weight:750}
+.team-dps-intro small{font-size:11px;font-weight:500;color:#91a9d4}
+.team-dps-list{display:flex;flex-direction:column;gap:10px}
+.team-dps-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 15px;border:1px solid #40547a;border-radius:13px;background:linear-gradient(100deg,rgba(53,76,122,.27),rgba(24,32,54,.52));position:relative;transform-origin:center;isolation:isolate}
+.team-dps-row.is-leader{border-color:#bf9445;background:linear-gradient(100deg,rgba(156,111,39,.18),rgba(32,45,77,.50));box-shadow:inset 3px 0 0 #e7b65b}
+.team-dps-rank{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#253653;border:1px solid #475d85;color:#bbd1fa;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+.team-dps-row.is-leader .team-dps-rank{color:#ffe2a0;background:#5b442c;border-color:#bd9151}
+.team-dps-main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.team-dps-info{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.team-dps-name{font-size:13px;font-weight:800;color:#f7faff;overflow-wrap:anywhere}
+.team-dps-turn{font-size:11px;color:#92c6ff;white-space:nowrap}
+.team-dps-track{height:11px;width:100%;background:#111c32;border:1px solid #334364;border-radius:999px;overflow:hidden}
+.team-dps-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#426dd9,#70a8ff);transition:width 650ms cubic-bezier(.22,1,.36,1);min-width:0}
+.team-dps-row.is-leader .team-dps-fill{background:linear-gradient(90deg,#4973d9,#83c4ff)}
+.team-dps-value{min-width:92px;text-align:right;color:#f8fbff;font-size:20px;font-weight:850;font-variant-numeric:tabular-nums}
+.team-dps-row.is-overtaking{animation:team-dps-overtake-glow 720ms ease-out}
+@keyframes team-dps-overtake-glow{0%{box-shadow:0 0 0 0 rgba(245,194,104,0);background-color:transparent}35%{box-shadow:0 0 0 3px rgba(245,194,104,.48);background-color:rgba(245,194,104,.12)}100%{box-shadow:0 0 0 0 rgba(245,194,104,0);background-color:transparent}}
+@media(max-width:560px){.team-dps-row{grid-template-columns:31px minmax(0,1fr);gap:8px;padding:12px 10px}.team-dps-rank{width:30px;height:30px}.team-dps-value{grid-column:2;grid-row:2;min-width:0;font-size:18px;text-align:right}.team-dps-info{gap:4px}.team-dps-turn{white-space:normal}}
+@media(prefers-reduced-motion:reduce){.team-dps-fill{transition:none!important}.team-dps-row.is-overtaking{animation:none!important}}
