@@ -96,9 +96,9 @@
           <section class="panel wide-panel" id="character-stats-panel">
             <div class="panel-eyebrow">CARACTÉRISTIQUES RELEVÉES EN JEU</div>
             <h2>Statistiques du build actif</h2>
-            <p class="muted">Les valeurs ci-dessous sont sauvegardées séparément pour chaque build. Elles servent de fiche de référence ; les dégâts déjà calculés sur DofusBook ne doivent pas recevoir une deuxième fois ces bonus.</p>
+            <p class="muted">Les valeurs ci-dessous sont sauvegardées pour chaque build. Pour le Sacrieur, OMBRE recalcule maintenant les dégâts des sorts à partir de ces statistiques, plutôt que d’utiliser directement les jets du stuff DofusBook.</p>
             <div id="character-stats-grid" class="character-stats-grid" aria-live="polite"></div>
-            <p class="microcopy">Attention : les PA réels du personnage peuvent être différents des PA choisis pour une simulation. Le calcul des dégâts de base reste fondé sur des références DofusBook. Les PV du Sacrieur et la Souffrance sont estimés, avec certaines interactions encore non vérifiées en jeu.</p>
+            <p class="microcopy">Les PA de simulation sont réglables indépendamment. Pour le Sacrieur, les jets de base sont retrouvés depuis la référence DofusBook puis calculés avec les caractéristiques actuelles (y compris dommages Air, Puissance, coups critiques et dommages aux sorts). Pour le Sram, les valeurs DofusBook restent utilisées en attendant les statistiques de la fiche source.</p>
           </section>
         </section>
         <section id="tab-optimize" class="tab-panel">
@@ -275,6 +275,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.2"></script>
+  <script type="module" src="./src/app.js?v=3.3"></script>
 </body>
 </html>
