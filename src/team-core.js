@@ -5,6 +5,7 @@
  */
 import {CLASSES} from "./classes.js?v=3.2";
 import {DEFAULT_SETTINGS} from "./spells.js";
+import {prepareBuildSpells} from "./build-damage.js?v=3.3";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
@@ -61,21 +62,10 @@ export function cleanTeamMemberOptions(build,raw={}){
 export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
  if(!cls)throw Error("Classe indisponible pour le build sélectionné.");
- const input=cleanTeamTarget(target),calibration=build.calibration||{};
+ const input=cleanTeamTarget(target);
  const options=cleanTeamMemberOptions(build,memberOptions);
  const variants=[...(build.variants||cls.defaultVariants)];
- const spells=cls.spells.map(base=>{
-  const s=JSON.parse(JSON.stringify(base));
-  const edit=calibration[s.id];
-  if(edit){
-   for(const key of ["min","max","critMin","critMax","summonBase"])
-    if(Number.isFinite(edit[key])&&edit[key]>=0)s[key]=edit[key];
-   if(s.status?.buff&&edit.buff)
-    for(const key of ["value","duration"])
-     if(Number.isFinite(edit.buff[key])&&edit.buff[key]>=0)s.status.buff[key]=edit.buff[key];
-  }
-  return s;
- });
+ const spells=prepareBuildSpells(build,cls);
  const settings=cleanSettings({...DEFAULT_SETTINGS,
    classId:cls.id,ap:options.ap,turns:input.turns,longHorizon:true,distance:build.distance,
   variantPairs:cls.pairs,variants,defaultVariants:cls.defaultVariants,
