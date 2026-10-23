@@ -38,14 +38,14 @@
         <section id="tab-team" class="tab-panel hidden" aria-label="Optimisation de DPS en équipe">
           <div class="panel-eyebrow">NOUVEAU MODULE / ÉQUIPE JUSQU'À 8 PERSONNAGES</div>
           <h2>Optimiseur DPS en équipe</h2>
-          <p class="muted">Choisis jusqu’à 8 personnages et leurs PA. OMBRE joue chaque tour dans l’ordre d’initiative : les décisions de chaque personnage tiennent compte des actions précédentes, des PV de la cible et des effets persistants. Les effets de soutien entre alliés ne sont pas encore tous simulés.</p>
+          <p class="muted">Choisis les personnages et clique pour calculer seulement le tour 1. « Tour suivant » calculera ensuite un seul nouveau tour, en conservant les buffs, PA, PV et relances des tours précédents.</p>
           <div class="team-shell">
             <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
               <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
               <div id="team-settings" class="team-settings">
                 <div class="team-settings-row">
                   <label for="team-hp">PV de la cible<input id="team-hp" type="number" min="100" max="100000000" step="100" value="10000"></label>
-                  <label for="team-turns">Tours simulés (1–50)<input id="team-turns" type="number" min="1" max="50" step="1" value="3"></label>
+                  
                   <label class="team-critical" for="team-critical"><input id="team-critical" type="checkbox" checked> Inclure les critiques probables</label>
                 </div>
                 <div class="team-resistances">
@@ -56,7 +56,7 @@
                   <label for="team-res-Neutre">Rés. Neutre %<input id="team-res-Neutre" type="number" min="0" max="90" step="1" value="0"></label>
                 </div>
               </div>
-              <div class="team-calc-actions"><button id="team-calculate" class="team-calculate" type="button">⚡ Calculer le DPS de l'équipe</button><button id="team-cancel" class="team-cancel" type="button" disabled>Annuler</button></div>
+              <div class="team-calc-actions"><button id="team-calculate" class="team-calculate" type="button">▶ Calculer le tour 1</button><button id="team-restart" class="team-cancel" type="button" disabled>Recommencer au tour 1</button><button id="team-cancel" class="team-cancel" type="button" disabled>Annuler</button></div>
               <p id="team-status" class="team-status" role="status" aria-live="polite"></p>
               <div class="team-turn-navigation"><label for="team-turn-select">Afficher le tour</label><select id="team-turn-select" aria-label="Aller directement à un tour" disabled><option value="">Calcule d'abord une rotation</option></select></div>
               <nav id="team-turn-buttons" class="team-turn-buttons" aria-label="Sélection du tour"></nav>
@@ -276,6 +276,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.5"></script>
+  <script type="module" src="./src/app.js?v=3.6"></script>
 </body>
 </html>
