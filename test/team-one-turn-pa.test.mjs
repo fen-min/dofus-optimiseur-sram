@@ -38,15 +38,12 @@ test("la recherche ne planifie que le tour courant, même sur un combat de 50 to
  const first=planCurrentTurn(entry,1000000);
  assert.equal(first.settings.turns,1);
  assert.equal(first.actions.every(a=>a.name==="Assaut"),true);
- let played=entry.state;
- for(const action of first.actions)played=(awaitImportNeverUsed(played,action));
  // Un nouveau tour ne reprend pas les PA consommés du précédent.
  entry.state=endTurn(entry.state,focused.settings);
  const second=planCurrentTurn(entry,1000000);
  assert.equal(second.settings.turns,2);
  assert.equal(ctx.settings.turns,50);
 });
-function awaitImportNeverUsed(state){return state;}
 
 test("+2 PA reçus avant son tour : disponibles immédiatement, puis expirent",()=>{
  const withSupport=optimizeTeam([paBuffer("support",3000),striker("damage",2000)],target);
