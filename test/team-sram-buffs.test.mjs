@@ -62,3 +62,40 @@ test("regression: un buff durable rentable sur les tours suivants doit être cho
  assert.ok(history[0].actions.includes("Manigance"),
   "Le bonus +160 pour trois tours devrait compenser un sort perdu au premier tour");
 });
+
+test("real Sram team build uses Manigance then waits until the buff expires",()=>{
+ const {ctx}=setup();
+ const history=steps(ctx,5);
+ assert.ok(history[0].actions.includes("Manigance"),"Le buff réel doit être considéré dès le premier tour");
+ assert.ok(history[0].actions.includes("Arnaque"),"Le vol d'Agilité est également un buff");
+ assert.ok(!history[1].actions.includes("Manigance"),"Manigance est encore active au tour 2");
+ assert.ok(!history[2].actions.includes("Manigance"),"Manigance est encore active au tour 3");
+ assert.ok(history[3].actions.includes("Manigance"),"Relance possible après expiration au tour 4");
+});
+test("in a Sacrieur+Sram team, the Sram still considers its own buffs",()=>{
+ const {ctx}=setup();
+ const sacri=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
+ const ally=createTeamContext(sacri,cfg);
+ let previous=null;
+ for(let turn=1;turn<=4;turn++)previous=optimizeTeamTurn([ctx,ally],cfg,()=>{},previous);
+ const sramCasts=previous.turns.map(t=>t.actors.find(a=>a.id===ctx.build.id).actions.map(a=>a.name));
+ console.log("SRAM TEAM BUFFS",JSON.stringify(sramCasts));
+ assert.ok(sramCasts[0].includes("Manigance"));
+ assert.ok(!sramCasts[1].includes("Manigance"));
+ assert.ok(!sramCasts[2].includes("Manigance"));
+ assert.ok(sramCasts[3].includes("Manigance"));
+});
+test("unavailable buff variants and weak buffs are not blindly forced",()=>{
+ const {ctx,manigance,arnaque}=setup();
+ const weak={...manigance,status:{...manigance.status,buff:{...manigance.status.buff,value:1}}};
+ const attack={...arnaque,maxPerTurn:4,perTarget:4,status:{}};
+ const modified={...ctx,spells:[attack,weak]};
+ const history=steps(modified,1);
+ assert.ok(!history[0].actions.includes("Manigance"));
+ const altVariants=ctx.settings.variants.slice();
+ altVariants[manigance.variantGroup]=ctx.settings.variantPairs[manigance.variantGroup]
+  .find(name=>name!=="Manigance");
+ const alternative={...ctx,settings:{...ctx.settings,variants:altVariants}};
+ const out=steps(alternative,1);
+ assert.ok(!out[0].actions.includes("Manigance"));
+});
