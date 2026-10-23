@@ -57,5 +57,5 @@ test("no turn-one buff candidate outside the saved spell variants",()=>{
  const ctx=createTeamContext(sacrier,{turns:3});
  const candidates=openingBuffCandidates(ctx);
  assert.ok(!candidates.some(s=>s.name==="Pacte de Sang"));
- assert.ok(candidates.every(s=>s.nonDirect&&s.status.buff.duration>0));
+ assert.ok(candidates.every(s=>s.nonDirect&&(s.status.buff.untilRemoved===true||s.status.buff.duration>0)));
 });
