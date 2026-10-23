@@ -3,7 +3,7 @@ import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.6";
+} from "./team-core.js?v=3.8";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -169,7 +169,7 @@ export function mountTeamModule({getBuilds}){
   $("team-cancel").disabled=false;
   status("Calcul du tour "+(previous?previous.turns.length+1:1)+" uniquement, dans l’ordre d’initiative…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.6",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.8",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
