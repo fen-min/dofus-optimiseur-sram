@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=3.3";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.5";
+} from "./team-core.js?v=3.6";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -27,7 +27,7 @@ export function mountTeamModule({getBuilds}){
  const saved=readStore();
  let ids=Array.isArray(saved?.ids)?saved.ids.slice(0,TEAM_LIMIT):
   getBuilds().slice(0,2).map(b=>b.id);
- let target=cleanTeamTarget(saved?.target||defaultTeamTarget());
+ let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,turns:50});
  const storedOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
   ?saved.memberOptions:{};
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
@@ -71,13 +71,15 @@ export function mountTeamModule({getBuilds}){
  }
  function renderTarget(){
   $("team-hp").value=String(target.hp);
-  $("team-turns").value=String(target.turns);
   $("team-critical").checked=target.criticals;
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
  }
  function renderResult(){
   const present=!!result;
   const turn=result?.turns[activeTurn-1];
+  $("team-calculate").textContent=result?"▶ Tour suivant ("+(result.turns.length+1)+")":"▶ Calculer le tour 1";
+  $("team-calculate").disabled=!!worker||!!result?.finished;
+  $("team-restart").disabled=!result||!!worker;
   $("team-turn-select").disabled=!present;
   $("team-turn-select").innerHTML=present?result.turns.map(t=>
    '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+result.turns.length+'</option>').join(""):
@@ -163,7 +165,7 @@ export function mountTeamModule({getBuilds}){
  }
  function changeTarget(){
   target=cleanTeamTarget({
-   hp:$("team-hp").value,turns:$("team-turns").value,criticals:$("team-critical").checked,
+   hp:$("team-hp").value,turns:50,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
   storeState();cancel();result=null;activeTurn=1;renderTarget();renderResult();
@@ -172,15 +174,17 @@ export function mountTeamModule({getBuilds}){
  function calculate(){
   const members=getMembers();
   if(!members.length){status("Ajoute au moins un personnage.");return;}
+  if(result?.finished){status("Combat terminé. Recommence au tour 1.");return;}
+  const previous=result;
   cancel();
   if(typeof Worker==="undefined"){status("Le navigateur ne prend pas en charge les calculs en arrière-plan.");return;}
   const contexts=members.map(b=>createTeamContext(b,target,memberOptions[b.id]));
   const currentJob=++job;
   $("team-calculate").disabled=true;
   $("team-cancel").disabled=false;
-  status("Optimisation des rotations de "+members.length+" personnages sur "+target.turns+" tours…");
+  status("Calcul du tour "+(previous?previous.turns.length+1:1)+" uniquement, dans l’ordre d’initiative…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.5",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.6",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -191,8 +195,8 @@ export function mountTeamModule({getBuilds}){
     if(data.type==="complete"||data.type==="error"){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
-     result=data.result;activeTurn=1;renderResult();
-     status("Simulation chronologique terminée : "+fmt(result.theoretical)+" dégâts théoriques sur "+result.turns.length+" tour(s) joué(s)."+(result.turns.length<target.turns?" Cible vaincue avant le dernier tour.":""));
+     result=data.result;activeTurn=result.turns.length;renderResult();
+     status("Tour "+activeTurn+" calculé. "+(result.finished?"Combat terminé.":"Clique sur « Tour suivant » pour calculer uniquement le tour "+(activeTurn+1)+"."));
     }
    };
    worker.onerror=event=>{
@@ -200,7 +204,7 @@ export function mountTeamModule({getBuilds}){
     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
     status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
-   worker.postMessage({contexts,target});
+   worker.postMessage({contexts,target,previous});
   }catch(error){
    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
    status("Impossible de lancer le calcul : "+error.message);
@@ -214,6 +218,10 @@ export function mountTeamModule({getBuilds}){
   if(event.target.closest("#team-settings"))changeTarget();
  });
  $("team-calculate").addEventListener("click",calculate);
+ $("team-restart").addEventListener("click",()=>{
+  cancel();result=null;activeTurn=1;renderResult();
+  status("Combat réinitialisé. Clique pour calculer uniquement le tour 1.");
+ });
  $("team-cancel").addEventListener("click",()=>{
   if(!worker)return;
   cancel();
@@ -246,7 +254,7 @@ export function mountTeamModule({getBuilds}){
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget(other.target);memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,turns:50});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
