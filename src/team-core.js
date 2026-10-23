@@ -4,6 +4,7 @@
  * movement or shared target effects are simulated.
  */
 import {CLASSES} from "./classes.js?v=3.2";
+import {spellsForActiveBuild} from "./build-damage.js?v=1";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
 
@@ -64,11 +65,11 @@ export function createTeamContext(build,target,memberOptions={}){
  const input=cleanTeamTarget(target),calibration=build.calibration||{};
  const options=cleanTeamMemberOptions(build,memberOptions);
  const variants=[...(build.variants||cls.defaultVariants)];
- const spells=cls.spells.map(base=>{
+ const spells=spellsForActiveBuild(cls.id,cls.spells,build.stats).map(base=>{
   const s=JSON.parse(JSON.stringify(base));
   const edit=calibration[s.id];
   if(edit){
-   for(const key of ["min","max","critMin","critMax","summonBase"])
+   for(const key of ["summonBase"])
     if(Number.isFinite(edit[key])&&edit[key]>=0)s[key]=edit[key];
    if(s.status?.buff&&edit.buff)
     for(const key of ["value","duration"])
@@ -128,7 +129,7 @@ export function assembleTeamResult(results,target){
   overkill:round(Math.max(0,theoreticalTotal-conf.hp)),
   averagePerTurn:round(theoreticalTotal/conf.turns),
   warnings:["Estimations monocibles indépendantes : pas de buffs, soins, érosion ni vulnérabilités partagés entre personnages.",
-   "Les résistances sont prises en compte par élément. Les dégâts utilisent les valeurs du build calibrées dans OMBRE ; aucune caractéristique n'est ajoutée deux fois.",
+   "Les résistances sont prises en compte par élément. Les dégâts sont recalculés depuis les statistiques du build actif.",
    "Ordre par initiative enregistrée. Sans initiative connue, le personnage figure à la fin. Les égalités conservent l'ordre de sélection.",
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
    "L'optimiseur compare la rotation libre, l'entretien des buffs expirés et les ouvertures avec les buffs disponibles, puis retient le scénario le plus dommageable parmi ceux testés.",
@@ -136,7 +137,7 @@ export function assembleTeamResult(results,target){
    "Sacrieur : Pacte de Sang (+25 % Vitalité) modifie les PV actuels et maximum, puis les sacrifices et la Souffrance. Le retrait de PV à l’expiration du Pacte reste provisoire, non vérifié en jeu.",
    "Le vol de vie de Désolation rend 50 % des dégâts même sous Berserk selon les logs observés ; les soins classiques restent une mécanique distincte.",
    "Dégâts ennemis, boucliers, érosion et soins alliés non simulés : estimations seulement.",
-   "Dommages : valeurs DofusBook du build, sans double comptage des caractéristiques, résistances fixes facultatives (0 par défaut) puis résistances %. Précision des arrondis à vérifier en jeu.",
+   "Dommages calculés depuis les statistiques du build actif et des jets de sort estimés ; arrondis à vérifier en jeu.",
    "Pièges non déclenchés automatiquement, carte et obstacles non simulés. Optimum non garanti."],
   approximate:true};
 }
