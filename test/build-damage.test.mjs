@@ -84,3 +84,15 @@ test("Team optimizer uses the same derived stats as the solo module, and PA is u
  const modified=createTeamContext(withStats({agility:1368,flatDamage:{Air:172},spellDamagePercent:0}),{turns:5,criticals:false});
  assert.equal(find(modified.spells,"Assaut").min,399);
 });
+
+
+test("Sacrier critical probability updates from the current build's Critical statistic",()=>{
+ const defaultCrit=find(prepareBuildSpells(sacri,CLASSES.sacrieur),"Assaut");
+ assert.equal(defaultCrit.critChance,.05,"5% crit from the screenshot with -44 Critical");
+ const highCrit=find(prepareBuildSpells(withStats({critical:20}),CLASSES.sacrieur),"Assaut");
+ assert.equal(highCrit.critChance,.25);
+ const otherCrit=find(prepareBuildSpells(withStats({critical:0}),CLASSES.sacrieur),"Assaut");
+ assert.equal(otherCrit.critChance,.05);
+ const missingCrit=find(prepareBuildSpells(withStats({critical:undefined}),CLASSES.sacrieur),"Assaut");
+ assert.equal(missingCrit.critChance,0,"Missing Critical input keeps original reference model");
+});
