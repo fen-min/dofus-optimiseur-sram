@@ -1,5 +1,6 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
+import {prepareBuildSpells} from "./build-damage.js?v=3.3";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.2";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
 import {mountTeamModule} from "./team-ui.js?v=3.2";
@@ -63,11 +64,7 @@ function saveActiveSettings(){
  saveBuilds();
 }
 function applyCalibration(){
- spells=model.spells.map(x=>({...x,status:deep(x.status||{})}));
- for(const s of spells){const item=current.calibration[s.id];if(!item)continue;
-  for(const k of ["min","max","critMin","critMax","summonBase"])if(Number.isFinite(item[k])&&item[k]>=0)s[k]=item[k];
-  if(s.status.buff&&item.buff)for(const k of ["value","duration"])if(Number.isFinite(item.buff[k])&&item.buff[k]>=0)s.status.buff[k]=item.buff[k];
- }
+ spells=prepareBuildSpells(current,model);
 }
 function renderProfileSelect(){
  const el=$("#profile-selector");
@@ -285,9 +282,9 @@ function renderCharacterStats(){
     '" value="'+escapeHtml(value)+'" placeholder="—"></label>';
   }).join("")+'</div></div>').join("");
  const note=document.querySelector("#character-stats-panel .microcopy");
- if(note)note.textContent=stats.source?.startsWith("capture-en-jeu")
-  ?`Capture du jeu du ${stats.source.endsWith("2026-10-22")?"22/10/2026":"21/10/2026"}. Les dommages DofusBook restent un calcul distinct ; évite de compter deux fois les caractéristiques.`
-  :"Statistiques locales de ce build, non recalculées automatiquement depuis DofusBook. Les dommages du moteur restent approximatifs.";
+ if(note)note.textContent=model.id==="sacrieur"
+  ?"Sacrieur : les dégâts des sorts sont recalculés automatiquement à partir des statistiques ci-dessus (Agilité, Puissance, dommages élémentaires, critiques et % dommages aux sorts). Les données DofusBook servent uniquement à retrouver les jets de base. Les ajustements manuels des sorts restent prioritaires. Champs manquants : conservation des dégâts de référence."
+  :"Sram : les caractéristiques sont enregistrées par build, mais la conversion automatique des lignes DofusBook nécessite encore les statistiques de la fiche source. Les dégâts de référence ou les calibrages manuels restent utilisés.";
 }
 function renderVariantPicker(){
  const picker=$("#variant-picker");
@@ -464,9 +461,25 @@ function activateBuild(id){
  $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
 }
 function saveCalibration(){
+ // Only save explicit edits: never persist all automatically computed rows,
+ // otherwise later equipment/stat changes would be silently ignored.
+ const baseline=new Map(prepareBuildSpells({...current,calibration:{}},model).map(s=>[s.id,s]));
  current.calibration={};
- for(const spell of spells)current.calibration[spell.id]={id:spell.id,min:spell.min,max:spell.max,critMin:spell.critMin,critMax:spell.critMax,
-  buff:spell.status?.buff?{value:spell.status.buff.value,duration:spell.status.buff.duration}:undefined};
+ for(const spell of spells){
+  const original=baseline.get(spell.id);
+  if(!original)continue;
+  const edit={id:spell.id};
+  for(const key of ["min","max","critMin","critMax","summonBase"])
+   if(Number.isFinite(spell[key])&&spell[key]!==original[key])edit[key]=spell[key];
+  if(spell.status?.buff&&original.status?.buff){
+   const buf={};
+   for(const key of ["value","duration"])
+    if(Number.isFinite(spell.status.buff[key])&&spell.status.buff[key]!==original.status.buff[key])
+     buf[key]=spell.status.buff[key];
+   if(Object.keys(buf).length)edit.buff=buf;
+  }
+  if(Object.keys(edit).length>1)current.calibration[spell.id]=edit;
+ }
  saveBuilds();
 }
 
@@ -631,9 +644,16 @@ $("#character-stats-grid").addEventListener("change",event=>{
  current.stats.source="manuel";
  current.stats=sanitizeCharacterStats(current.stats);
  saveBuilds();
+ applyCalibration();
+ result=null;
+ cancelCalculation();
+ invalidateCombatSnapshot();
+ renderSpells();
+ renderSpellbook();
  if(assistIsOpen())refreshAssistContext();
  if(multiIsOpen())refreshMultiContext();
  renderCharacterStats();
+ $("#status").textContent="Statistiques enregistrées : dégâts recalculés pour ce build lorsque les données de référence sont disponibles.";
 });
 $("#build-form").addEventListener("submit",e=>{
  e.preventDefault();
