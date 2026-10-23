@@ -20,6 +20,66 @@ function orderContexts(contexts){
    (bi??0)-(ai??0)||a.index-b.index;
  });
 }
+/**
+ * Valeur analytique d'un buff sur sa durée restante.
+ *
+ * Cela n'exécute AUCUN tour futur : les seuls dégâts réellement simulés
+ * restent ceux du tour courant. On estime les frappes qui pourraient profiter
+ * du buff, puis on réduit cette estimation pour l'incertitude de rotation.
+ */
+function estimatedBuffDamagePerRound(ctx,buff){
+ const amount=Number(buff.amount)||0;
+ if(amount<=0)return 0;
+ let pa=Number(ctx.settings.ap)||12,total=0;
+ const attacks=ctx.spells.filter(spell=>
+  ctx.settings.variants?.[spell.variantGroup]===spell.name &&
+  !spell.nonDirect&&!spell.isTrap&&!spell.status?.poison&&
+  Number(spell.pa)>0&&Number(spell.max)>0
+ ).map(spell=>{
+  let increment=0;
+  if(buff.stat==="Dommages")increment=amount;
+  else if(buff.stat==="Puissance"||buff.stat===spell.element)
+   increment=amount*(Number(spell.baseDamage)||0)/100;
+  else if(buff.stat==="Dommages finaux")
+   increment=amount*((Number(spell.min)||0)+(Number(spell.max)||0))/200;
+  else if(buff.stat==="Critique")
+   increment=amount*Math.max(0,((Number(spell.critMin)||0)+(Number(spell.critMax)||0)-
+    (Number(spell.min)||0)-(Number(spell.max)||0)))/200;
+  increment*=1-(Number(ctx.settings.resistances?.[spell.element])||0)/100;
+  const limit=Math.max(0,Math.min(
+   Number(spell.maxPerTurn)||1,Number(spell.perTarget)||Number(spell.maxPerTurn)||1));
+  return {cost:spell.pa,increment:Math.max(0,increment),limit};
+ }).filter(x=>x.increment>0).sort((a,b)=>b.increment/b.cost-a.increment/a.cost);
+ for(const attack of attacks){
+  const uses=Math.min(attack.limit,Math.floor(pa/attack.cost));
+  pa-=uses*attack.cost;
+  total+=uses*attack.increment;
+ }
+ // Un buff ne garantit ni la portée ni la rotation exacte des prochains tours.
+ return total*0.75;
+}
+function projectedCarryoverValue(ctx,state,actions){
+ if(!actions?.length)return 0;
+ let after=state;
+ try{
+  for(const action of actions){
+   const spell=ctx.spells.find(s=>String(s.id)===String(action.id));
+   if(!spell||!eligible(spell,after,ctx.settings))return 0;
+   after=castSpell(after,spell,ctx.settings);
+  }
+ }catch{return 0;}
+ const current=state.turn;
+ const remaining=Math.max(0,ctx.settings.turns-current);
+ if(!remaining)return 0;
+ const lifetime=buff=>{
+  const turns=Math.max(0,Math.min(remaining,buff.until-current));
+  if(!turns||!offensive.has(buff.stat))return 0;
+  return turns*estimatedBuffDamagePerRound(ctx,buff);
+ };
+ const before=state.buffs.reduce((sum,b)=>sum+lifetime(b),0);
+ const value=after.buffs.reduce((sum,b)=>sum+lifetime(b),0);
+ return Math.max(0,value-before);
+}
 function evaluateTrial(ctx,state,settings,forcedSpell=null){
  let seed=state;
  if(forcedSpell){
@@ -28,24 +88,26 @@ function evaluateTrial(ctx,state,settings,forcedSpell=null){
  }
  const result=optimizeFromState(settings,ctx.spells,seed);
  const turn=result.turns[state.turn-1];
- return turn?{actions:turn.actions,score:result.total-state.total,
-  first:turn.total,label:forcedSpell?"Ouverture "+forcedSpell.name:"Rotation dynamique"}:null;
+ if(!turn)return null;
+ const score=result.total-state.total;
+ const carry=projectedCarryoverValue(ctx,state,turn.actions);
+ return {actions:turn.actions,score,carry,strategicScore:score+carry,
+  first:turn.total,label:forcedSpell?"Ouverture "+forcedSpell.name:"Rotation dynamique"};
 }
 function better(a,b,remainingHp){
  if(!a)return false;
  if(!b)return true;
- const score=Math.min(remainingHp,Math.max(0,a.score));
- const previous=Math.min(remainingHp,Math.max(0,b.score));
+ const score=Math.min(remainingHp,Math.max(0,a.score))+Math.max(0,a.carry||0);
+ const previous=Math.min(remainingHp,Math.max(0,b.score))+Math.max(0,b.carry||0);
  if(score>previous+.01)return true;
  if(Math.abs(score-previous)<=.01 && a.first>b.first+.01)return true;
  return false;
 }
 function selectedBuffs(ctx,state,settings){
- return ctx.spells.filter(s=>s.nonDirect&&s.target==="self"&&
-  s.status?.buff&&offensive.has(s.status.buff.stat)&&
+ return ctx.spells.filter(s=>s.status?.buff&&offensive.has(s.status.buff.stat)&&
   s.status.buff.value>0&&eligible(s,state,settings))
   .sort((a,b)=>((b.status.buff.value||0)/Math.max(1,b.pa))-
-                 ((a.status.buff.value||0)/Math.max(1,a.pa))).slice(0,2);
+                 ((a.status.buff.value||0)/Math.max(1,a.pa))).slice(0,5);
 }
 function replay(seed,actions,ctx){
  let state=seed;
@@ -96,7 +158,7 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
  }
  // Un soutien +PA s'évalue sur les personnages qui joueront PLUS TARD
  // dans le même tour. Il ne simule jamais les tours T+1.
- let bestScore=Math.min(remainingHp,Math.max(0,best?.score||0));
+ let bestScore=Math.min(remainingHp,Math.max(0,best?.score||0))+Math.max(0,best?.carry||0);
  for(const spell of ctx.spells.filter(x=>!!paTeamBuff(x)&&eligible(x,state,settings)).slice(0,3)){
   const bonus=paTeamBuff(spell);
   const recipients=following.filter(x=>targetsTeamBuff(bonus,entry,x));
@@ -113,7 +175,7 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
   const trial=evaluateTrial(ctx,state,settings,spell);
   entry.trials++;
   if(!trial)continue;
-  const score=Math.min(remainingHp,Math.max(0,trial.score))+gain;
+  const score=Math.min(remainingHp,Math.max(0,trial.score))+Math.max(0,trial.carry||0)+gain;
   if(score>bestScore+.01){best=trial;bestScore=score;}
  }
  return {actions:improveCurrentBuffOrder(best?.actions||[],ctx,state),
