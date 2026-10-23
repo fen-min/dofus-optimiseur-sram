@@ -32,7 +32,7 @@ function estimatedBuffDamagePerRound(ctx,buff){
  if(amount<=0)return 0;
  let pa=Number(ctx.settings.ap)||12,total=0;
  const attacks=ctx.spells.filter(spell=>
-  ctx.settings.variants?.[spell.variantGroup]===spell.name &&
+  (spell.isWeapon===true||ctx.settings.variants?.[spell.variantGroup]===spell.name) &&
   !spell.nonDirect&&!spell.isTrap&&!spell.status?.poison&&
   Number(spell.pa)>0&&Number(spell.max)>0
  ).map(spell=>{
