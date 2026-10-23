@@ -49,3 +49,16 @@ test("diagnostic: a lasting high-value Sram self buff is considered vs pure imme
  console.log("SRAM BUFF OPPORTUNITY",JSON.stringify(history));
  assert.equal(history.length,4);
 });
+
+test("regression: un buff durable rentable sur les tours suivants doit être choisi sans simuler plusieurs tours",()=>{
+ const {ctx,manigance,arnaque}=setup();
+ const attack={...arnaque,maxPerTurn:4,perTarget:4,status:{}};
+ const buff={...manigance,status:{...manigance.status,buff:{
+  ...manigance.status.buff,value:160,duration:3
+ }}};
+ const modified={...ctx,spells:[attack,buff]};
+ const history=steps(modified,3);
+ console.log("SRAM LONG BUFF PROFIT",JSON.stringify(history));
+ assert.ok(history[0].actions.includes("Manigance"),
+  "Le bonus +160 pour trois tours devrait compenser un sort perdu au premier tour");
+});
