@@ -301,3 +301,22 @@ a{color:var(--class-accent)}
 .character-stat-fields input{min-width:0;width:100%;font-size:13px;border:1px solid #505b71;background:#151b2a;color:#f8f5ff;padding:10px;border-radius:8px}
 @media(max-width:900px){.character-stats-grid{grid-template-columns:1fr}}
 @media(max-width:475px){.character-stat-fields{grid-template-columns:1fr 1fr}}
+
+/* Equipped-weapon slot in the class spellbook. */
+.spellbook-weapon-panel{border:1px solid #65769b;border-radius:15px;padding:17px 19px;margin:17px 0 23px;background:linear-gradient(120deg,#1b2540,#202131 65%,#2d2734);box-shadow:inset 4px 0 0 #89a5ec}
+.spellbook-weapon-intro{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.spellbook-weapon-glyph{height:44px;width:44px;border:1px solid #657ba7;border-radius:12px;background:#15213a;color:#c5d7ff;display:grid;place-items:center;font-size:25px}
+.spellbook-weapon-intro>div{flex:1;min-width:180px}
+.spellbook-weapon-intro h3{font-size:17px;margin:0 0 5px;color:#f5f7ff}
+.spellbook-weapon-intro p{font-size:12px;color:#aebcda;margin:0}
+.spellbook-weapon-select-label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:11px;color:#bdcbed}
+#spellbook-weapon-select{min-width:230px;min-height:38px;padding:8px 10px;border:1px solid #697b9f;border-radius:9px;background:#141e33;color:#fff}
+.spellbook-weapon-detail{margin-top:14px}
+.spellbook-weapon-name{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;color:#fff}
+.spellbook-weapon-name strong{font-size:18px}
+.spellbook-weapon-equipped{color:#a9e0bd;font-size:12px;font-weight:700}
+.spellbook-weapon-badges,.spellbook-weapon-hits{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.spellbook-weapon-badges span{border:1px solid #465579;color:#e4edff;background:#1d2943;border-radius:8px;padding:6px 9px;font-size:11px}
+.spellbook-weapon-hits span{background:#193827;color:#b6edc6;border:1px solid #396e53;border-radius:8px;padding:9px 12px;font-size:13px;font-weight:750}
+.spellbook-weapon-note,.spellbook-weapon-empty{font-size:12px;color:#b8c7e5;line-height:1.6;margin:12px 0 0}
+@media(max-width:680px){.spellbook-weapon-panel{padding:12px}.spellbook-weapon-select-label,#spellbook-weapon-select{width:100%;min-width:0}}
