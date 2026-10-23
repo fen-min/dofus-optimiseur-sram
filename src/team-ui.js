@@ -1,4 +1,5 @@
 import {CLASSES} from "./classes.js?v=3.3";
+import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
@@ -8,6 +9,8 @@ const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[ch]));
 const fmt=n=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1}).format(n||0);
+// Pure damage comparison: an effectively unkillable virtual target, never shown.
+const INTERNAL_TARGET_HP=1_000_000_000_000;
 const readStore=()=>{
  try{const data=JSON.parse(localStorage.getItem(TEAM_STORAGE_KEY)||"null");return data&&typeof data==="object"?data:null;}
  catch{return null;}
@@ -27,7 +30,7 @@ export function mountTeamModule({getBuilds}){
  const saved=readStore();
  let ids=Array.isArray(saved?.ids)?saved.ids.slice(0,TEAM_LIMIT):
   getBuilds().slice(0,2).map(b=>b.id);
- let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,turns:50});
+ let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,hp:INTERNAL_TARGET_HP,turns:50});
  const storedOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
   ?saved.memberOptions:{};
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
@@ -70,7 +73,6 @@ export function mountTeamModule({getBuilds}){
   $("team-count").textContent=roster.length+" / "+TEAM_LIMIT+" personnages";
  }
  function renderTarget(){
-  $("team-hp").value=String(target.hp);
   $("team-critical").checked=target.criticals;
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
  }
@@ -90,14 +92,13 @@ export function mountTeamModule({getBuilds}){
   const ordered=present?turn.actors:getMembers();
   $("team-order").innerHTML='<div class="team-order-heading"><strong>Ordre de jeu'+
    (present?' · Tour '+activeTurn:'')+'</strong><small>'+
-   (present?'PV cible au début : '+fmt(turn.roundStartHp??result.target.hp):
+   (present?'Tour '+activeTurn+' sur '+result.turns.length+' calculé(s)':
     'Les personnages joueront dans cet ordre')+'</small></div>'+
    ordered.map((actor,index)=>'<div class="team-order-row'+
     (actor.defeated?' is-last':'')+'">'+
     '<span class="team-order-number">'+String(index+1).padStart(2,"0")+'</span>'+
     '<span class="team-order-name">'+safe(actor.character)+'</span>'+
-    (present&&Number.isFinite(actor.remainingHp)?
-      '<span class="team-order-hp">'+fmt(actor.remainingHp)+' PV</span>':'')+
+
     '</div>').join("");
   $("team-rotations").innerHTML=present?turn.actors.map((a,i)=>
    '<div class="team-rotation-item"><div class="team-rotation-heading"><span>'+
@@ -109,30 +110,14 @@ export function mountTeamModule({getBuilds}){
    '<div class="team-rotation-meta">'+fmt(a.spent)+'/'+fmt(a.availablePA??result.members.find(m=>m.id===a.id)?.ap??0)+' PA utilisés'+
    (a.paBonus?' · bonus '+(a.paBonus>0?'+':'')+fmt(a.paBonus)+' PA':'')+' · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
-   (Number.isFinite(a.remainingHp)?' · cible '+fmt(a.remainingHp)+' PV':'')+
+
    (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
     ' · Souffrance '+safe(a.health.suffering):'')+
    (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
     ' · ouverture choisie : '+safe(result.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
-  $("team-damage").innerHTML=present?
-   '<div class="team-numbers"><div><small>Dégâts théoriques</small><strong>'+fmt(result.theoretical)+'</strong></div>'+
-   '<div><small>Dégâts directs</small><strong>'+fmt(result.direct)+'</strong></div>'+
-   '<div><small>Poison / différés</small><strong>'+fmt(result.poison)+'</strong></div>'+
-   '<div><small>Dégâts limités aux PV</small><strong>'+fmt(result.effective)+'</strong></div>'+
-   '<div><small>Moyenne / tour</small><strong>'+fmt(result.averagePerTurn)+'</strong></div></div>'+
-   '<div class="team-target-life"><div><span>PV de la cible</span><strong>'+fmt(turn.remainingHp)+' / '+fmt(result.target.hp)+'</strong></div>'+
-    '<meter min="0" max="'+result.target.hp+'" value="'+turn.remainingHp+'">'+fmt(turn.remainingHp)+'</meter>'+
-   '</div><div class="team-contributions"><h3>Contribution par personnage</h3>'+
-   result.members.map(m=>'<div class="team-contribution"><span>'+safe(m.character)+'</span><b>'+fmt(m.estimated)+'</b>'+
-    '<div class="team-contribution-track"><i style="width:'+(result.theoretical?Math.min(100,100*m.estimated/result.theoretical):0)+'%"></i></div></div>').join("")+
-   '</div><div class="team-round-totals"><h3>Dégâts cumulés par tour</h3>'+
-   result.turns.map(t=>'<div>T'+t.number+' <strong>'+fmt(t.theoretical)+
-    '</strong> · cible : '+fmt(t.remainingHp)+' PV</div>').join("")+'</div>'+
-   '<p class="team-footnote">Excès de dégâts théorique : '+fmt(result.overkill)+
-    '. Les dégâts affichés sont des estimations, pas des dégâts constatés dans DOFUS.</p>':
-   '<p class="team-placeholder">Le bilan des dégâts et des PV restants de la cible apparaîtra ici après le calcul.</p>';
+  updateDamageLeaderboard($("team-damage"),result,activeTurn,{safe,fmt});
   const info=$("team-assumptions");
   info.textContent=present?result.warnings.join(" "):
    "Chaque personnage joue après le précédent, avec les PV de cible communs et les buffs et relances personnels. Les buffs de soutien entre alliés ne sont pas encore entièrement modélisés.";
@@ -165,7 +150,7 @@ export function mountTeamModule({getBuilds}){
  }
  function changeTarget(){
   target=cleanTeamTarget({
-   hp:$("team-hp").value,turns:50,criticals:$("team-critical").checked,
+   hp:INTERNAL_TARGET_HP,turns:50,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
   storeState();cancel();result=null;activeTurn=1;renderTarget();renderResult();
@@ -254,7 +239,7 @@ export function mountTeamModule({getBuilds}){
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,turns:50});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:50});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
