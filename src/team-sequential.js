@@ -105,7 +105,9 @@ function better(a,b,remainingHp){
 }
 function selectedBuffs(ctx,state,settings){
  return ctx.spells.filter(s=>s.status?.buff&&offensive.has(s.status.buff.stat)&&
-  s.status.buff.value>0&&eligible(s,state,settings))
+  s.status.buff.value>0&&eligible(s,state,settings)&&
+  (!s.nonDirect||!state.buffs.some(b=>
+   b.until>=state.turn&&(b.key===s.name||b.key.startsWith(s.name+":")))))
   .sort((a,b)=>((b.status.buff.value||0)/Math.max(1,b.pa))-
                  ((a.status.buff.value||0)/Math.max(1,a.pa))).slice(0,5);
 }
@@ -354,7 +356,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
    "Tours joués dans l’ordre d’initiative, puis passage au tour suivant. Chaque personnage recalcule ses sorts lorsque vient son tour.",
    "PV de la cible communs : la simulation s’arrête à sa défaite. Buffs, relances, PV et effets personnels restent mémorisés d’un tour à l’autre.",
    "Les vulnérabilités modélisées de la cible sont transmises aux personnages suivants.",
-   "Chaque décision utilise UNIQUEMENT le tour courant : aucun tour futur n’est calculé à l’avance. Les bonus de PA entre alliés sont pris en compte lorsqu’ils sont définis dans les métadonnées des sorts.",
+   "Chaque décision simule uniquement le tour actuel. La rentabilité sur plusieurs tours des buffs est estimée analytiquement, sans exécuter les tours suivants. Les bonus de PA entre alliés sont suivis si leurs effets sont renseignés.",
    "Les autres buffs et soins alliés, le placement, les attaques ennemies et le calendrier exact des déclenchements de poisons ne sont pas encore simulés.",
    "Les dégâts sont des estimations fondées sur les statistiques du build actif ; les jets de base et arrondis peuvent encore différer du jeu."
   ],approximate:true};
