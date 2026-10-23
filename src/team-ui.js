@@ -1,4 +1,4 @@
-import {CLASSES} from "./classes.js?v=3.2";
+import {CLASSES} from "./classes.js?v=3.3";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
