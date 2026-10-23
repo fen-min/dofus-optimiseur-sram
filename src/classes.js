@@ -1,5 +1,5 @@
 import {SIM_SPELLS,VARIANT_PAIRS,DEFAULT_VARIANTS,SRAM_SCREENSHOT_VARIANTS} from "./sim-spells.js?v=1.8";
-import {SACRIER_SPELLS,SACRIER_DEFAULT_VARIANTS,SACRIER_SOURCE} from "./sacrier-spells.js";
+import {SACRIER_SPELLS,SACRIER_DEFAULT_VARIANTS,SACRIER_SOURCE} from "./sacrier-spells.js?v=3.1";
 import {SACRIER_CATALOG,SACRIER_VARIANTS} from "./sacrier-catalog.js";
 import {SRAM_CATALOG} from "./sram-catalog.js?v=1.8";
 import {SOURCE_URL} from "./spells.js";
