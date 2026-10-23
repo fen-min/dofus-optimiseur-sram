@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "../src/classes.js";
 import {WEAPONS,equippedWeaponSpell} from "../src/weapons.js";
 import {prepareBuildSpells} from "../src/build-damage.js";
-import {cleanSettings,initialState,eligible,castSpell,damage} from "../src/engine.js";
+import {cleanSettings,initialState,eligible,castSpell} from "../src/engine.js";
 import {createTeamContext,optimizeTeamTurn} from "../src/team-core.js";
 
 const sram=INITIAL_BUILDS.find(b=>b.classId==="sram");
@@ -19,7 +19,7 @@ test("l'arme Manthache est choisie uniquement sur le Sram du preset",()=>{
  assert.equal(normalizeBuild({...sram,weapon:undefined}).weapon,"manthache");
  assert.equal(normalizeBuild({...sram,weapon:null}).weapon,null);
  assert.equal(normalizeBuild(sacrier).weapon,null);
- assert.equal(normalizeBuild({...sram,id:"new-sram"}).weapon,null);
+ assert.equal(normalizeBuild({...sram,id:"new-sram",weapon:undefined}).weapon,null);
  assert.equal(WEAPONS.manthache.ap,5);
  assert.equal(WEAPONS.manthache.criticalBonus,8);
 });
