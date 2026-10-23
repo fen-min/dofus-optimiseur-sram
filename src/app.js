@@ -1,5 +1,6 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
+import {spellsForActiveBuild} from "./build-damage.js?v=1";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.2";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
 import {mountTeamModule} from "./team-ui.js?v=3.2";
@@ -63,9 +64,9 @@ function saveActiveSettings(){
  saveBuilds();
 }
 function applyCalibration(){
- spells=model.spells.map(x=>({...x,status:deep(x.status||{})}));
+ spells=spellsForActiveBuild(model.id,model.spells,current.stats);
  for(const s of spells){const item=current.calibration[s.id];if(!item)continue;
-  for(const k of ["min","max","critMin","critMax","summonBase"])if(Number.isFinite(item[k])&&item[k]>=0)s[k]=item[k];
+  for(const k of ["summonBase"])if(Number.isFinite(item[k])&&item[k]>=0)s[k]=item[k];
   if(s.status.buff&&item.buff)for(const k of ["value","duration"])if(Number.isFinite(item.buff[k])&&item.buff[k]>=0)s.status.buff[k]=item.buff[k];
  }
 }
@@ -286,8 +287,8 @@ function renderCharacterStats(){
   }).join("")+'</div></div>').join("");
  const note=document.querySelector("#character-stats-panel .microcopy");
  if(note)note.textContent=stats.source?.startsWith("capture-en-jeu")
-  ?`Capture du jeu du ${stats.source.endsWith("2026-10-22")?"22/10/2026":"21/10/2026"}. Les dommages DofusBook restent un calcul distinct ; évite de compter deux fois les caractéristiques.`
-  :"Statistiques locales de ce build, non recalculées automatiquement depuis DofusBook. Les dommages du moteur restent approximatifs.";
+  ?`Capture du jeu du ${stats.source.endsWith("2026-10-22")?"22/10/2026":"21/10/2026"}. Ces statistiques sont utilisées pour recalculer les dégâts.`
+  :"Dégâts recalculés depuis les statistiques renseignées dans ce build.";
 }
 function renderVariantPicker(){
  const picker=$("#variant-picker");
@@ -465,7 +466,7 @@ function activateBuild(id){
 }
 function saveCalibration(){
  current.calibration={};
- for(const spell of spells)current.calibration[spell.id]={id:spell.id,min:spell.min,max:spell.max,critMin:spell.critMin,critMax:spell.critMax,
+ for(const spell of spells)current.calibration[spell.id]={id:spell.id,
   buff:spell.status?.buff?{value:spell.status.buff.value,duration:spell.status.buff.duration}:undefined};
  saveBuilds();
 }
