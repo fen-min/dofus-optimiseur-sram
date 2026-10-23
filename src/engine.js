@@ -48,7 +48,7 @@ export function turnActionPoints(c,turn){
 }
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
+ return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return c.variants[spell.variantGroup]===spell.name;}
@@ -94,7 +94,8 @@ function damage(spell,s,c,override=null){
  // Fixed resistance precedes percentage resistance, per hit.
  const raw=Math.max(0,row+buff-(c.fixedResistances[element]||0));
  const suffering=s.sacrierHealth?sufferingFinalBonus(s.sacrierHealth.hp,s.sacrierHealth.maxHp):0;
- return Math.max(0,raw*(1-(c.resistances[element]||0)/100)*vulner*finalMultiplier*(1+suffering/100));
+ const berserk=s.berserkActive&&s.sacrierHealth?.suffering>=6?1.1:1;
+ return Math.max(0,raw*(1-(c.resistances[element]||0)/100)*vulner*finalMultiplier*(1+suffering/100)*berserk);
 }
 function addDamage(s,n,delayed=false){if(!Number.isFinite(n)||n<=0)return;n=round(n);s.total+=n;s.turnDamage+=n;if(delayed)s.delayed+=n;else{s.immediate+=n;s.turnImmediate=(s.turnImmediate||0)+n;}}
 function addBuff(s,key,stat,amount,duration,maxStacks,unit="",persistent=false){
@@ -143,7 +144,8 @@ export function castSpell(origin,spell,input={}){
  const {name,status}=spell;
  // Coagulation does not sacrifice PV a second time.
  const coagulation=!!status.mutilation&&s.mutilationStage>0;
- if(status.hpCostPercent&&!coagulation&&s.sacrierHealth){
+ const endingBerserk=!!status.berserk&&s.berserkActive;
+ if(status.hpCostPercent&&!coagulation&&!endingBerserk&&s.sacrierHealth){
   s.sacrierHealth=sacrificeHealth(s.sacrierHealth,status.hpCostPercent);
   action.notes.push("PV : "+s.sacrierHealth.hp+"/"+s.sacrierHealth.maxHp+
    " · Souffrance "+s.sacrierHealth.suffering);
@@ -158,6 +160,7 @@ export function castSpell(origin,spell,input={}){
   addDamage(s,dealt);
   if(spell.lifeSteal&&s.sacrierHealth){
    s.sacrierHealth=restoreHealth(s.sacrierHealth,dealt/2);
+   if(s.berserkActive&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
    action.notes.push("Vol de vie (estimation) : "+s.sacrierHealth.hp+
     "/"+s.sacrierHealth.maxHp+" PV");
   }
@@ -165,6 +168,11 @@ export function castSpell(origin,spell,input={}){
  // Un sort peut accorder plusieurs bonus indépendants, par exemple
  // Pacte de Sang : Puissance ET Vitalité. La Vitalité est enregistrée
  // comme état, mais les PV ne sont pas encore simulés.
+ if(status.berserk){
+  s.berserkActive=!endingBerserk;
+  action.notes.push(endingBerserk?"Berserk désactivé (sans nouveau sacrifice)":
+   "Berserk activé : bonus sorts conditionnel à Souffrance ≥ 6");
+ }
  if(status.mutilation){
   if(coagulation){
    const stage=s.mutilationStage;
@@ -185,8 +193,10 @@ export function castSpell(origin,spell,input={}){
  }
  if(status.hpCostPercent&&!status.mutilation&&!s.sacrierHealth)
   action.notes.push("Coût en PV : -"+status.hpCostPercent+"% (non déduit : suivi PV désactivé)");
- if(status.conditionalBonus)
+ if(status.conditionalBonus&&!status.berserk)
   action.notes.push("Effet conditionnel non simulé : +"+status.conditionalBonus.value+"% "+status.conditionalBonus.stat+" si "+status.conditionalBonus.condition);
+ if(status.conditionalBonus&&status.berserk&&!s.sacrierHealth)
+  action.notes.push("Bonus Berserk conditionnel non simulé sans suivi des PV");
  if(status.vulnerability){
   const rate=name==="Marque Mortuaire"?1.02+0.02*Math.min(4,s.charges):status.vulnerability;
   s.enemyDebuff={multiplier:Math.max(s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1,rate),expires:s.turn+(status.vulnerabilityTurns||1)-1};
@@ -219,6 +229,9 @@ export function snapshotEffects(state,atTurn=state.turn){
    finalDamagePercent:sufferingFinalBonus(state.sacrierHealth.hp,state.sacrierHealth.maxHp),
    remaining:null,source:"PV estimés sans attaques ennemies"});
  }
+ if(state.berserkActive)
+  entries.push({kind:"state",name:"Berserk",remaining:null,source:"Berserk",
+   damageBonusActive:!!state.sacrierHealth&&state.sacrierHealth.suffering>=6});
  if(state.mutilationStage>0){
   entries.push({kind:"state",name:"Mutilation",stage:state.mutilationStage,
    maxStage:3,remaining:null,source:"Mutilation"});
@@ -279,6 +292,7 @@ export function endTurn(original,input={}){
   s.mutilationStage=Math.min(3,s.mutilationStage+1);
   if(s.sacrierHealth)s.sacrierHealth=sacrificeHealth(s.sacrierHealth,10);
  }
+ if(s.berserkActive&&s.sacrierHealth&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
  summary.sacrierNextHealth=s.sacrierHealth?{...s.sacrierHealth}:null;
  s.traps=s.traps.slice(-12);
  if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
@@ -306,7 +320,7 @@ function potential(s,c){
 function signature(s){
  return [s.turn,s.pa,Object.entries(s.used).sort().join(":"),Object.entries(s.ready).sort().join(":"),
  s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
- s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.trapActivatedThisTurn,
+ s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.berserkActive,s.trapActivatedThisTurn,
  s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,
  s.sacrierHealth?Math.round(s.sacrierHealth.hp):"HP OFF",
  s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
