@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {sufferingLevel,sufferingFinalBonus,initialSacrierHealth,sacrificeHealth,restoreHealth} from "../src/sacrier-state.js";
+import {sufferingLevel,sufferingFinalBonus,initialSacrierHealth,sacrificeHealth,restoreHealth,setTemporaryVitality} from "../src/sacrier-state.js";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {initialState,castSpell,endTurn,snapshotEffects,eligible,cleanSettings,optimize} from "../src/engine.js";
 import {createTeamContext,optimizeTeamMember,openingBuffCandidates} from "../src/team-core.js";
@@ -8,6 +8,13 @@ import {createTeamContext,optimizeTeamMember,openingBuffCandidates} from "../src
 const sacrier=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
 const sram=INITIAL_BUILDS.find(b=>b.classId==="sram");
 const getCtx=(turns=15)=>createTeamContext(sacrier,{turns,hp:10000000,criticals:false});
+
+function ctxWithPact(turns=5){
+ const ctx=createTeamContext(sacrier,{turns,hp:10000000,criticals:false});
+ const index=ctx.settings.variantPairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+ const chosen=[...ctx.settings.variants];chosen[index]="Pacte de Sang";
+ return {...ctx,settings:cleanSettings({...ctx.settings,variants:chosen})};
+}
 const castByName=(state,ctx,name)=>{
  const spell=ctx.spells.find(s=>s.name===name);
  assert.ok(spell,"Spell missing: "+name);
@@ -169,19 +176,79 @@ test("Permanent Mutilation remains eligible as an offensive opening candidate",(
 });
 
 
-test("Berserk reduces received life-steal healing to 30% while active",()=>{
+
+test("Berserk preserves Désolation's 50% life-steal (actual Poutch combat log)",()=>{
  const ctx=getCtx(2);
  const berserk=ctx.spells.find(spell=>spell.name==="Berserk");
  const steal=ctx.spells.find(spell=>spell.name==="Désolation");
  assert.ok(berserk&&steal&&steal.lifeSteal);
  const active=castSpell(initialState(ctx.settings),berserk,ctx.settings);
  const inactive={...active,berserkActive:false};
- const gainedActive=castSpell(active,steal,ctx.settings);
- const gainedInactive=castSpell(inactive,steal,ctx.settings);
- const activeHeal=gainedActive.sacrierHealth.hp-active.sacrierHealth.hp;
- const inactiveHeal=gainedInactive.sacrierHealth.hp-inactive.sacrierHealth.hp;
- assert.ok(inactiveHeal>0);
- assert.ok(activeHeal>0);
- assert.ok(activeHeal<inactiveHeal);
- assert.ok(Math.abs(activeHeal/(gainedActive.total/2)-0.3)<0.02);
+ const activeHit=castSpell(active,steal,ctx.settings);
+ const inactiveHit=castSpell(inactive,steal,ctx.settings);
+ const activeHeal=activeHit.sacrierHealth.hp-active.sacrierHealth.hp;
+ const inactiveHeal=inactiveHit.sacrierHealth.hp-inactive.sacrierHealth.hp;
+ assert.equal(activeHeal,Math.floor(activeHit.total/2));
+ assert.equal(inactiveHeal,Math.floor(inactiveHit.total/2));
+ // Real logged examples under Berserk: 811 -> +405, 819 -> +409.
+ assert.equal(Math.floor(811/2),405);
+ assert.equal(Math.floor(819/2),409);
+});
+test("Pacte de Sang increases current and maximum HP before Berserk and Libation",()=>{
+ const cls=ctxWithPact(4);
+ let state=initialState(cls.settings);
+ assert.equal(state.sacrierHealth.hp,4952);
+ state=castByName(state,cls,"Pacte de Sang");
+ assert.equal(state.sacrierHealth.hp,6190);
+ assert.equal(state.sacrierHealth.maxHp,6190);
+ assert.equal(state.sacrierHealth.baseMaxHp,4952);
+ assert.equal(state.sacrierHealth.temporaryVitality,1238);
+ assert.equal(state.sacrierHealth.suffering,0);
+ state=castByName(state,cls,"Berserk");
+ assert.equal(state.sacrierHealth.hp,1857);
+ assert.equal(state.sacrierHealth.suffering,7);
+ state=castByName(state,cls,"Libation");
+ assert.equal(state.sacrierHealth.hp,1300);
+ assert.equal(state.sacrierHealth.suffering,8);
+ assert.equal(state.sacrierHealth.maxHp,6190);
+});
+test("Pacte temporary HP expires after third turn; expiry removal is provisional",()=>{
+ const ctx=ctxWithPact(5);
+ let s=castByName(initialState(ctx.settings),ctx,"Pacte de Sang");
+ for(let turn=1;turn<=3;turn++){
+  s=endTurn(s,ctx.settings);
+  if(turn<=2){
+   assert.equal(s.sacrierHealth.maxHp,6190);
+   assert.equal(s.sacrierHealth.hp,6190);
+  }
+ }
+ assert.equal(s.turn,4);
+ assert.equal(s.sacrierHealth.maxHp,4952);
+ assert.equal(s.sacrierHealth.hp,4952);
+ assert.equal(s.sacrierHealth.temporaryVitality,0);
+ assert.equal(s.sacrierHealth.suffering,0);
+ assert.ok(!s.buffs.some(b=>b.stat==="Vitalité"));
+});
+test("Reapplying Pacte does not stack HP or add a second 25% vitality",()=>{
+ const ctx=ctxWithPact(7);
+ let s=castByName(initialState(ctx.settings),ctx,"Pacte de Sang");
+ for(let i=0;i<3;i++)s=endTurn(s,ctx.settings);
+ assert.equal(s.sacrierHealth.maxHp,4952);
+ s=castByName(s,ctx,"Pacte de Sang");
+ assert.equal(s.sacrierHealth.maxHp,6190);
+ assert.equal(s.sacrierHealth.hp,6190);
+ const same=setTemporaryVitality(s.sacrierHealth,25);
+ assert.equal(same,s.sacrierHealth);
+});
+test("Pacte temporary Vitalité applies on partially wounded HP and restores baseline on expiry",()=>{
+ const state=sacrificeHealth(initialSacrierHealth(4952),40);
+ const withPact=setTemporaryVitality(state,25);
+ assert.equal(withPact.maxHp,6190);
+ assert.equal(withPact.hp,state.hp+1238);
+ assert.equal(withPact.suffering,4);
+ const removed=setTemporaryVitality(withPact,0);
+ assert.equal(removed.maxHp,4952);
+ assert.equal(removed.hp,state.hp);
+ assert.equal(removed.suffering,state.suffering);
+ assert.equal(state.maxHp,4952);
 });

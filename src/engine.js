@@ -1,6 +1,6 @@
 import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {initialSacrierHealth,sacrificeHealth,restoreHealth,sufferingFinalBonus} from "./sacrier-state.js?v=3.1";
+import {initialSacrierHealth,sacrificeHealth,restoreHealth,sufferingFinalBonus,setTemporaryVitality} from "./sacrier-state.js?v=3.2";
 // Monocible, sans carte : estimation paramétrée, PAS simulateur du serveur DOFUS.
 // Un état contient PA, variantes, buffs, altérations, pièges et poisons.
 // Toutes les 44 actions existent, mais des effets de placement nécessitent des hypothèses.
@@ -159,17 +159,17 @@ export function castSpell(origin,spell,input={}){
   const dealt=damage(spell,s,c);
   addDamage(s,dealt);
   if(spell.lifeSteal&&s.sacrierHealth){
-   // Berserk receives only 30% of normal healing, including life steal.
-   const actualHealing=dealt/2*(s.berserkActive?0.3:1);
-   s.sacrierHealth=restoreHealth(s.sacrierHealth,actualHealing);
+   // Real-game benchmark (Désolation): 811 damage -> +405 PV,
+   // 819 -> +409 PV even with Berserk active and "soins reçus ×30%".
+   // Life-steal is independent from ordinary healing received.
+   s.sacrierHealth=restoreHealth(s.sacrierHealth,dealt/2);
    if(s.berserkActive&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
    action.notes.push("Vol de vie (estimation) : "+s.sacrierHealth.hp+
     "/"+s.sacrierHealth.maxHp+" PV");
   }
  }
- // Un sort peut accorder plusieurs bonus indépendants, par exemple
- // Pacte de Sang : Puissance ET Vitalité. La Vitalité est enregistrée
- // comme état, mais les PV ne sont pas encore simulés.
+ // Personal buffs may change max HP as well as the offense.
+ // Pacte de Sang's observed +25% Vitalité changes current AND max HP.
  if(status.berserk){
   s.berserkActive=!endingBerserk;
   action.notes.push(endingBerserk?"Berserk désactivé (sans nouveau sacrifice)":
@@ -190,6 +190,11 @@ export function castSpell(origin,spell,input={}){
  for(const b of bonuses){
   const key=bonuses.length===1?name:name+":"+b.stat;
   addBuff(s,key,b.stat,b.value,b.duration,b.stacks,b.unit||"",b.untilRemoved===true);
+  if(b.stat==="Vitalité"&&b.unit==="%"&&s.sacrierHealth){
+   s.sacrierHealth=setTemporaryVitality(s.sacrierHealth,b.value);
+   action.notes.push("PV avec Vitalité : "+s.sacrierHealth.hp+"/"+s.sacrierHealth.maxHp+
+    " · Souffrance "+s.sacrierHealth.suffering);
+  }
   action.notes.push("Buff +"+b.value+(b.unit||"")+" "+b.stat+" ("+
    (b.untilRemoved?"jusqu’à Coagulation":b.duration+" tours")+", "+b.stacks+" cumul(s) max)");
  }
@@ -288,6 +293,10 @@ export function endTurn(original,input={}){
   endEffects:snapshotEffects(s,s.turn)};
  s.turn++;s.pa=turnActionPoints(c,s.turn);s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
  s.buffs=s.buffs.filter(b=>b.until>=s.turn);
+ // At the start of the next turn, reconcile expired temporary Vitalité.
+ // Recasting Pacte while active refreshes its duration without stacking HP.
+ if(s.sacrierHealth?.temporaryVitality&&!s.buffs.some(b=>b.stat==="Vitalité"&&b.until>=s.turn))
+  s.sacrierHealth=setTemporaryVitality(s.sacrierHealth,0);
  // Seule la progression de l'état Mutilation est incrémentée ;
  // la Puissance reste à +150 au rang 3.
  if(s.mutilationStage>0){
@@ -325,6 +334,7 @@ function signature(s){
  s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.berserkActive,s.trapActivatedThisTurn,
  s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,
  s.sacrierHealth?Math.round(s.sacrierHealth.hp):"HP OFF",
+ s.sacrierHealth?Math.round(s.sacrierHealth.maxHp):"MAX OFF",
  s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
  ].join("|");
 }
