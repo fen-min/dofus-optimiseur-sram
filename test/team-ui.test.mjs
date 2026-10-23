@@ -48,10 +48,10 @@ test("emptying a slot keeps other character selected and invalidates results",()
 }));
 test("target changes preserve resistances and use a hidden maximum for stepwise turns",()=>withBrowser(({root,node,localStorage})=>{
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
- node("team-hp").value="5000";node("team-res-Air").value="25";
+ node("team-res-Air").value="25";
  root.listeners.change({target:{closest(selector){return selector==="#team-settings"?{}:null;}}});
  const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
- assert.equal(stored.target.hp,5000);
+ assert.equal(stored.target.hp,1000000000000);
  assert.equal(stored.target.turns,50);
  assert.equal(stored.target.resistances.Air,25);
  assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
