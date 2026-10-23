@@ -77,7 +77,7 @@ export function mountTeamModule({getBuilds}){
  function renderResult(){
   const present=!!result;
   const turn=result?.turns[activeTurn-1];
-  $("team-calculate").textContent=result?"▶ Tour suivant ("+(result.turns.length+1)+")":"▶ Calculer le tour 1";
+  $("team-calculate").textContent=result?(result.finished?"✓ Combat terminé":"▶ Tour suivant ("+(result.turns.length+1)+")"):"▶ Calculer le tour 1";
   $("team-calculate").disabled=!!worker||!!result?.finished;
   $("team-restart").disabled=!result||!!worker;
   $("team-turn-select").disabled=!present;
@@ -190,7 +190,7 @@ export function mountTeamModule({getBuilds}){
     const data=event.data||{};
     if(data.type==="progress"){
      const p=data.progress;
-     status(p.character+" · "+(p.scenario||"Optimisation")+" · "+p.index+"/"+p.count+" · tour "+p.turn+"/"+p.turns);
+     status(p.character+" · "+(p.scenario||"Optimisation")+" · "+p.index+"/"+p.count+" · tour "+p.turn);
     }
     if(data.type==="complete"||data.type==="error"){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
