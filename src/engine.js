@@ -307,7 +307,9 @@ function signature(s){
  return [s.turn,s.pa,Object.entries(s.used).sort().join(":"),Object.entries(s.ready).sort().join(":"),
  s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
  s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.trapActivatedThisTurn,
- s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
+ s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,
+ s.sacrierHealth?Math.round(s.sacrierHealth.hp):"HP OFF",
+ s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
  ].join("|");
 }
 function prune(states,width,c){
