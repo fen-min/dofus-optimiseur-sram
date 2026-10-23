@@ -3,13 +3,14 @@ import {SACRIER_SPELLS,SACRIER_DEFAULT_VARIANTS,SACRIER_SOURCE} from "./sacrier-
 import {SACRIER_CATALOG,SACRIER_VARIANTS} from "./sacrier-catalog.js";
 import {SRAM_CATALOG} from "./sram-catalog.js?v=1.8";
 import {SOURCE_URL} from "./spells.js";
+import {normalizedWeaponId} from "./weapons.js?v=1";
 import {SACRIER_AIR_REFERENCE_STATS,SRAM_AIR_REFERENCE_STATS,sanitizeCharacterStats} from "./character-stats.js?v=1.8";
 export const CLASSES={
  sram:{id:"sram",name:"Sram",glyph:"☽",color:"#b6a0ff",element:"Air",catalog:SRAM_CATALOG,spells:SIM_SPELLS,pairs:VARIANT_PAIRS,defaultVariants:DEFAULT_VARIANTS,source:SOURCE_URL,model:"Sram expérimental"},
  sacrieur:{id:"sacrieur",name:"Sacrieur",glyph:"◆",color:"#fb9a91",element:"Air",catalog:SACRIER_CATALOG,spells:SACRIER_SPELLS,pairs:SACRIER_VARIANTS,defaultVariants:SACRIER_DEFAULT_VARIANTS,source:SACRIER_SOURCE,model:"Sacrieur expérimental · PV / Souffrance estimés · dégâts du build actif"}
 };
 export const INITIAL_BUILDS=[
- {id:"sram-air-pvm",classId:"sram",character:"Matryoshka",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SOURCE_URL,variants:SRAM_SCREENSHOT_VARIANTS.slice(),ap:12,turns:10,distance:3,stats:SRAM_AIR_REFERENCE_STATS,calibration:{}},
+ {id:"sram-air-pvm",classId:"sram",character:"Matryoshka",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SOURCE_URL,variants:SRAM_SCREENSHOT_VARIANTS.slice(),weapon:"manthache",ap:12,turns:10,distance:3,stats:SRAM_AIR_REFERENCE_STATS,calibration:{}},
  {id:"sacri-air-pvm",classId:"sacrieur",character:"Mon Sacrieur",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SACRIER_SOURCE,variants:SACRIER_DEFAULT_VARIANTS.slice(),ap:12,turns:10,distance:2,stats:SACRIER_AIR_REFERENCE_STATS,calibration:{}}
 ];
 export function normalizeBuild(b,index=0){
@@ -30,6 +31,7 @@ export function normalizeBuild(b,index=0){
  element:["Air","Terre","Feu","Eau","Multi"].includes(b?.element)?b.element:"Air",
  source:typeof b?.source==="string" && /^https:\/\/www\.dofusbook\.net\/desktop\/fr\/equipement\//.test(b.source)?b.source:cls.source,
  variants:cls.pairs.map((p,i)=>p.includes(selectedVariants?.[i])?selectedVariants[i]:cls.defaultVariants[i]),
+ weapon:b?.weapon===undefined?(isReferenceSram?"manthache":null):normalizedWeaponId(b.weapon),
  ap:Math.max(6,Math.min(20,+b?.ap||12)),turns:Math.max(1,Math.min(10,+b?.turns||10)),
  distance:Number.isFinite(+b?.distance)?Math.max(0,Math.min(30,+b.distance)):(cls.id==="sacrieur"?2:3),
  // Migration automatique de l'ancien build Sacrieur par défaut.
