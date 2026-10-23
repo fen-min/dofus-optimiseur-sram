@@ -125,3 +125,39 @@ test("PV differences are considered by the search; 15-turn Sacrier run returns l
   if(turn.sacrierEndHealth)assert.ok(turn.sacrierEndHealth.hp>=1);
  }
 });
+
+
+test("Berserk's second cast ends the state rather than taking 70% HP again",()=>{
+ const ctx=getCtx(5);
+ let state=castByName(initialState(ctx.settings),ctx,"Berserk");
+ assert.equal(state.berserkActive,true);
+ assert.equal(state.sacrierHealth.hp,1486);
+ assert.equal(state.sacrierHealth.suffering,7);
+ assert.ok(snapshotEffects(state).some(effect=>effect.name==="Berserk"));
+ const mid=endTurn(state,ctx.settings);
+ // Spell cooldown may defer recast to a later round; do not bypass legality.
+ state=mid;
+ const spell=ctx.spells.find(x=>x.name==="Berserk");
+ while(!eligible(spell,state,ctx.settings)&&state.turn<5)
+  state=endTurn(state,ctx.settings);
+ assert.ok(eligible(spell,state,ctx.settings));
+ const before=state.sacrierHealth.hp;
+ const ended=castSpell(state,spell,ctx.settings);
+ assert.equal(ended.berserkActive,false);
+ assert.equal(ended.sacrierHealth.hp,before);
+ assert.match(ended.actions.at(-1).notes.join(" "),/désactivé/);
+});
+test("Berserk's 10% spell bonus only applies while active in Souffrance 6+",()=>{
+ const ctx=getCtx(2),berserk=ctx.spells.find(x=>x.name==="Berserk"),
+  assaut=ctx.spells.find(x=>x.name==="Assaut");
+ const active=castSpell(initialState(ctx.settings),berserk,ctx.settings);
+ const activeHit=castSpell(active,assaut,ctx.settings);
+ const inactive={...active,berserkActive:false};
+ const inactiveHit=castSpell(inactive,assaut,ctx.settings);
+ assert.ok(activeHit.total>inactiveHit.total);
+ assert.ok(Math.abs(activeHit.total/inactiveHit.total-1.1)<0.002);
+ const highHealth={...active,sacrierHealth:{hp:4952,maxHp:4952,suffering:0}};
+ const noBonus=castSpell(highHealth,assaut,ctx.settings);
+ const withoutFlag=castSpell({...highHealth,berserkActive:false},assaut,ctx.settings);
+ assert.equal(noBonus.total,withoutFlag.total);
+});
