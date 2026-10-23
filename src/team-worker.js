@@ -1,9 +1,9 @@
-import {optimizeTeam} from "./team-core.js?v=3.5";
+import {optimizeTeamTurn} from "./team-core.js?v=3.6";
 
 self.onmessage=event=>{
  try{
-  const {contexts,target}=event.data||{};
-  const result=optimizeTeam(contexts,target,progress=>{
+  const {contexts,target,previous}=event.data||{};
+  const result=optimizeTeamTurn(contexts,target,progress=>{
    self.postMessage({type:"progress",progress});
   });
   self.postMessage({type:"complete",result});
