@@ -1,9 +1,9 @@
 /**
- * Team DPS prototype: combines existing independent mono-target OMBRE rotations.
- * Order is from the saved in-game initiative stat; no ally spell interactions,
- * movement or shared target effects are simulated.
+ * Team DPS chronological engine: actors decide at their initiative turn.
+ * HP, target vulnerabilities and per-character effects persist between turns.
  */
 import {CLASSES} from "./classes.js?v=3.3";
+import {playSequentialTeam} from "./team-sequential.js?v=3.4";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.3";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
