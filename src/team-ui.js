@@ -119,7 +119,7 @@ export function mountTeamModule({getBuilds}){
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
   updateDamageLeaderboard($("team-damage"),result,activeTurn,{safe,fmt});
   const info=$("team-assumptions");
-  info.textContent=present?result.warnings.join(" "):
+  info.textContent=present?result.warnings.filter(note=>!/PV de la cible|cible possède des PV/i.test(note)).join(" "):
    "Chaque personnage joue après le précédent, avec les PV de cible communs et les buffs et relances personnels. Les buffs de soutien entre alliés ne sont pas encore entièrement modélisés.";
  }
  function render(){renderMembers();renderTarget();renderResult();}
