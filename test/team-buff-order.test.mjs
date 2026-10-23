@@ -7,8 +7,11 @@ import {createTeamContext as createHealthAwareContext,optimizeTeamMember,improve
 // Preserve the pre-health-regression fixtures explicitly: these tests check
 // historical beam-search buff ordering with HP simulation disabled.
 // New Sacrieur PV/Souffrance tests live in sacrier-health-damage.test.mjs.
-const createTeamContext=(...args)=>{
- const ctx=createHealthAwareContext(...args);
+const createTeamContext=(build,...args)=>{
+ // Historical golden scores are intentionally computed using the legacy
+ // DofusBook rows, not the active-build stats introduced in v3.3.
+ const fixture=build.classId==="sacrieur"?{...build,stats:{initiative:build.stats?.initiative}}:build;
+ const ctx=createHealthAwareContext(fixture,...args);
  return {...ctx,settings:{...ctx.settings,sacrierHealthSimulation:false}};
 };
 
