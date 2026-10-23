@@ -169,7 +169,7 @@ export function mountTeamModule({getBuilds}){
   $("team-cancel").disabled=false;
   status("Calcul du tour "+(previous?previous.turns.length+1:1)+" uniquement, dans l’ordre d’initiative…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.8",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.10",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
