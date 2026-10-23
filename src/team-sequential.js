@@ -72,7 +72,7 @@ function improveCurrentBuffOrder(actions,ctx,state){
  }
  return best;
 }
-function planCurrentTurn(entry,remainingHp,following=[]){
+export function planCurrentTurn(entry,remainingHp,following=[]){
  const {ctx,state}=entry;
  const turn=state.turn;
  // STRICT : la recherche est bornée au tour en train d'être joué.
