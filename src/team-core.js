@@ -83,6 +83,9 @@ export function createTeamContext(build,target,memberOptions={}){
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
   resistanceNeutre:input.resistances.Neutre,
   criticals:input.criticals,beamWidth:8,refreshTimedBuffs:false,
+  sacrierHealthSimulation:cls.id==="sacrieur"&&Number(build.stats?.hitPoints)>0,
+  sacrierMaxHp:cls.id==="sacrieur"?Number(build.stats?.hitPoints)||0:0,
+  sacrierStartingHpPercent:100,
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false
  });
@@ -108,7 +111,8 @@ export function assembleTeamResult(results,target){
     initiative:entry.build.initiative,actions:(t?.actions||[]).map(a=>({
      name:a.name,pa:a.pa,autoRefreshed:!!a.notes?.includes("Relance automatique : buff expiré")
     })),spent:t?.spent||0,direct:round(t?.immediate||0),
-    poison:round(t?.poison||0),damage:round(t?.total||0)};
+    poison:round(t?.poison||0),damage:round(t?.total||0),
+    health:t?.sacrierEndHealth||null};
   });
   const theoretical=round(actors.reduce((sum,a)=>sum+a.damage,0));
   theoreticalTotal=round(theoreticalTotal+theoretical);
@@ -129,7 +133,9 @@ export function assembleTeamResult(results,target){
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
    "L'optimiseur compare la rotation libre, l'entretien des buffs expirés et les ouvertures avec les buffs disponibles, puis retient le scénario le plus dommageable parmi ceux testés.",
    "Les variantes exclusives proviennent du build. La recherche reste heuristique : meilleur scénario testé, pas optimum mathématiquement garanti.",
-   "Pièges non déclenchés automatiquement, carte/obstacles et Souffrance du Sacrieur non simulés. Optimum non garanti."],
+   "Sacrieur : PV sacrifiés, vol de vie et bonus de Souffrance simulés avec les PV connus du build. Les dégâts ennemis, le bouclier, l’érosion et les soins alliés restent inconnus : estimation uniquement.",
+   "Dommages : valeurs DofusBook du build, sans double comptage des caractéristiques, résistances fixes facultatives (0 par défaut) puis résistances %. Précision des arrondis à vérifier en jeu.",
+   "Pièges non déclenchés automatiquement, carte et obstacles non simulés. Optimum non garanti."],
   approximate:true};
 }
 /**
