@@ -152,11 +152,11 @@ export function openingBuffCandidates(ctx){
   spell.nonDirect&&spell.status?.buff&&
   offensiveStats.has(spell.status.buff.stat)&&
   Number(spell.status.buff.value)>0&&
-  Number(spell.status.buff.duration)>0&&
+  (spell.status.buff.untilRemoved===true||Number(spell.status.buff.duration)>0)&&
   eligible(spell,start,c)
  ).sort((a,b)=>{
   const estimate=spell=>spell.status.buff.value*
-   Math.min(c.turns,spell.status.buff.duration)/Math.max(1,spell.pa);
+   Math.min(c.turns,spell.status.buff.untilRemoved?c.turns:spell.status.buff.duration)/Math.max(1,spell.pa);
   return estimate(b)-estimate(a);
  }).slice(0,2);
 }
