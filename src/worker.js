@@ -1,4 +1,4 @@
-import {optimize} from "./engine.js?v=3.2";
+import {optimize} from "./engine.js?v=3.11";
 
 // Calcul hors du fil principal pour préserver la fluidité de la page sur 10 tours.
 self.onmessage = (event) => {
