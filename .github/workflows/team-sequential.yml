@@ -11,6 +11,7 @@ on:
       - "test/team-stepwise.test.mjs"
       - "test/team-ui.test.mjs"
       - "test/team-dps-board.test.mjs"
+      - "test/team-sram-buffs.test.mjs"
       - "index.html"
       - "team.css"
       - ".github/workflows/team-sequential.yml"
@@ -25,4 +26,4 @@ jobs:
         with:
           node-version: "22"
       - name: Simulations chronologiques et mémoire des états
-        run: node --test test/team-sequential.test.mjs test/team-50-turns.test.mjs test/team-one-turn-pa.test.mjs test/team-stepwise.test.mjs test/team-ui.test.mjs test/team-dps-board.test.mjs
+        run: node --test test/team-sequential.test.mjs test/team-50-turns.test.mjs test/team-one-turn-pa.test.mjs test/team-stepwise.test.mjs test/team-ui.test.mjs test/team-dps-board.test.mjs test/team-sram-buffs.test.mjs
