@@ -21,7 +21,7 @@ export function initialSacrierHealth(maxHp,currentPercent=100){
  const max=Math.max(1,Math.round(maxHp));
  const pct=Number.isFinite(currentPercent)?Math.max(1,Math.min(100,currentPercent)):100;
  const hp=Math.max(1,Math.min(max,Math.round(max*pct/100)));
- return {hp,maxHp:max,suffering:sufferingLevel(hp,max)};
+ return {hp,maxHp:max,baseMaxHp:max,temporaryVitality:0,suffering:sufferingLevel(hp,max)};
 }
 export function sacrificeHealth(state,percent){
  if(!state||!Number.isFinite(percent)||percent<=0)return state;
@@ -33,4 +33,27 @@ export function restoreHealth(state,amount){
  if(!state||!Number.isFinite(amount)||amount<=0)return state;
  const hp=Math.min(state.maxHp,state.hp+Math.floor(amount));
  return {...state,hp,suffering:sufferingLevel(hp,state.maxHp)};
+}
+
+/**
+ * Pacte de Sang: percentage bonus is based on the character's unbuffed max HP.
+ * In-game observation: 4 952/4 952 -> 6 190/6 190 at +25% Vitalité.
+ *
+ * When the bonus expires, subtract the same flat amount from current and max
+ * HP. This expiry behavior is a provisional rule pending a direct game log;
+ * it must not be confused with the experimentally confirmed application.
+ * Reapplying an active pact refreshes it, never stacks another +25%.
+ */
+export function setTemporaryVitality(state,percent=0){
+ if(!state)return state;
+ const old=state.temporaryVitality||0;
+ const base=state.baseMaxHp||Math.max(1,state.maxHp-old);
+ const wanted=Number.isFinite(percent)&&percent>0
+  ?Math.floor(base*percent/100):0;
+ const change=wanted-old;
+ if(!change)return state;
+ const maxHp=Math.max(1,base+wanted);
+ const hp=Math.max(1,Math.min(maxHp,state.hp+change));
+ return {...state,baseMaxHp:base,temporaryVitality:wanted,maxHp,hp,
+  suffering:sufferingLevel(hp,maxHp)};
 }
