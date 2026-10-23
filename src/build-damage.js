@@ -26,7 +26,11 @@ function forwardDamage(base,stats,element,critical){
 }
 export function spellsForActiveBuild(classId,sourceSpells,stats){
  const reference=REFERENCES[classId];
- if(!reference||!stats||typeof stats!=="object")return sourceSpells.map(s=>({...s,status:structuredClone(s.status||{})}));
+ if(!reference) return sourceSpells.map(s=>({...s,status:structuredClone(s.status||{})}));
+ if(!stats||typeof stats!=="object"||!Number.isFinite(Number(stats.power))){
+  return sourceSpells.map(s=>({...s,status:structuredClone(s.status||{}),
+   min:0,max:0,critMin:0,critMax:0,damageSource:"statistiques-manquantes"}));
+ }
  return sourceSpells.map(original=>{
   const spell={...original,status:structuredClone(original.status||{})};
   if(spell.nonDirect||!valid(spell.min)||!valid(spell.max)||!spell.element)return spell;
