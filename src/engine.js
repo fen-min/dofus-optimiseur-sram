@@ -159,7 +159,9 @@ export function castSpell(origin,spell,input={}){
   const dealt=damage(spell,s,c);
   addDamage(s,dealt);
   if(spell.lifeSteal&&s.sacrierHealth){
-   s.sacrierHealth=restoreHealth(s.sacrierHealth,dealt/2);
+   // Berserk receives only 30% of normal healing, including life steal.
+   const actualHealing=dealt/2*(s.berserkActive?0.3:1);
+   s.sacrierHealth=restoreHealth(s.sacrierHealth,actualHealing);
    if(s.berserkActive&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
    action.notes.push("Vol de vie (estimation) : "+s.sacrierHealth.hp+
     "/"+s.sacrierHealth.maxHp+" PV");
