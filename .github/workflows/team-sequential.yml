@@ -6,6 +6,9 @@ on:
       - "src/team*.js"
       - "src/engine.js"
       - "src/build-damage.js"
+      - "src/weapons.js"
+      - "src/classes.js"
+      - "test/team-weapon-mantache.test.mjs"
       - "test/team-sequential.test.mjs"
       - "test/team-one-turn-pa.test.mjs"
       - "test/team-stepwise.test.mjs"
@@ -26,4 +29,4 @@ jobs:
         with:
           node-version: "22"
       - name: Simulations chronologiques et mémoire des états
-        run: node --test test/team-sequential.test.mjs test/team-50-turns.test.mjs test/team-one-turn-pa.test.mjs test/team-stepwise.test.mjs test/team-ui.test.mjs test/team-dps-board.test.mjs test/team-sram-buffs.test.mjs
+        run: node --test
