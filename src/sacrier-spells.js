@@ -27,10 +27,10 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
  if(cat.name==="Mutilation"){
    // Rang 3 (niveau 200) : +150 Puissance dès le lancer.
    // La progression 1/3 → 3/3 détermine Coagulation, PAS un buff qui augmente de 50/tour.
-   status.buff={stat:"Puissance",value:150,duration:10,stacks:1};
+   status.buff={stat:"Puissance",value:150,duration:null,untilRemoved:true,stacks:1};
    status.hpCostPercent=10;
    status.mutilation=true;
-   utility="Rang 3 : -10% PV, +150 Puissance, Mutilation 1/3→3/3 ; relance : Coagulation 15/25% PV max. PV et bouclier non calculés.";
+   utility="Rang 3 : -10% des PV restants à l’activation et à chaque début de tour, +150 Puissance jusqu’à Coagulation ; relance : bouclier 15/25 % PV max (bouclier non calculé).";
  }
  if(cat.name==="Pacte de Sang"){
    // Rang 2 confirmé par capture en jeu (21 octobre 2026).
@@ -94,6 +94,7 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
  critChance:Math.max(0,(cat.critChance||0)/100),
  baseDamage:dmg&&dmg.element?(min+max)/2/(ratio[dmg.element]||5):0,
  nonDirect:isUtility,isTrap:false,target,variantGroup,
+ lifeSteal:!!cat.effects.some(effect=>!effect.cc&&effect.kind==="Vol"),
  icon:cat.type==="Invocation"?"♟":isUtility?"✦":"⚔",
  status,utility,damagePrecision:cat.effects.filter(x=>!x.cc).length>1?"conditionnel":"direct",
  classId:"sacrieur",
