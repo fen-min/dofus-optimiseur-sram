@@ -1,4 +1,4 @@
-import {optimizeTeam} from "./team-core.js?v=3.4";
+import {optimizeTeam} from "./team-core.js?v=3.5";
 
 self.onmessage=event=>{
  try{
