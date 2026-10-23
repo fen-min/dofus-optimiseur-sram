@@ -133,7 +133,9 @@ export function assembleTeamResult(results,target){
    "Les PV de la cible plafonnent seulement le bilan : l'optimiseur n'adapte pas encore ses rotations lorsque la cible meurt.",
    "L'optimiseur compare la rotation libre, l'entretien des buffs expirés et les ouvertures avec les buffs disponibles, puis retient le scénario le plus dommageable parmi ceux testés.",
    "Les variantes exclusives proviennent du build. La recherche reste heuristique : meilleur scénario testé, pas optimum mathématiquement garanti.",
-   "Sacrieur : PV sacrifiés, vol de vie et bonus de Souffrance simulés avec les PV connus du build. Les dégâts ennemis, le bouclier, l’érosion et les soins alliés restent inconnus : estimation uniquement.",
+   "Sacrieur : Pacte de Sang (+25 % Vitalité) modifie les PV actuels et maximum, puis les sacrifices et la Souffrance. Le retrait de PV à l’expiration du Pacte reste provisoire, non vérifié en jeu.",
+   "Le vol de vie de Désolation rend 50 % des dégâts même sous Berserk selon les logs observés ; les soins classiques restent une mécanique distincte.",
+   "Dégâts ennemis, boucliers, érosion et soins alliés non simulés : estimations seulement.",
    "Dommages : valeurs DofusBook du build, sans double comptage des caractéristiques, résistances fixes facultatives (0 par défaut) puis résistances %. Précision des arrondis à vérifier en jeu.",
    "Pièges non déclenchés automatiquement, carte et obstacles non simulés. Optimum non garanti."],
   approximate:true};
