@@ -3,9 +3,9 @@
  * Order is from the saved in-game initiative stat; no ally spell interactions,
  * movement or shared target effects are simulated.
  */
-import {CLASSES} from "./classes.js?v=3.1";
+import {CLASSES} from "./classes.js?v=3.2";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.1";
+import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.2";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
