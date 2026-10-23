@@ -5,7 +5,7 @@
  */
 import {CLASSES} from "./classes.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=1.8";
+import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.1";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
