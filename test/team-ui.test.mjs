@@ -46,15 +46,15 @@ test("emptying a slot keeps other character selected and invalidates results",()
  assert.match(node("team-members").innerHTML,/Matryoshka/);
  assert.doesNotMatch(localStorage.getItem("ombre-team-dps-v1"),/sacri-air-pvm/);
 }));
-test("target changes persist and enforce resistance and turn limits",()=>withBrowser(({root,node,localStorage})=>{
+test("target changes preserve resistances and use a hidden maximum for stepwise turns",()=>withBrowser(({root,node,localStorage})=>{
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
- node("team-hp").value="5000";node("team-turns").value="2";node("team-res-Air").value="25";
+ node("team-hp").value="5000";node("team-res-Air").value="25";
  root.listeners.change({target:{closest(selector){return selector==="#team-settings"?{}:null;}}});
  const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
  assert.equal(stored.target.hp,5000);
- assert.equal(stored.target.turns,2);
+ assert.equal(stored.target.turns,50);
  assert.equal(stored.target.resistances.Air,25);
- assert.equal(node("team-turns").value,"2");
+ assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
 }));
 
 test("individual PA selector persists its value without changing the saved build",()=>withBrowser(({root,node,localStorage})=>{
@@ -112,31 +112,45 @@ test("legacy saved buff overrides are discarded while custom PA survives",()=>wi
 }));
 
 
-test("50-turn results expose direct turn navigation through the selector",()=>withBrowser(({root,node})=>{
+test("each button click calculates one new round and restart clears progress",()=>withBrowser(({node})=>{
  const previousWorker=globalThis.Worker,previousURL=globalThis.URL;
- const completed={
-  target:{hp:10000},theoretical:50,direct:50,poison:0,effective:50,averagePerTurn:1,overkill:0,
-  members:[{id:"sacri-air-pvm",character:"Mon Sacrieur",estimated:50}],
-  turns:Array.from({length:50},(_,index)=>({number:index+1,theoretical:1,remainingHp:10000-index-1,
-   actors:[{id:"sacri-air-pvm",character:"Mon Sacrieur",initiative:2272,actions:[],spent:0,direct:1,poison:0,damage:1}]})),
-  warnings:[]
- };
+ const requests=[];
  class FakeWorker{
-  postMessage(){this.onmessage({data:{type:"complete",result:completed}});}
+  postMessage(input){
+   requests.push(input);
+   const number=(input.previous?.turns.length||0)+1;
+   const earlier=input.previous?.turns||[];
+   const turns=[...earlier,{
+    number,theoretical:15,remainingHp:10000-number*15,roundStartHp:10000-(number-1)*15,
+    actors:[{id:"sacri-air-pvm",character:"Mon Sacrieur",initiative:2272,
+     actions:[],spent:0,direct:15,poison:0,damage:15,remainingHp:10000-number*15}]
+   }];
+   this.onmessage({data:{type:"complete",result:{
+    target:input.target,theoretical:15*number,direct:15*number,
+    poison:0,effective:15*number,averagePerTurn:15,overkill:0,
+    members:[{id:"sacri-air-pvm",character:"Mon Sacrieur",estimated:15*number,ap:12}],
+    turns,session:{actors:[]},finished:false,warnings:[]
+   }}});
+  }
   terminate(){}
  }
  globalThis.Worker=FakeWorker;
  if(!globalThis.URL)globalThis.URL=class {constructor(p){this.href=p;}};
  try{
   mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
-  node("team-turns").value="50";
-  root.listeners.change({target:{closest(selector){return selector==="#team-settings"?{}:null;}}});
   node("team-calculate").listeners.click();
-  assert.equal(node("team-turn-select").disabled,false);
-  assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,50);
-  node("team-turn-select").listeners.change({target:{value:"50"}});
-  assert.match(node("team-turn-buttons").innerHTML,/data-team-turn="50" class="is-current"/);
-  assert.match(node("team-damage").innerHTML,/9\s950/);
+  assert.equal(requests.length,1);
+  assert.equal(requests[0].previous,null);
+  assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,1);
+  assert.match(node("team-calculate").textContent,/Tour suivant \(2\)/);
+  node("team-calculate").listeners.click();
+  assert.equal(requests.length,2);
+  assert.equal(requests[1].previous.turns.length,1);
+  assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,2);
+  assert.match(node("team-turn-buttons").innerHTML,/data-team-turn="2" class="is-current"/);
+  node("team-restart").listeners.click();
+  assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
+  assert.equal(node("team-turn-select").disabled,true);
   assert.equal(node("team-cancel").disabled,true);
  }finally{globalThis.Worker=previousWorker;globalThis.URL=previousURL;}
 }));
