@@ -425,7 +425,7 @@ function renderSpells(){
   const summary=spellBonuses(s).length?"Buffs : "+spellBonuses(s).map(b=>"+"+b.value+(b.unit||"")+" "+b.stat).join(", ")+" · "+(s.status.buff?.duration||spellBonuses(s)[0].duration)+" tours":s.utility|| (first?first.kind+" "+first.element+" : "+first.min+"–"+first.max:"Soutien ou placement");
   const elements=cat.elements.length?cat.elements.map(e=>'<span class="element-tag element-'+e.toLowerCase()+'">'+escapeHtml(e)+'</span>').join(""):'<span class="element-tag">Soutien</span>';
   const effects=cat.effects.length?'<div class="effect-lines">'+cat.effects.map(e=>'<div class="effect-row"><span>'+e.kind+" "+e.element+(e.cc?" CC":"")+'</span><strong>'+e.min+(e.max===e.min?"":" – "+e.max)+'</strong>'+(e.condition?'<small>'+escapeHtml(e.condition)+'</small>':'')+'</div>').join("")+'</div>':'<p class="muted">Aucune ligne de dégâts directs chiffrée sur DofusBook.</p>';
-  const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts utilisés par le calculateur</div><div class="calibration-grid">'+[["min","Normal min"],["max","Normal max"],["critMin","CC min"],["critMax","CC max"]].map(([key,label])=>'<label>'+label+'<input type="number" min="0" max="20000" data-spell="'+ix+'" data-field="'+key+'" value="'+s[key]+'"></label>').join("")+'</div></div>':'';
+  const editable=!s.nonDirect?'<div class="calibration-box"><div class="catalog-subhead">Dégâts calculés avec le build actif</div><p>Normal : '+s.min+'–'+s.max+' · Critique : '+s.critMin+'–'+s.critMax+'</p></div>':'';
   const boost=s.status?.buff?'<div class="calibration-box"><div class="catalog-subhead">Bonus de sort pris en compte par le moteur</div><div class="calibration-grid"><label>Bonus '+(s.status.buff.unit||"")+' <input type="number" min="0" max="1000" data-spell="'+ix+'" data-field="buffValue" value="'+s.status.buff.value+'"></label><label>Durée <input type="number" min="1" max="10" data-spell="'+ix+'" data-field="buffDuration" value="'+s.status.buff.duration+'"></label></div></div>':'';
   const additionalBuffs=s.status?.extraBuffs?.length?'<div class="spell-audit-box"><div class="catalog-subhead">Bonus supplémentaires suivis</div>'+s.status.extraBuffs.map(b=>'<p>+'+b.value+(b.unit||"")+' '+escapeHtml(b.stat)+' · '+b.duration+' tours</p>').join("")+'<p class="microcopy">La Vitalité est enregistrée comme effet actif, mais ne modifie pas encore les PV dans le simulateur.</p></div>':'';
   const auditNote=audit?'<div class="spell-audit-box"><div class="catalog-subhead">Effets recensés dans l’audit</div><p>'+escapeHtml(audit.description)+'</p><p class="microcopy">'+(audit.checked?'Effet général recoupé.':'Description à vérifier plus précisément.')+' <strong>Dans le calculateur :</strong> '+escapeHtml(audit.simulation||"effet secondaire non modélisé")+'. Les rangs et conditions doivent être vérifiés en jeu. <a href="'+escapeHtml(audit.source)+'" target="_blank" rel="noopener noreferrer">Voir la fiche OpenDofusDB ↗</a></p></div>':'';
@@ -632,6 +632,10 @@ $("#character-stats-grid").addEventListener("change",event=>{
  current.stats.source="manuel";
  current.stats=sanitizeCharacterStats(current.stats);
  saveBuilds();
+ applyCalibration();
+ renderSpells();
+ result=null;
+ $("#turn-results").innerHTML='<p class="muted">Statistiques modifiées : relance le calcul.</p>';
  if(assistIsOpen())refreshAssistContext();
  if(multiIsOpen())refreshMultiContext();
  renderCharacterStats();
