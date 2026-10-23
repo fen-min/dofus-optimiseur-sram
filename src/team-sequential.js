@@ -3,7 +3,7 @@
  * en tenant compte de la cible et des états laissés par les actions précédentes.
  * Les tours individuels ne sont jamais planifiés à l'avance sur 50 tours.
  */
-import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.2";
+import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.11";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
