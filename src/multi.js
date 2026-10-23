@@ -1,4 +1,4 @@
-import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.2";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.3";
 import {cleanSettings,turnActionPoints} from "./engine.js?v=3.2";
 import {
  SIZE,MAX_MONSTERS,MULTI_STORE,SHAPES,makeBoard,validateBoard,shapeHits,
