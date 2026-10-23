@@ -16,6 +16,7 @@
  * Effects with unknown additional lines/conditional rules remain approximate.
  */
 import {SACRIER_CATALOG} from "./sacrier-catalog.js";
+import {equippedWeaponSpell} from "./weapons.js?v=1";
 
 export const SACRIER_DOFUSBOOK_GEAR_STATS={
  agility:1368,chance:410,strength:100,intelligence:100,power:160,critical:-44,
@@ -55,7 +56,7 @@ function recoverBase(row,element,critical){
  */
 export function prepareBuildSpells(build,cls){
  const edits=build?.calibration||{},stats=build?.stats;
- return cls.spells.map(original=>{
+ const classSpells=cls.spells.map(original=>{
   const spell={...original,status:JSON.parse(JSON.stringify(original.status||{}))};
   if(cls.id==="sacrieur"&&!spell.nonDirect&&spell.element&&complete(stats,spell.element)){
    const e=spell.element,sourceRows=[original.min,original.max,original.critMin,original.critMax];
@@ -92,4 +93,6 @@ export function prepareBuildSpells(build,cls){
   }
   return spell;
  });
+ const equipped=equippedWeaponSpell(build);
+ return equipped?[...classSpells,equipped]:classSpells;
 }
