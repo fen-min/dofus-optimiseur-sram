@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {sufferingLevel,sufferingFinalBonus,initialSacrierHealth,sacrificeHealth,restoreHealth} from "../src/sacrier-state.js";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {initialState,castSpell,endTurn,snapshotEffects,eligible,cleanSettings,optimize} from "../src/engine.js";
-import {createTeamContext,optimizeTeamMember} from "../src/team-core.js";
+import {createTeamContext,optimizeTeamMember,openingBuffCandidates} from "../src/team-core.js";
 
 const sacrier=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
 const sram=INITIAL_BUILDS.find(b=>b.classId==="sram");
@@ -160,4 +160,10 @@ test("Berserk's 10% spell bonus only applies while active in Souffrance 6+",()=>
  const noBonus=castSpell(highHealth,assaut,ctx.settings);
  const withoutFlag=castSpell({...highHealth,berserkActive:false},assaut,ctx.settings);
  assert.equal(noBonus.total,withoutFlag.total);
+});
+
+test("Permanent Mutilation remains eligible as an offensive opening candidate",()=>{
+ const ctx=getCtx(15);
+ const names=openingBuffCandidates(ctx).map(spell=>spell.name);
+ assert.ok(names.includes("Mutilation"),"Mutilation must not be filtered due to its non-expiring buff");
 });
