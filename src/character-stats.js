@@ -1,7 +1,8 @@
 /** Statistiques relevées sur la capture du Sacrieur Air, 21/10/2026.
  * Ces valeurs décrivent le personnage EN JEU, pas nécessairement
- * l'équipement de la fiche DofusBook utilisée pour les dégâts des sorts.
- * Ne jamais additionner ces bonus aux dégâts déjà calculés sur DofusBook.
+ * l'équipement de la fiche DofusBook utilisée comme référence des jets.
+ * Le Sacrieur reconstruit les dégâts bruts du sort puis applique ces stats ;
+ * ne jamais ajouter ces bonus à une ligne DofusBook déjà précalculée.
  */
 export const SACRIER_AIR_REFERENCE_STATS={
  source:"capture-en-jeu-2026-10-21",
