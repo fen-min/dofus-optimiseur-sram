@@ -145,7 +145,7 @@ function plan(){
   return;
  }
  try{
-  worker=new Worker(new URL("./assist-worker.js?v=1.8",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./assist-worker.js?v=3.1",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==request)return;
    const data=e.data||{};
