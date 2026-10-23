@@ -277,3 +277,25 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
  }
  return playSequentialTeam(contexts,cleanTeamTarget(target),onProgress);
 }
+
+/**
+ * Interactive team mode: run EXACTLY one complete team round on demand.
+ * Previous actor states are restored; no later rounds are executed.
+ */
+export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null){
+ if(!Array.isArray(contexts)||contexts.length<1||contexts.length>TEAM_LIMIT)
+  throw Error("Sélectionne entre 1 et 8 builds.");
+ const ids=new Set();
+ for(const ctx of contexts){
+  if(!ctx?.build?.id||ids.has(ctx.build.id)||!Array.isArray(ctx.spells)||!ctx.settings)
+   throw Error("Composition d'équipe invalide.");
+  ids.add(ctx.build.id);
+ }
+ const config=cleanTeamTarget(target);
+ if(previous){
+  if(JSON.stringify(previous.target)!==JSON.stringify(config))
+   throw Error("La cible a changé : recommence au tour 1.");
+  if(previous.finished)throw Error("Le combat est terminé : recommence au tour 1.");
+ }
+ return playSequentialTeam(contexts,config,onProgress,{previous,oneRound:true});
+}
