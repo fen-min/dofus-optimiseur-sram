@@ -34,11 +34,12 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
  }
  if(cat.name==="Pacte de Sang"){
    // Rang 2 confirmé par capture en jeu (21 octobre 2026).
-   // Seule la Puissance est valorisée par le modèle DPS actuel.
-   // Vitalité est suivie comme état temporaire, sans calcul de PV max / actuels.
+   // Confirmed game log: 4 952/4 952 -> 6 190/6 190.
+   // On expiry, remove the corresponding flat HP from current and max HP:
+   // provisional expiry behavior, awaiting a direct in-game observation.
    status.buff={stat:"Puissance",value:100,duration:3,stacks:1};
    status.extraBuffs=[{stat:"Vitalité",value:25,unit:"%",duration:3,stacks:1}];
-   utility="Pacte de Sang : +100 Puissance et +25 % Vitalité pendant 3 tours (rang 2). La Vitalité ne modifie pas encore les PV simulés.";
+   utility="Pacte de Sang : +100 Puissance et +25 % Vitalité pendant 3 tours. Bonus appliqué aux PV actuels et maximum du Sacrieur ; restitution en fin d'effet encore à confirmer en jeu.";
  }
  if(cat.name==="Furie"){
    // Confirmé par la capture du jeu : +3 % finaux pendant 3 tours, 2 cumuls.
@@ -73,7 +74,7 @@ export const SACRIER_SPELLS=SACRIER_CATALOG.map(cat=>{
    status.buff={stat:"Tacle",value:15,duration:1,stacks:1};
    utility="Rang 2 : +15 Tacle par cible dans la zone, durant 1 tour. Une seule cible prise en compte."; 
  }
- if(cat.name==="Désolation")utility="Vol Air en zone et -3 PM pendant 1 tour ; retrait et soin non intégrés au DPS.";
+ if(cat.name==="Désolation")utility="Vol Air en zone : 50 % des dégâts rendus en PV observés même avec Berserk actif ; retrait de 3 PM non valorisé dans le DPS.";
  if(cat.name==="Transfusion")utility="Rang 3 : dommages Neutre équivalents à 10% des PV du lanceur et transfert de PV alliés ; nécessite le module PV.";
  if(cat.name==="Punition")utility="Dégâts du meilleur élément et Neutre à hauteur de 30% des PV érodés ; nécessite le module de PV érodés.";
  if(cat.name==="Folie Sanguinaire")utility="Vole de la vie dans le meilleur élément en zone non dégressive ; nécessite le calcul du meilleur élément.";
