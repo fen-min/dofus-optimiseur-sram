@@ -1,10 +1,10 @@
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=1.8";
-import {cleanSettings,turnActionPoints} from "./engine.js?v=1.8";
+import {cleanSettings,turnActionPoints} from "./engine.js?v=3.1";
 import {
  SIZE,MAX_MONSTERS,MULTI_STORE,SHAPES,makeBoard,validateBoard,shapeHits,
  defaultShape,dist,selectedSpells,legalActions,manualActions,possibleTargets,replay,newHistory,
  addManual,nextTurn,undo
-} from "./multi-core.js?v=2.3";
+} from "./multi-core.js?v=3.1";
 import {geometryFor,inMask,profileCoverage,MASK_LABELS} from "./spell-zones.js?v=2.0";
 import {MULTI_CONTEXT_KEY,getMultiContext} from "./multi-build-link.js?v=2.1";
 
@@ -324,7 +324,7 @@ function requestPlan(){
  if(typeof Worker==="undefined"){$("status").textContent="Ce navigateur ne prend pas en charge le calcul en arrière-plan.";return;}
  const id=++requestNo;
  try{
-  worker=new Worker(new URL("./multi-worker.js?v=2.3",import.meta.url),{type:"module"});
+  worker=new Worker(new URL("./multi-worker.js?v=3.1",import.meta.url),{type:"module"});
   worker.onmessage=e=>{
    if(requestNo!==id)return;
    const data=e.data||{};
