@@ -10,7 +10,7 @@ import {createTeamContext as createHealthAwareContext,optimizeTeamMember,improve
 const createTeamContext=(build,...args)=>{
  // Historical golden scores are intentionally computed using the legacy
  // DofusBook rows, not the active-build stats introduced in v3.3.
- const fixture=build.classId==="sacrieur"?{...build,stats:null}:build;
+ const fixture=build.classId==="sacrieur"?{...build,stats:{initiative:build.stats?.initiative}}:build;
  const ctx=createHealthAwareContext(fixture,...args);
  return {...ctx,settings:{...ctx.settings,sacrierHealthSimulation:false}};
 };
