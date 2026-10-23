@@ -182,19 +182,39 @@ function blankActor(entry,remainingHp){
  * Cible, vulnérabilités, dégâts et effets persistants sont transmis dans
  * cet ordre. Le moteur individuel gère PV, buffs, relances, poisons.
  */
-export function playSequentialTeam(contexts,target,onProgress=()=>{}){
+export function playSequentialTeam(contexts,target,onProgress=()=>{},options={}){
+ const previous=options.previous||null;
  const entries=orderContexts(contexts);
- const members=entries.map(({ctx})=>({
+ if(previous){
+  if(!previous.session||!Array.isArray(previous.session.actors))
+   throw Error("État précédent manquant : recommence au tour 1.");
+  const saved=new Map(previous.session.actors.map(actor=>[actor.id,actor]));
+  if(saved.size!==entries.length)throw Error("La composition a changé : recommence au tour 1.");
+  for(const entry of entries){
+   const record=saved.get(entry.ctx.build.id);
+   if(!record||record.state?.turn!==previous.turns.length+1)
+    throw Error("État précédent incompatible : recommence au tour 1.");
+   entry.state=record.state;
+   entry.trials=record.trials||0;
+   entry.teamBuffs=record.teamBuffs||[];
+  }
+ }
+ const members=previous?structuredClone(previous.members):entries.map(({ctx})=>({
   id:ctx.build.id,character:ctx.build.character,name:ctx.build.name,
   initiative:ctx.build.initiative,ap:ctx.build.ap,
   strategy:"séquentiel",strategiesTested:0,chosenOpening:null,
   estimated:0,direct:0,poison:0
  }));
  for(const entry of entries)entry.everyone=entries;
- const turns=[];
- let remainingHp=target.hp,theoretical=0,directTotal=0,poisonTotal=0,shared=emptyDebuff();
- let effective=0;
- for(let turn=1;turn<=target.turns;turn++){
+ const turns=previous?structuredClone(previous.turns):[];
+ let remainingHp=previous?previous.session.remainingHp:target.hp;
+ let theoretical=previous?previous.theoretical:0;
+ let directTotal=previous?previous.direct:0;
+ let poisonTotal=previous?previous.poison:0;
+ let shared=previous?previous.session.shared:emptyDebuff();
+ let effective=previous?previous.effective:0;
+ const stopAt=options.oneRound?Math.min(target.turns,turns.length+1):target.turns;
+ for(let turn=turns.length+1;turn<=stopAt;turn++){
   if(remainingHp<=0)break;
   const actors=[],roundStart=remainingHp;
   for(let index=0;index<entries.length;index++){
@@ -261,6 +281,13 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{}){
   poison:round(poisonTotal),effective:round(effective),
   overkill:round(Math.max(0,theoretical-effective)),
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
+  finished:remainingHp<=0||turns.length>=target.turns,
+  session:{
+   remainingHp,shared,
+   actors:entries.map(entry=>({
+    id:entry.ctx.build.id,state:entry.state,trials:entry.trials,teamBuffs:entry.teamBuffs
+   }))
+  },
   warnings:[
    "Tours joués dans l’ordre d’initiative, puis passage au tour suivant. Chaque personnage recalcule ses sorts lorsque vient son tour.",
    "PV de la cible communs : la simulation s’arrête à sa défaite. Buffs, relances, PV et effets personnels restent mémorisés d’un tour à l’autre.",
