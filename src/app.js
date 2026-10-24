@@ -759,6 +759,25 @@ $("#copy-btn").addEventListener("click",copyRotation);
 $("#save-spells").addEventListener("click",()=>{saveCalibration();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();tab("optimize");if(currentJob)cancelCalculation();calculate();});
 $("#reset-spells").addEventListener("click",()=>{current.calibration={};saveBuilds();applyCalibration();renderSpells();invalidateCombatSnapshot();if(multiIsOpen())refreshMultiContext();});
 activateBuild(builds.find(b=>b.id===activeId)?.id||builds[0].id);
-teamModule=mountTeamModule({getBuilds:()=>builds});
+teamModule=mountTeamModule({
+ getBuilds:()=>builds,
+ onChangeVariant:(buildId,group,name)=>{
+  const build=builds.find(item=>item.id===buildId);
+  const cls=CLASSES[build?.classId];
+  if(!build||!cls?.pairs[group]?.includes(name))return false;
+  if(build.variants[group]===name)return true;
+  build.variants[group]=name;
+  saveBuilds();
+  if(current?.id===buildId){
+   invalidateRotationForVariant();
+   renderVariantPicker();
+   renderSpellbook();
+   renderSpells();
+   $("#spellbook-selection-message").textContent=name+
+    " équipé · build enregistré depuis l'optimiseur d'équipe";
+  }
+  return true;
+ }
+});
 updatePinButton();
 updateAssistTopPin();
