@@ -67,7 +67,7 @@ export function equippedWeaponSpell(build){
   element:item.hits[0].element,
   min:totals?totals[0].normal:0,max:totals?totals[1].normal:0,
   critMin:totals?totals[0].crit:0,critMax:totals?totals[1].crit:0,
-  critChance:Math.min(.95,Math.max(.05,(item.criticalChance+(valid?(stats.critical||0):0))/100)),
+  critChance:Math.min(1,Math.max(0,(item.criticalChance+(valid?(stats.critical||0):0))/100)),
   baseDamage:item.hits.reduce((n,h)=>n+(h.min+h.max)/2,0),
   weaponHits:hits,weaponCriticalBonus:item.criticalBonus,
   damageSource:valid?"active-build-weapon":"weapon-stats-missing",
