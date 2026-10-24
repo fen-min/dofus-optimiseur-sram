@@ -1,6 +1,6 @@
 import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
-import {handKey,nextHand,cardHandDamageBonus,playedHandBonuses,rekopBaseHits,winningHand,estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.20";
+import {handKey,nextHand,cardHandDamageBonus,playedHandBonuses,rekopBaseHits,winningHand,estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {effectiveCriticalRate,activeTurquoiseBonus,registerTurquoiseCritical} from "./critical.js?v=3.22";
 import {initialSacrierHealth,sacrificeHealth,restoreHealth,sufferingFinalBonus,setTemporaryVitality} from "./sacrier-state.js?v=3.2";
 // Monocible, sans carte : estimation paramétrée, PAS simulateur du serveur DOFUS.
