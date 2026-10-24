@@ -5,7 +5,7 @@
  */
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.20";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.20";
-import {theoreticalCriticalRate} from "./critical.js?v=1";
+import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=1";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -430,6 +430,17 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // Garder la dépense brute séparée pour le diagnostic.
     actor.grossPA=played;
     actor.spent=Math.max(0,actor.availablePA-entry.state.pa);
+    if(entry.ctx.settings.classId==="ecaflip"){
+     const available=entry.ctx.spells.filter(sp=>
+      (sp.isWeapon||entry.ctx.settings.variants?.[sp.variantGroup]===sp.name)&&
+      !sp.nonDirect&&(sp.min>0||sp.ecaflipRekop)&&sp.critChance>0);
+     if(available.length){
+      actor.criticalRate=Math.min(...available.map(sp=>theoreticalCriticalRate(sp,entry.state)));
+      actor.criticalGuaranteed=actor.criticalRate>=1-1e-8;
+     }
+     actor.turquoiseBonus=entry.ctx.settings.dofusTurquoise?
+       activeTurquoiseBonus(entry.state):null;
+    }
     // Les poisons en attente évoluent après le tour de leur lanceur.
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
     const beforeEnd=entry.state.total;
