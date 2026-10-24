@@ -2,7 +2,7 @@
  * Team DPS chronological engine: actors decide at their initiative turn.
  * HP, target vulnerabilities and per-character effects persist between turns.
  */
-import {CLASSES} from "./classes.js?v=3.11";
+import {CLASSES} from "./classes.js?v=3.12";
 import {playSequentialTeam} from "./team-sequential.js?v=3.11";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.11";
