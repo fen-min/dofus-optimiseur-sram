@@ -110,6 +110,11 @@ export function mountTeamModule({getBuilds}){
    '<div class="team-rotation-meta">'+fmt(a.spent)+'/'+fmt(a.availablePA??result.members.find(m=>m.id===a.id)?.ap??0)+' PA utilisés'+
    (a.paBonus?' · bonus '+(a.paBonus>0?'+':'')+fmt(a.paBonus)+' PA':'')+' · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
+   (Number.isFinite(a.criticalRate)?
+    ' · Critiques : '+fmt(a.criticalRate*100)+' %'+
+    (a.criticalGuaranteed?' (CC garantis)':''):'')+
+   (Number.isFinite(a.turquoiseBonus)?
+    ' · Turquoise : +'+fmt(a.turquoiseBonus)+' % dommages finaux':'')+
 
    (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
     ' · Souffrance '+safe(a.health.suffering):'')+
