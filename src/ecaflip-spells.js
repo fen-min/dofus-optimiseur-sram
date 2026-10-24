@@ -48,7 +48,11 @@ const DATA={
  "Griffe Invocatrice":{pa:3,r:[1,4],self:true,cooldown:4,buff:{stat:"Puissance",value:90,duration:4,stacks:1},conditional:"Chaton : son IA, ses dommages et sa durée restent non simulés"},
  "Château de Cartes":{pa:3,r:[0,6],self:true,cooldown:3,playHand:true},
  "Roulette":{pa:1,r:[0,0],self:true,turn:1,refundPA:1,randomDraw:0},
- "Pile ou Face":{pa:2,e:"Terre",n:[0,0],c:[0,0],cc:5,r:[0,6],turn:3,card:["diamond",2],refundPA:1,conditional:"Dégâts Terre à confirmer, lancer de pièce simplifié"}
+ "Pile ou Face":{pa:2,e:"Terre",n:[18,18],c:[22,22],cc:5,r:[0,6],turn:3,target:2,card:["diamond",2],refundPA:1,conditional:"Face/Pile : +1 PA ou +1 PM supplémentaire non anticipé"},
+ "Belote":{pa:3,e:"Terre",n:[27,30],c:[36,36],cc:10,r:[0,6],turn:3,target:2,card:["diamond",3],playSuit:"diamond"},
+ "Lapement":{pa:4,e:"Terre",n:[32,36],c:[43,43],cc:15,r:[0,5],turn:2,card:["diamond",4],conditional:"Retrait PA/PM selon Pile ou Face non valorisé"},
+ "Destin d'Ecaflip":{pa:5,e:"Terre",n:[42,46],c:[55,55],cc:20,r:[1,6],turn:1,card:["diamond",5],conditional:"Dégâts conditionnels supplémentaires sur critique adverse non simulés"}
+
 };
 const levels=[
  [1,95],[1,100],[1,105],[1,110],[5,115],[10,120],[15,125],[20,130],
