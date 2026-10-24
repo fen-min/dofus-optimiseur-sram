@@ -1,9 +1,31 @@
+import {ECAFLIP_SPELLS,ECAFLIP_SOURCE} from "./ecaflip-spells.js?v=1";
 /** Référentiel d'effets de classe : 44 Sram + 44 Sacrieur.
  * Mise à jour Sram : 22 octobre 2026, OpenDofusDB 3.7.12.12
  * Une description répertoriée ne signifie pas que le moteur reproduit cet effet.
  * Les liens vers la page classe sont utilisés lorsqu'une URL précise n'a pas été vérifiée.
  */
+const ECAFLIP_EFFECT_AUDIT=Object.fromEntries(ECAFLIP_SPELLS.map(spell=>[
+ spell.name,{
+  description:spell.utility||spell.conditionalDamage||
+   (spell.drawCard?
+    "Sort élémentaire Écaflip : "+spell.cardSource+" ; ses dégâts de base sont documentés, les effets annexes restent partiels.":
+    spell.ecaflipRekop?
+     "Rekop consomme une main gagnante de cartes pour ses dégâts, selon les combinaisons de rangs et couleurs.":
+     "Sort Écaflip figurant sur la capture du personnage ; effet chiffré incomplet, vérifier la fiche avant simulation."),
+  checked:spell.modelingConfidence==="verified-base-damage",
+  source:ECAFLIP_SOURCE,
+  simulation:spell.ecaflipRekop?"Combinaison de cartes et dommages estimés":
+   spell.modelingConfidence==="verified-base-damage"?"Dégâts directs calculés depuis le build actif; effets conditionnels incomplets":
+   "Sort visible, mais effets non chiffrés ou tirages non simulés",
+  sourceClass:"Dofus Grimoire 3.7.12 et capture Karuta 24/10/2026",
+  sourceRank:"Rang de niveau 200 lorsque confirmé",
+  verified:spell.modelingConfidence==="verified-base-damage"?
+   "Jets de base documentés, conditions secondaires à vérifier":
+   "Détails et aléatoires non complètement vérifiés"
+ }
+]));
 export const SPELL_EFFECTS_AUDIT = {
+  ecaflip:ECAFLIP_EFFECT_AUDIT,
   "sacrieur": {
     "Supplice": {
       "description": "Vol de vie Terre ; effet de soin sur les attaquants désormais nul (0 %).",
