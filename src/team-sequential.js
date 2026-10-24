@@ -100,9 +100,10 @@ function projectedCarryoverValue(ctx,state,actions){
 }
 function evaluateTrial(ctx,state,settings,forcedSpell=null){
  let seed=state;
- if(forcedSpell){
-  if(!eligible(forcedSpell,seed,settings))return null;
-  seed=castSpell(seed,forcedSpell,settings);
+ const forced=forcedSpell?(Array.isArray(forcedSpell)?forcedSpell:[forcedSpell]):[];
+ for(const spell of forced){
+  if(!eligible(spell,seed,settings))return null;
+  seed=castSpell(seed,spell,settings);
  }
  const result=optimizeFromState(settings,ctx.spells,seed);
  const turn=result.turns[state.turn-1];
@@ -110,7 +111,7 @@ function evaluateTrial(ctx,state,settings,forcedSpell=null){
  const score=result.total-state.total;
  const carry=projectedCarryoverValue(ctx,state,turn.actions);
  return {actions:turn.actions,score,carry,strategicScore:score+carry,
-  first:turn.total,label:forcedSpell?"Ouverture "+forcedSpell.name:"Rotation dynamique"};
+  first:turn.total,label:forced.length?"Ouverture "+forced.map(x=>x.name).join(" + "):"Rotation dynamique"};
 }
 function better(a,b,remainingHp){
  if(!a)return false;
@@ -255,6 +256,14 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
   const trial=evaluateTrial(ctx,state,settings,spell);
   entry.trials++;
   consider(trial);
+  // Tester également deux Yams comme UNE ouverture du tour courant :
+  // atteindre 100% est un objectif, sans calculer T+1.
+  if(ctx.settings.classId==="ecaflip"&&spell.ecaflipCriticalRateBuff&&
+    theoreticalCriticalRate(spell,state)<1-1e-8){
+   const two=evaluateTrial(ctx,state,settings,[spell,spell]);
+   entry.trials++;
+   consider(two);
+  }
  }
  // Une vulnérabilité peut coûter du DPS à son lanceur mais être supérieure
  // pour l'équipe : tester explicitement les ouvertures qui en appliquent.
