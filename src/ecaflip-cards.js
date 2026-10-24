@@ -91,13 +91,29 @@ export function rekopBaseHits(hand){
  return [];
 }
 export function winningHand(hand){return rekopBaseHits(hand).length>0;}
+/**
+ * Analytical reserve value for cards retained toward a future Rekop.
+ * No future turn is executed or assumed guaranteed.
+ * Estimated values are deliberately discounted for PA cost and card choice.
+ */
 export function estimatedCardFutureValue(hand,stats){
- if(!Array.isArray(hand)||!hand.length)return 0;
- const rolls=rekopBaseHits(hand),chance=Number(stats?.chance)||0,power=Number(stats?.power)||0;
- if(rolls.length){
-  return rolls.reduce((sum,hit)=>sum+hit.base*(1+((stats?.[
-   {Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"}[hit.element]
-  ]||0)+power)/100)+(stats?.flatDamage?.[hit.element]||0),0)*0.22;
- }
- return Math.min(4,hand.length)*8;
+ if(!Array.isArray(hand)||!hand.length||!stats)return 0;
+ const direct=rekopBaseHits(hand);
+ const characteristic=element=>stats[{
+  Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"
+ }[element]]||0;
+ const weighted=hits=>hits.reduce((sum,hit)=>sum+
+  hit.base*(100+characteristic(hit.element)+(stats.power||0))/100+
+  (stats.flatDamage?.[hit.element]||0),0);
+ if(direct.length)return weighted(direct)*0.45;
+ // A partial suit might become the 2/3/4/5 same-suit royal sequence.
+ const suited={club:0,spade:0,heart:0,diamond:0};
+ for(const card of hand)suited[card.suit]=(suited[card.suit]||0)+1;
+ const dominant=Object.entries(suited).sort((a,b)=>b[1]-a[1])[0];
+ const missing=4-dominant[1];
+ const element=SUIT_ELEMENT[dominant[0]];
+ const royal=56*(100+characteristic(element)+(stats.power||0))/100+
+  (stats.flatDamage?.[element]||0);
+ return royal*0.32*Math.pow(0.77,Math.max(0,missing-1))*
+  (dominant[1]/Math.max(1,hand.length));
 }
