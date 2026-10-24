@@ -30,7 +30,7 @@ export function mountTeamModule({getBuilds}){
  const saved=readStore();
  let ids=Array.isArray(saved?.ids)?saved.ids.slice(0,TEAM_LIMIT):
   getBuilds().slice(0,2).map(b=>b.id);
- let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,hp:INTERNAL_TARGET_HP,turns:50});
+ let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,hp:INTERNAL_TARGET_HP,turns:100});
  const storedOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
   ?saved.memberOptions:{};
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
@@ -155,7 +155,7 @@ export function mountTeamModule({getBuilds}){
  }
  function changeTarget(){
   target=cleanTeamTarget({
-   hp:INTERNAL_TARGET_HP,turns:50,criticals:$("team-critical").checked,
+   hp:INTERNAL_TARGET_HP,turns:100,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
   storeState();cancel();result=null;activeTurn=1;renderTarget();renderResult();
@@ -244,7 +244,7 @@ export function mountTeamModule({getBuilds}){
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:50});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:100});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
