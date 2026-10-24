@@ -5,7 +5,10 @@
  * permanent +10% is ALREADY included in stats.critical and must not be added.
  */
 export function theoreticalCriticalRate(spell,state){
- if(!spell||!(Number(spell.critChance)>0))return 0;
+ if(!spell)return 0;
+ // Some class spells have 0% native CC but can gain a nonzero chance
+ // from a +Critique buff (e.g. Sacrieur Nervosité).
+ if(!(Number(spell.critChance)>0)&&!(Number(spell.critMin)>0||Number(spell.critMax)>0))return 0;
  const buffs=(state?.buffs||[]).filter(b=>b.until>=(state?.turn||1));
  const extra=buffs.reduce((n,b)=>n+(b.stat==="Critique"?Number(b.amount)||0:0),0);
  return Math.max(0,Math.min(1,Number(spell.critChance)+extra/100));
