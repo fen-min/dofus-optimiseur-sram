@@ -101,5 +101,14 @@ test("team scheduler chooses cards or attacks while keeping one round per click"
  }
  assert.equal(res.turns.length,3);
  assert.ok(summaries.every(x=>x.damage>0));
+ const handAtFirst=summaries[0].hand.filter(c=>c.suit==="club").map(c=>c.rank).sort();
+ const handAtSecond=summaries[1].hand.filter(c=>c.suit==="club").map(c=>c.rank).sort();
+ assert.deepEqual(handAtFirst,[2,3,4],"Tour 1 : constituer les trois premiers Trèfles");
+ assert.deepEqual(handAtSecond,[2,3,4,5],"Tour 2 : préparer la Main complète");
+ const names=summaries[2].names;
+ const triple=["Baraka","Tout ou Rien","Rekop"];
+ assert.ok(triple.every(name=>names.includes(name)),"Tour 3 : dérouler Baraka / Tout ou Rien / Rekop");
+ assert.ok(names.indexOf("Baraka")<names.indexOf("Tout ou Rien")&&
+  names.indexOf("Tout ou Rien")<names.indexOf("Rekop"));
  console.log("KARUTA OPTIMIZED THREE ROUNDS",JSON.stringify(summaries));
 });
