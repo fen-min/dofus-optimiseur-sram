@@ -52,7 +52,7 @@ test("target changes preserve resistances and use a hidden maximum for stepwise 
  root.listeners.change({target:{closest(selector){return selector==="#team-settings"?{}:null;}}});
  const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
  assert.equal(stored.target.hp,1000000000000);
- assert.equal(stored.target.turns,50);
+ assert.equal(stored.target.turns,100);
  assert.equal(stored.target.resistances.Air,25);
  assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
 }));
