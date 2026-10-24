@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {INITIAL_BUILDS} from "../src/classes.js";
+import {INITIAL_BUILDS,CLASSES} from "../src/classes.js";
 import {mountTeamModule} from "../src/team-ui.js";
 
 function mockBrowser(){
@@ -208,8 +208,9 @@ test("Sacrier can select Pacte de Sang from team; callback persists the actual b
 test("Sram Manigance option follows its saved variant instead of silently casting an unavailable buff",()=>withBrowser(({root,node})=>{
  const builds=structuredClone(INITIAL_BUILDS);
  const sram=builds.find(b=>b.classId==="sram");
- const i=18;
- sram.variants[i]="Piège Scélérat";
+ const i=CLASSES.sram.pairs.findIndex(p=>p.includes("Manigance"));
+ const alternative=CLASSES.sram.pairs[i].find(name=>name!=="Manigance");
+ sram.variants[i]=alternative;
  const calls=[];
  mountTeamModule({getBuilds:()=>builds,onChangeVariant:(id,group,name)=>{
   const b=builds.find(x=>x.id===id);
