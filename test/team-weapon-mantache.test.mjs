@@ -18,7 +18,11 @@ test("l'arme Manthache est choisie uniquement sur le Sram du preset",()=>{
  assert.equal(normalizeBuild(sram).weapon,"manthache");
  assert.equal(normalizeBuild({...sram,weapon:undefined}).weapon,"manthache");
  assert.equal(normalizeBuild({...sram,weapon:null}).weapon,null);
- assert.equal(normalizeBuild(sacrier).weapon,null);
+ assert.equal(normalizeBuild(sacrier).weapon,"manthache");
+ assert.equal(normalizeBuild({...sacrier,weapon:undefined}).weapon,"manthache");
+ assert.equal(normalizeBuild({...sacrier,weapon:null}).weapon,null);
+ assert.equal(normalizeBuild({...sacrier,weapon:"manthache"}).weapon,"manthache");
+ assert.equal(normalizeBuild({...sacrier,id:"new-sacrieur",weapon:undefined}).weapon,null);
  assert.equal(normalizeBuild({...sram,id:"new-sram",weapon:undefined}).weapon,null);
  assert.equal(WEAPONS.manthache.ap,5);
  assert.equal(WEAPONS.manthache.criticalBonus,8);
@@ -81,4 +85,48 @@ test("la carte d'arme est présente et reste distincte des 22 variantes",()=>{
  assert.match(js,/renderEquippedWeapon\(\)/);
  assert.match(js,/equipWeapon\(e.target.value\)/);
  assert.equal(CLASSES.sram.pairs.length,22);
+});
+
+test("le Sacrieur utilise sa propre fiche de statistiques pour la Manthache",()=>{
+ const build=normalizeBuild({...sacrier,weapon:undefined});
+ const weapon=equippedWeaponSpell(build);
+ const sramWeapon=equippedWeaponSpell(sram);
+ assert.equal(build.classId,"sacrieur");
+ assert.equal(weapon.name,"Manthache");
+ assert.equal(weapon.pa,5);
+ assert.equal(weapon.maxPerTurn,1);
+ assert.equal(weapon.weaponHits.length,2);
+ assert.equal(weapon.damageSource,"active-build-weapon");
+ assert.notEqual(weapon.min,sramWeapon.min);
+ const stronger=equippedWeaponSpell({...build,stats:{...build.stats,agility:build.stats.agility+100}});
+ assert.ok(stronger.min>weapon.min);
+ // Rolls on the equipped item must not be added a second time.
+ assert.equal(build.stats.agility,sacrier.stats.agility);
+});
+
+test("l'optimiseur d'équipe du Sacrieur peut lancer la Manthache à 1 case, jamais à 2 cases",()=>{
+ const target={hp:1_000_000_000_000,turns:50,
+  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0},criticals:false};
+ const close=createTeamContext({...sacrier,weapon:"manthache",distance:1},target);
+ const attack=close.spells.find(spell=>spell.isWeapon);
+ assert.ok(attack);
+ assert.equal(attack.name,"Manthache");
+ const selected={...close,spells:[attack]};
+ const result=optimizeTeamTurn([selected],target);
+ assert.equal(result.turns.length,1);
+ assert.ok(result.turns[0].actors[0].actions.some(action=>action.name==="Manthache"));
+ assert.ok(result.turns[0].actors[0].damage>0);
+ const far=createTeamContext({...sacrier,weapon:"manthache",distance:2},target);
+ const weaponFar=far.spells.find(spell=>spell.isWeapon);
+ assert.equal(eligible(weaponFar,initialState(far.settings),far.settings),false);
+});
+
+test("un ancien Sacrieur sans champ d'arme récupère Manthache, mais null reste sans arme",()=>{
+ const oldStored=JSON.parse(JSON.stringify(sacrier));
+ delete oldStored.weapon;
+ const migrated=normalizeBuild(oldStored);
+ assert.equal(migrated.weapon,"manthache");
+ const disabled=normalizeBuild({...oldStored,weapon:null});
+ assert.equal(disabled.weapon,null);
+ assert.equal(prepareBuildSpells(disabled,CLASSES.sacrieur).filter(x=>x.isWeapon).length,0);
 });
