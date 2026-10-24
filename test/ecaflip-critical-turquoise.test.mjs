@@ -89,3 +89,16 @@ test("Un clic = un tour, et les buffs critiques et passif Turquoise persistent e
  assert.ok(Array.isArray(previous.session.actors[0].state.turquoiseProcs));
  assert.ok(previous.session.actors[0].state.buffs.every(b=>b.until>=3));
 });
+
+test("Optimiseur d'équipe : Karuta cherche à atteindre 100% critique dès le tour 1 si Yams est accessible",()=>{
+ const spells=context.spells.filter(sp=>
+  ["Yams","Baraka","Griffe Joueuse","Sceptre du Roi Joueur"].includes(sp.name));
+ const tailored={...context,spells};
+ const res=optimizeTeamTurn([tailored],target);
+ const actions=res.turns[0].actors[0].actions.map(a=>a.name);
+ const final=res.session.actors[0].state;
+ console.log("ECACRIT FIRST TURN",JSON.stringify({actions,critYams:theoreticalCriticalRate(spell("Yams"),final),critWeapon:theoreticalCriticalRate(spell("Sceptre du Roi Joueur"),final),turquoise:activeTurquoiseBonus(final)}));
+ assert.ok(actions.includes("Yams"),"Le tour initial doit au moins chercher son bonus Critique Yams");
+ assert.ok(theoreticalCriticalRate(spell("Yams"),final)>.68);
+ assert.ok(activeTurquoiseBonus(final)>0);
+});
