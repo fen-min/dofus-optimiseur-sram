@@ -163,6 +163,7 @@ function applyEcaflipAction(s,spell){
   s.actions.at(-1).notes.push("Table récupérée ; bonus de soins non estimé");
   return;
  }
+ const hadSuitBefore=spell.playSuit&&s.ecaHand.some(card=>card.suit===spell.playSuit);
  if(spell.drawCard){
   const [suit,rank]=spell.drawCard;
   if(s.ecaHand.length>=4){
@@ -171,7 +172,7 @@ function applyEcaflipAction(s,spell){
   }
   s.ecaHand=nextHand(s.ecaHand,suit,rank);
  }
- if(spell.playSuit){
+ if(spell.playSuit&&hadSuitBefore){
   const played=s.ecaHand.filter(card=>card.suit===spell.playSuit);
   if(played.length){
    playEcaCards(s,played,spell.name+" : "+played.length+" carte(s) jouée(s)");
