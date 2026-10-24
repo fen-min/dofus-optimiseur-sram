@@ -1,4 +1,4 @@
-import {CLASSES} from "./classes.js?v=3.11";
+import {CLASSES} from "./classes.js?v=3.12";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
