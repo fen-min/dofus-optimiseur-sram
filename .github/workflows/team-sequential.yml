@@ -26,6 +26,7 @@ on:
       - "test/team-ui.test.mjs"
       - "test/team-dps-board.test.mjs"
       - "test/team-sram-buffs.test.mjs"
+      - "test/team-pacte-manigance-regression.test.mjs"
       - "test/team-100-rounds-regression.test.mjs"
       - "index.html"
       - "team.css"
