@@ -14,7 +14,7 @@ export const CLASSES={
 export const INITIAL_BUILDS=[
  {id:"sram-air-pvm",classId:"sram",character:"Matryoshka",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SOURCE_URL,variants:SRAM_SCREENSHOT_VARIANTS.slice(),weapon:"manthache",ap:12,turns:10,distance:3,stats:SRAM_AIR_REFERENCE_STATS,calibration:{}},
  {id:"sacri-air-pvm",classId:"sacrieur",character:"Mon Sacrieur",name:"Air PvM 200 Low Cost",level:200,element:"Air",source:SACRIER_SOURCE,variants:SACRIER_DEFAULT_VARIANTS.slice(),weapon:"manthache",ap:12,turns:10,distance:2,stats:SACRIER_AIR_REFERENCE_STATS,calibration:{}},
- {id:"ecaflip-karuta-eau",classId:"ecaflip",character:"Karuta",name:"Eau Critique 200",level:200,element:"Eau",source:ECAFLIP_SOURCE,variants:ECAFLIP_KARUTA_VARIANTS.slice(),weapon:"sceptre-roi-joueur",ap:12,turns:10,distance:2,stats:ECAFLIP_KARUTA_STATS,calibration:{}}
+ {id:"ecaflip-karuta-eau",classId:"ecaflip",character:"Karuta",name:"Eau Critique 200",level:200,element:"Eau",source:ECAFLIP_SOURCE,variants:ECAFLIP_KARUTA_VARIANTS.slice(),weapon:"sceptre-roi-joueur",dofusTurquoise:true,ap:12,turns:10,distance:2,stats:ECAFLIP_KARUTA_STATS,calibration:{}}
 ];
 export function normalizeBuild(b,index=0){
  const cls=CLASSES[b?.classId]||CLASSES.sram;
@@ -41,6 +41,7 @@ export function normalizeBuild(b,index=0){
  source:typeof b?.source==="string" && (/^https:\/\/www\.dofusbook\.net\/desktop\/fr\/equipement\//.test(b.source)||b.source===ECAFLIP_SOURCE)?b.source:cls.source,
  variants:cls.pairs.map((p,i)=>p.includes(selectedVariants?.[i])?selectedVariants[i]:cls.defaultVariants[i]),
  weapon:b?.weapon===undefined?(isReferenceEcaflip?"sceptre-roi-joueur":(isReferenceSram||isReferenceSacrier)?"manthache":null):normalizedWeaponId(b.weapon),
+ dofusTurquoise:b?.dofusTurquoise===undefined?isReferenceEcaflip:b.dofusTurquoise===true,
  ap:Math.max(6,Math.min(20,+b?.ap||12)),turns:Math.max(1,Math.min(10,+b?.turns||10)),
  distance:Number.isFinite(+b?.distance)?Math.max(0,Math.min(30,+b.distance)):(cls.id==="sacrieur"?2:3),
  // Migration automatique de l'ancien build Sacrieur par défaut.
