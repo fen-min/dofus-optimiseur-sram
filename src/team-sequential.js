@@ -309,6 +309,29 @@ function estimateTeamVulnerability(ctx,state,actions,following,remainingHp,poten
  }
  return Math.min(remainingHp,Math.max(0,gain))*0.8;
 }
+/**
+ * A build that explicitly equips a known self-buff has requested this
+ * maintenance policy. Always test the buff as a legal first cast while it
+ * is absent; don't inadvertently drop it just because a beam-width-8
+ * damage-only search favors the Sacrier's Berserk/Furie burst.
+ *
+ * Weak/edited buffs (< threshold) and unequipped variants are NOT forced.
+ * Each candidate still calculates ONLY the current turn; future effects
+ * stay in the stored battle state.
+ */
+function preferredBuildBuff(entry,settings){
+ const {ctx,state}=entry;
+ const choice=ctx.settings.classId==="sacrieur"?
+  {name:"Pacte de Sang",min:75}:ctx.settings.classId==="sram"?
+  {name:"Manigance",min:12}:null;
+ if(!choice)return null;
+ const spell=ctx.spells.find(x=>x.name===choice.name&&
+  ctx.settings.variants?.[x.variantGroup]===x.name&&
+  x.status?.buff?.value>=choice.min&&x.status?.buff?.duration>=3);
+ if(!spell||state.buffs.some(buff=>buff.until>=state.turn&&
+    (buff.key===spell.name||buff.key.startsWith(spell.name+":"))))return null;
+ return eligible(spell,state,settings)?spell:null;
+}
 export function planCurrentTurn(entry,remainingHp,following=[]){
  const {ctx,state}=entry;
  const turn=state.turn;
@@ -317,6 +340,14 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
  const settings=cleanSettings({...ctx.settings,turns:turn,
   apByTurn:{...ctx.settings.apByTurn,[turn]:entry.currentPA},
   beamWidth:8,refreshTimedBuffs:false});
+ const maintained=preferredBuildBuff(entry,settings);
+ if(maintained){
+  const trial=evaluateTrial(ctx,state,settings,maintained);
+  entry.trials++;
+  if(trial?.actions?.some(action=>String(action.id)===String(maintained.id)))
+   return {actions:improveCurrentBuffOrder(trial.actions,ctx,state),
+    label:"Entretien "+maintained.name,settings};
+ }
  let best=evaluateTrial(ctx,state,settings);
  entry.trials++;
  const potentials=new Map();
