@@ -140,34 +140,72 @@ function selectedBuffs(ctx,state,settings){
  * As (Infortune), then Baraka / Tout ou Rien / Rekop. Only this round runs.
  * The strategy bonus is NOT displayed as inflicted damage.
  */
-function royalClubCount(state){
- const count=cards=>{
-  const ranks=new Set((cards||[]).filter(c=>c.suit==="club").map(c=>c.rank));
-  return [2,3,4,5].filter(rank=>ranks.has(rank)).length;
- };
- return Math.max(count(state.ecaHand),count(state.ecaTable));
+const ROYAL_CLUB_GENERATORS=[
+ [2,"Yams"],[3,"Kraps"],[4,"Griffe Joueuse"],[5,"Infortune"]
+];
+function royalClubReady(ctx){
+ if(ctx.settings.classId!=="ecaflip")return false;
+ return [...ROYAL_CLUB_GENERATORS.map(([,name])=>name),
+  "Baraka","Tout ou Rien","Rekop"].every(name=>
+   ctx.spells.some(sp=>sp.name===name&&
+    ctx.settings.variants?.[sp.variantGroup]===name));
 }
+function clubRanks(cards){
+ return new Set((cards||[]).filter(c=>c.suit==="club").map(c=>c.rank));
+}
+function fullClubs(cards){return [2,3,4,5].every(r=>clubRanks(cards).has(r));}
+function royalClubCount(state){
+ return Math.max(clubRanks(state.ecaHand).size,clubRanks(state.ecaTable).size);
+}
+/** Cyclical objective: keeping four clubs during a cooldown is as useful as
+ * obtaining them; spending them with Rekop counts as success ONLY if
+ * Tout ou Rien has recovered the table, not if Rekop was used prematurely.
+ * Strategic scores NEVER enter the DPS totals.
+ */
 function royalClubGoalScore(ctx,state,actions){
- if(ctx.settings.classId!=="ecaflip"||!actions?.length||
-    !ctx.spells.some(x=>x.name==="Rekop"))return 0;
+ if(!royalClubReady(ctx)||!actions?.length)return 0;
  const after=replay(state,actions,ctx);
  if(!after)return 0;
- const before=royalClubCount(state),afterCount=royalClubCount(after);
- return (afterCount*afterCount-before*before)*220;
+ const names=actions.map(a=>a.name);
+ const rekop=names.lastIndexOf("Rekop");
+ if(rekop>=0){
+  // Proper cash-out: the full suit was played via Baraka, then recovered
+  // via Tout ou Rien and consumed by Rekop. A play from a previous
+  // turn can live in the Table while the cooldown runs.
+  const recovered=names.slice(0,rekop).includes("Tout ou Rien");
+  const played=names.slice(0,rekop).includes("Baraka")||
+   fullClubs(state.ecaTable);
+  if(recovered&&played)return 650;
+  // Preserve full royal hands; waiting one turn for Tout ou Rien is better
+  // than spending them with an ordinary Rekop and breaking the cycle.
+  return state.turn>=ctx.settings.turns?-250:-4400;
+ }
+ const before=royalClubCount(state),now=royalClubCount(after);
+ // Mixed hands fill the 4 available slots and make the royal straight
+ // unattainable until cards are played/discarded.
+ const blocked=after.ecaHand.length>=4&&!fullClubs(after.ecaHand)&&
+  after.ecaHand.some(card=>card.suit!=="club")&&!fullClubs(after.ecaTable);
+ if(blocked)return -4500;
+ return (now*now-before*before)*220;
 }
 function ecaflipRoyalPrefixes(ctx,state){
- if(ctx.settings.classId!=="ecaflip"||
-    !ctx.spells.some(x=>x.name==="Rekop"))return [];
- const hand=new Set((state.ecaHand||[]).filter(x=>x.suit==="club").map(x=>x.rank));
- const table=new Set((state.ecaTable||[]).filter(x=>x.suit==="club").map(x=>x.rank));
+ if(!royalClubReady(ctx))return [];
+ const hand=clubRanks(state.ecaHand);
+ const table=clubRanks(state.ecaTable);
  const full=ranks=>[2,3,4,5].every(rank=>ranks.has(rank));
  const get=name=>ctx.spells.find(x=>x.name===name);
  const map=names=>names.map(get).filter(Boolean);
  const prefixes=[];
- if(full(hand))prefixes.push(map(["Baraka","Tout ou Rien","Rekop"]));
+ if(full(hand)){
+  prefixes.push(map(["Baraka","Tout ou Rien","Rekop"]));
+  // Tout ou Rien may be on cooldown on the round immediately following
+  // a completed combo. Playing Baraka now saves all four cards in Table,
+  // where Tout ou Rien can restore them on the next round.
+  prefixes.push(map(["Baraka"]));
+ }
  if(full(table))prefixes.push(map(["Tout ou Rien","Rekop"]));
  if(!full(hand)){
-  const missing=[[2,"Yams"],[3,"Kraps"],[4,"Griffe Joueuse"],[5,"Infortune"]]
+  const missing=ROYAL_CLUB_GENERATORS
    .filter(([rank])=>!hand.has(rank)).map(([,name])=>name);
   let ap=state.pa,sequence=[];
   for(const name of missing){
