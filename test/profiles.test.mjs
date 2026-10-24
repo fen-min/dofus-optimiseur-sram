@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
 import {cleanSettings,optimize,eligible,initialState} from "../src/engine.js";
 
-test("two reference characters and their respective DofusBook sources",()=>{
- assert.deepEqual(Object.keys(CLASSES),["sram","sacrieur"]);
- assert.equal(INITIAL_BUILDS.length,2);
+test("three reference characters with distinct and verified class sources",()=>{
+ assert.deepEqual(Object.keys(CLASSES),["sram","sacrieur","ecaflip"]);
+ assert.equal(INITIAL_BUILDS.length,3);
  for(const cls of Object.values(CLASSES)){
   assert.equal(cls.spells.length,44);
   assert.equal(cls.catalog.length,44);
@@ -14,7 +14,7 @@ test("two reference characters and their respective DofusBook sources",()=>{
   const all=cls.pairs.flat();
   assert.equal(new Set(all).size,44);
   assert.deepEqual(new Set(all),new Set(cls.catalog.map(x=>x.name)));
-  assert.ok(cls.source.includes("dofusbook.net"));
+  assert.ok(cls.source.includes(cls.id==="ecaflip"?"dofus-grimoire.fr":"dofusbook.net"));
  }
 });
 test("each build has one and only one spell from each variant pair",()=>{
