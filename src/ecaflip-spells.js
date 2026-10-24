@@ -31,7 +31,7 @@ const DATA={
  "Baraka":{pa:3,e:"Eau",n:[27,30],c:[35,35],cc:10,r:[0,6],turn:3,target:2,card:["club",3],playSuit:"club"},
  "Félintion":{pa:4,e:"Eau",n:[33,36],c:[43,43],cc:15,r:[1,6],turn:2,card:["club",4]},
  "Griffe Joueuse":{pa:4,e:"Eau",n:[31,35],c:[42,42],cc:15,r:[1,6],turn:2,card:["club",4],line:true},
- "Infortune":{pa:5,e:"Eau",n:[41,45],c:[54,54],cc:20,r:[1,7],turn:1,card:["club",5],conditional:"Dégâts différés si aucun critique adverse : non comptés"},
+ "Infortune":{pa:5,e:"Eau",n:[41,45],c:[54,54],cc:20,r:[1,7],turn:1,card:["club",5],delayed:{n:[31,33],c:[38,38]},conditional:"État : dégâts Eau à la fin du tour de la cible si elle ne critique pas (hypothèse Poutch)"},
  "Kraps":{pa:3,e:"Eau",n:[28,30],c:[34,34],cc:10,r:[0,6],turn:2,card:["club",3],critDamageBuff:29,critDamageBuffOnCrit:34},
  "Réflexes":{pa:2,e:"Air",n:[14,17],c:[20,20],cc:5,r:[0,6],turn:3,target:2,card:["spade",2]},
  "Jass":{pa:3,e:"Air",n:[26,29],c:[35,35],cc:10,r:[0,6],turn:3,target:2,card:["spade",3],playSuit:"spade"},
@@ -88,6 +88,7 @@ export const ECAFLIP_SPELLS=ECAFLIP_PAIRS.flatMap((pair,i)=>pair.map((name,j)=>{
   restoreTable:!!raw.restoreTable,ecaflipRekop:!!raw.rekop,
   ecaflipRandomDraw:raw.randomDraw||0,refundPA:raw.refundPA||0,
   ecaflipCriticalRateBuff:raw.criticalRateBuff||null,
+  ecaflipDelayed:raw.delayed||null,
   ecaflipCritDamageOnCrit:raw.critDamageBuffOnCrit||0,
   conditionalDamage:raw.conditional||"",ecaflipCritDamageBuff:raw.critDamageBuff||0,
   modelingConfidence:done?"verified-base-damage":raw.rekop?"poker-dependent":"non-modeled",
@@ -106,6 +107,15 @@ export function prepareEcaflipSpellDamage(spell,stats){
   if(fields.every(v=>v!==null)){
    [output.min,output.max,output.critMin,output.critMax]=fields;
    output.critChance=Math.min(1,Math.max(0,output.critChance+(stats.critical||0)/100));
+   if(output.ecaflipDelayed){
+    const delayed=output.ecaflipDelayed;
+    const scaled=[...delayed.n,...delayed.c].map((v,i)=>
+     scaleLine(v,e,i>=2,stats));
+    output.ecaflipDelayed=scaled.every(Number.isFinite)?{
+     min:scaled[0],max:scaled[1],critMin:scaled[2],critMax:scaled[3],
+     baseDamage:(delayed.n[0]+delayed.n[1])/2
+    }:null;
+   }
    output.damageSource="active-build-stats";
    return output;
   }
