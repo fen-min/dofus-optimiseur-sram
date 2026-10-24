@@ -4,14 +4,17 @@ import {INITIAL_BUILDS} from "../src/classes.js";
 import {cleanSettings,optimize} from "../src/engine.js";
 import {TEAM_LIMIT,cleanTeamTarget,teamMembers,createTeamContext,optimizeTeam} from "../src/team-core.js";
 
-test("team horizon accepts 50 turns, rejects 51 and preserves old 10-turn solo limit",()=>{
+test("team horizon accepts 100 turns, rejects 101 and preserves old 10-turn solo limit",()=>{
  assert.equal(cleanTeamTarget({turns:50}).turns,50);
- assert.equal(cleanTeamTarget({turns:51}).turns,50);
+ assert.equal(cleanTeamTarget({turns:51}).turns,51);
+ assert.equal(cleanTeamTarget({turns:100}).turns,100);
+ assert.equal(cleanTeamTarget({turns:101}).turns,100);
  assert.equal(cleanTeamTarget({turns:0}).turns,1);
  assert.equal(cleanTeamTarget({turns:10}).turns,10);
  assert.equal(cleanSettings({turns:50}).turns,10);
  assert.equal(cleanSettings({turns:50,longHorizon:true}).turns,50);
- assert.equal(cleanSettings({turns:75,longHorizon:true}).turns,50);
+ assert.equal(cleanSettings({turns:75,longHorizon:true}).turns,75);
+ assert.equal(cleanSettings({turns:101,longHorizon:true}).turns,100);
 });
 
 test("team builds use 50 turns regardless of 10-turn saved build duration",()=>{
