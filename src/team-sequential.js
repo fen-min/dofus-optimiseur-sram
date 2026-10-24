@@ -393,6 +393,11 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
       autoRefreshed:executed.notes?.includes("Relance automatique : buff expiré")||false});
      played+=executed.pa;
     }
+    // L'Écaflip peut récupérer des PA lors de ses lancers : « utilisés »
+    // reflète la dépense NETTE, et non la somme brute des coûts affichés.
+    // Garder la dépense brute séparée pour le diagnostic.
+    actor.grossPA=played;
+    actor.spent=Math.max(0,actor.availablePA-entry.state.pa);
     // Les poisons en attente évoluent après le tour de leur lanceur.
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
     const beforeEnd=entry.state.total;
@@ -401,7 +406,6 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     actor.poison=delayed;
     actor.damage=round(actor.damage+delayed);
     remainingHp=round(Math.max(0,remainingHp-delayed));
-    actor.spent=played;
     actor.remainingHp=remainingHp;
     actor.defeated=remainingHp<=0;
     actor.health=entry.state.turns.at(-1)?.sacrierEndHealth||null;
