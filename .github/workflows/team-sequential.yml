@@ -9,6 +9,7 @@ on:
       - "src/weapons.js"
       - "src/classes.js"
       - "test/team-weapon-mantache.test.mjs"
+      - "test/team-choice-audit.test.mjs"
       - "test/team-sequential.test.mjs"
       - "test/team-one-turn-pa.test.mjs"
       - "test/team-stepwise.test.mjs"
