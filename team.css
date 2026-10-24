@@ -119,3 +119,11 @@
 @keyframes team-dps-overtake-glow{0%{box-shadow:0 0 0 0 rgba(245,194,104,0);background-color:transparent}35%{box-shadow:0 0 0 3px rgba(245,194,104,.48);background-color:rgba(245,194,104,.12)}100%{box-shadow:0 0 0 0 rgba(245,194,104,0);background-color:transparent}}
 @media(max-width:560px){.team-dps-row{grid-template-columns:31px minmax(0,1fr);gap:8px;padding:12px 10px}.team-dps-rank{width:30px;height:30px}.team-dps-value{grid-column:2;grid-row:2;min-width:0;font-size:18px;text-align:right}.team-dps-info{gap:4px}.team-dps-turn{white-space:normal}}
 @media(prefers-reduced-motion:reduce){.team-dps-fill{transition:none!important}.team-dps-row.is-overtaking{animation:none!important}}
+
+/* Selected in-game buff variant: saved with the actual character build. */
+.team-slot-body .team-slot-buff{display:flex;flex-direction:column;gap:5px;margin-top:5px;
+ font-size:10px!important;color:#ead0dc!important;overflow:visible}
+.team-slot-body .team-slot-buff select{font-size:12px;min-height:34px;
+ border:1px solid #8a657c;color:#f8f4fa;background:#191a28}
+.team-slot-body .team-buff-info{display:block;font-size:10px;line-height:1.45;
+ color:#d8c6db;white-space:normal;overflow-wrap:anywhere}
