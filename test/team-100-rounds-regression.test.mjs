@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {createTeamContext,optimizeTeamTurn,cleanTeamTarget} from "../src/team-core.js";
-import {initialState,eligible,castSpell} from "../src/engine.js";
 
 const target=cleanTeamTarget({
  hp:1_000_000_000_000,turns:100,criticals:true,
@@ -11,7 +10,6 @@ const target=cleanTeamTarget({
 const lineup=INITIAL_BUILDS.map(build=>createTeamContext(build,target));
 const named=Object.fromEntries(INITIAL_BUILDS.map(b=>[b.classId,b.id]));
 const histories={ecaflip:[],sram:[],sacrieur:[]};
-const requiredBuffs={sram:["Manigance"],sacrieur:["Mutilation","Furie"]};
 test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrier buff health",()=>{
  assert.equal(target.turns,100);
  assert.ok(lineup.every(c=>c.settings.turns===100));
@@ -55,9 +53,42 @@ test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrie
  });
  assert.ok(combo.length>=30,"recurring Eca combo disappeared after round 3");
  const sram=histories.sram;
- assert.ok(sram.some(x=>x.names.includes("Manigance")),"Sram never used Manigance");
+ const maniganceRounds=sram.filter(row=>row.names.includes("Manigance"))
+  .map(row=>row.turn);
+ assert.ok(maniganceRounds.length>=30,"Sram lost regular Manigance refresh");
+ assert.equal(maniganceRounds[0],1);
+ assert.ok(maniganceRounds.every((n,i)=>i===0||n-maniganceRounds[i-1]===3),
+  "Sram must NEVER cast Manigance while its three-round buff remains active");
+ for(const t of sram){
+  const active=t.buffs.filter(b=>b.key==="Manigance");
+  assert.ok(active.length<=1,"Manigance is not stackable at turn "+t.turn);
+  if(t.turn<=97&&t.names.includes("Manigance"))
+   assert.ok(active.length===1&&active[0].until===t.turn+2,
+    "Sram must get 3 turns of buff, neither shorter nor longer");
+ }
  const sacri=histories.sacrieur;
- assert.ok(sacri.some(x=>x.names.includes("Mutilation")||x.names.includes("Furie")),
-  "Sacrier never used offensive buffs");
+ const mutilations=sacri.filter(t=>t.names.includes("Mutilation"));
+ assert.deepEqual(mutilations.map(t=>t.turn),[1],
+  "Sacrier must cast its persistent Mutilation ONCE, not deactivate it later");
+ const berserk=sacri.filter(t=>t.names.includes("Berserk"));
+ assert.ok(berserk.length>2,"Sacrier must consider reactivating Berserk when appropriate");
+ for(const t of sacri){
+  const permanent=t.buffs.filter(b=>b.key==="Mutilation");
+  assert.equal(permanent.length,1,"Sacrier lost Mutilation at turn "+t.turn);
+  assert.equal(permanent[0].until,Number.MAX_SAFE_INTEGER);
+  const furie=t.buffs.filter(b=>b.key==="Furie");
+  assert.ok(furie.length<=2,"Furie maximum 2 stacks violated on turn "+t.turn);
+  assert.ok(furie.every(b=>b.until>=t.turn+1),
+   "Furie contains an expired stack on turn "+t.turn);
+  const castCount=t.names.filter(name=>name==="Furie").length;
+  assert.ok(castCount<=2,"Furie casts per turn exceed spell limit");
+  if(castCount>0)assert.ok(furie.length>0,
+   "Furie casts should refresh a timed damage buff");
+  assert.ok(t.stage>=0&&t.stage<=3);
+  assert.ok(t.suffering>=0&&t.suffering<=10);
+ }
+ assert.equal(previous.finished,true);
+ assert.throws(()=>optimizeTeamTurn(lineup,target,()=>{},previous),
+  /terminé|recommence/i,"101st click must not calculate a new round");
  assert.ok(previous.theoretical>0);
 });
