@@ -22,7 +22,7 @@ export function defaultTeamTarget(){
 export function cleanTeamTarget(raw={}){
  const defaults=defaultTeamTarget(),r=raw&&typeof raw==="object"?raw:{};
  return {hp:Math.round(clamp(r.hp,100,1000000000000,defaults.hp)),
-  turns:Math.round(clamp(r.turns,1,50,defaults.turns)),
+  turns:Math.round(clamp(r.turns,1,100,defaults.turns)),
   criticals:r.criticals===undefined?true:!!r.criticals,
   resistances:Object.fromEntries(RESIST_ELEMENTS.map(element=>[
    element,Math.round(clamp(r.resistances?.[element],0,90,0))
