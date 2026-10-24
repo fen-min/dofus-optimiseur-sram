@@ -94,3 +94,38 @@ test("équipe réelle Sacrieur/Sram: un clic, ordre d'initiative, PA légaux et 
   assert.ok(Math.abs(previous.theoretical-sum)<.25);
  }
 });
+
+test("une faible vulnérabilité non rentable n'est pas imposée à la place des dégâts",()=>{
+ const first=context("minor-debuff",3000,6,ctx=>[
+  small(ctx,"Arnaque",{pa:3,damage:300,limit:2}),
+  small(ctx,"Coupe-gorge",{pa:2,damage:0,limit:1,nonDirect:true,
+   status:{vulnerability:1.01,vulnerabilityTurns:1}})
+ ]);
+ const ally=context("minor-ally",1000,6,ctx=>[
+  small(ctx,"Arnaque",{pa:3,damage:300,limit:2})
+ ]);
+ const res=optimizeTeamTurn([first,ally],target);
+ assert.ok(!res.turns[0].actors[0].actions.some(a=>a.name==="Coupe-gorge"),
+  "Une vulnérabilité +1% ne doit pas faire sacrifier une attaque importante");
+ assert.ok(res.turns[0].actors[0].damage>=599.9);
+});
+test("une vulnérabilité expirée ne se transmet pas au tour suivant",()=>{
+ const first=context("temporary-debuff",3000,6,ctx=>[
+  small(ctx,"Arnaque",{pa:3,damage:100,limit:2}),
+  {...small(ctx,"Coupe-gorge",{pa:2,damage:0,limit:1,nonDirect:true,
+   status:{vulnerability:1.5,vulnerabilityTurns:1}}),cooldown:3}
+ ]);
+ const ally=context("temporary-ally",1000,6,ctx=>[
+  small(ctx,"Arnaque",{pa:3,damage:1000,limit:2})
+ ]);
+ const firstTurn=optimizeTeamTurn([first,ally],target);
+ const secondTurn=optimizeTeamTurn([first,ally],target,()=>{},firstTurn);
+ assert.ok(firstTurn.turns[0].actors[1].damage>2500);
+ assert.ok(secondTurn.turns[1].actors[1].damage<2500);
+});
+test("changer une variante ou la puissance d'un build entre deux clics doit invalider l'ancien combat",()=>{
+ const first=context("stale",2000,6,ctx=>[small(ctx,"Arnaque",{pa:3,damage:300})]);
+ const round=optimizeTeamTurn([first],target);
+ const changed={...first,spells:first.spells.map(spell=>({...spell,min:1000,max:1000}))};
+ assert.throws(()=>optimizeTeamTurn([changed],target,()=>{},round),/changé|recommence/i);
+});
