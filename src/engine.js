@@ -152,28 +152,28 @@ function playEcaCards(s,cards,note){
 }
 function applyEcaflipAction(s,spell){
  if(!spell.ecaflip)return;
+ const notes=s.actions.at(-1)?.notes;
  if(spell.ecaflipRekop){
   s.ecaHand=[];
-  s.actions.at(-1).notes.push("Rekop : combinaison consommée, main défaussée");
+  notes?.push("Rekop : main gagnante défaussée après ses impacts séparés");
   return;
  }
  if(spell.restoreTable){
-  s.ecaHand=s.ecaTable.filter(card=>card.expires>=s.turn)
+  // Tout ou Rien défausse la Main actuelle et RÉCUPÈRE les cartes
+  // précédemment jouées de la Table. Sans récupération, Rekop n'est
+  // jamais proposé après le Baraka des quatre Trèfles.
+  const previous=s.ecaHand.map(c=>({...c}));
+  s.ecaHand=s.ecaTable.filter(c=>c.expires>=s.turn)
    .map(({suit,rank})=>({suit,rank})).slice(0,4);
   s.ecaTable=[];
-  s.actions.at(-1).notes.push("Table récupérée ; bonus de soins non estimé");
+  notes?.push("Tout ou Rien : "+previous.length+" cartes défaussées ; "+
+   s.ecaHand.length+" cartes récupérées de la Table");
   return;
  }
- const hadSuitBefore=spell.playSuit&&s.ecaHand.some(card=>card.suit===spell.playSuit);
- if(spell.drawCard){
-  const [suit,rank]=spell.drawCard;
-  if(s.ecaHand.length>=4){
-   playEcaCards(s,s.ecaHand,"Main complète jouée avant pioche");
-   s.ecaHand=[];
-  }
-  s.ecaHand=nextHand(s.ecaHand,suit,rank);
- }
- if(spell.playSuit&&hadSuitBefore){
+ // Baraka joue la main qui était présente AVANT son lancer.
+ // En particulier, quatre Trèfles doivent former leur suite et entrer
+ // sur la Table avant la nouvelle Dame piochée par le sort.
+ if(spell.playSuit){
   const played=s.ecaHand.filter(card=>card.suit===spell.playSuit);
   if(played.length){
    playEcaCards(s,played,spell.name+" : "+played.length+" carte(s) jouée(s)");
@@ -183,7 +183,13 @@ function applyEcaflipAction(s,spell){
   playEcaCards(s,s.ecaHand,spell.name+" : main jouée");
   s.ecaHand=[];
  }
+ if(spell.drawCard){
+  const [suit,rank]=spell.drawCard;
+  if(s.ecaHand.length<4)s.ecaHand=nextHand(s.ecaHand,suit,rank);
+  else notes?.push("Main à 4 cartes : nouvelle carte non modélisée (pas de consommation fictive)");
+ }
 }
+
 function damage(spell,s,c,override=null){
  if(spell.ecaflipRekop)return rekopDamage(spell,s,c);
  if(spell.isWeapon)return equippedWeaponDamage(spell,s,c);
