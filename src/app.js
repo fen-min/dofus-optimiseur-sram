@@ -1,10 +1,10 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
-import {prepareBuildSpells} from "./build-damage.js?v=3.20";
-import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.20";
+import {prepareBuildSpells} from "./build-damage.js?v=3.22";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.22";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
-import {mountTeamModule} from "./team-ui.js?v=3.20";
-import {optimize} from "./engine.js?v=3.20";
+import {mountTeamModule} from "./team-ui.js?v=3.22";
+import {optimize} from "./engine.js?v=3.22";
 import {packCombatRotation,storeCombatRotation,getCombatRotation,clearCombatRotation,getCombatTurn,setCombatTurn,renderCombatTurns,COMBAT_STORE,COMBAT_TURNS} from "./combat-view.js?v=1.4";
 import {canPinCombat,openPinnedCombat,unsupportedPinText} from "./combat-pin.js?v=1.4";
 import {saveAssistContext} from "./assist-core.js?v=3.11";
@@ -12,7 +12,7 @@ import {saveMultiContext} from "./multi-build-link.js?v=2.1";
 import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js?v=3.20";
-import {WEAPONS,normalizedWeaponId} from "./weapons.js?v=3.20";
+import {WEAPONS,normalizedWeaponId} from "./weapons.js?v=3.22";
 
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
@@ -611,7 +611,7 @@ function calculate(){
  try{
   if(typeof Worker==="undefined"){setTimeout(()=>{if(currentJob!==job)return;try{finish(null,optimize(cfg,spells))}catch(e){finish(e)}},30);}
   else {
-   job.worker=new Worker(new URL("./worker.js?v=3.20",import.meta.url),{type:"module"});
+   job.worker=new Worker(new URL("./worker.js?v=3.22",import.meta.url),{type:"module"});
    job.worker.onmessage=e=>{if(currentJob!==job)return;const m=e.data||{};if(m.type==="progress")$("#status").textContent="Tour "+m.progress.turn+"/"+cfg.turns+" · "+fmt(m.progress.explored)+" actions testées";else if(m.type==="complete")finish(null,m.result);else if(m.type==="error")finish(new Error(m.message));};
    job.worker.onerror=e=>{e.preventDefault?.();finish(new Error(e.message||"Erreur du calcul en arrière-plan"))};
    job.worker.postMessage({settings:cfg,spells});
