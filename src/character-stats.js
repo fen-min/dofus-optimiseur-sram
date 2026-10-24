@@ -34,9 +34,27 @@ export const SRAM_AIR_REFERENCE_STATS={
  lock:141,dodge:159,apRemoval:46,mpRemoval:43,apDodge:49,mpDodge:93,
  initiative:1748,heals:0,prospecting:207
 };
+/** Karuta — Écaflip Eau, capture des caractéristiques le 24/10/2026.
+ * Il s'agit des valeurs totales du build actif ; on ne réajoute pas les
+ * caractéristiques de l'arme ou de l'équipement.
+ * Critical=63 (bonus CC affiché par DOFUS, en points de pourcentage).
+ */
+export const ECAFLIP_KARUTA_STATS={
+ source:"capture-en-jeu-2026-10-24",
+ hitPoints:4293,actionPoints:12,movementPoints:5,rangeBonus:1,
+ strength:259,intelligence:218,chance:973,agility:100,wisdom:206,
+ power:426,critical:63,summons:6,
+ flatDamage:{Neutre:25,Terre:43,Feu:55,Eau:93,Air:12},
+ criticalDamage:115,spellDamagePercent:1,
+ resistPercent:{Neutre:12,Terre:10,Feu:10,Eau:45,Air:28},
+ resistFixed:{Neutre:0,Terre:0,Feu:21,Eau:0,Air:0},
+ criticalResistance:19,pushResistance:18,pushDamage:40,
+ lock:70,dodge:22,apRemoval:26,mpRemoval:24,apDodge:10,mpDodge:25,
+ initiative:1963,heals:0,prospecting:237
+};
 const numericKeys=["hitPoints","actionPoints","movementPoints","rangeBonus",
  "strength","intelligence","chance","agility","wisdom","power","critical","summons",
- "criticalDamage","spellDamagePercent","criticalResistance","pushResistance",
+ "criticalDamage","spellDamagePercent","criticalResistance","pushResistance","pushDamage",
  "lock","dodge","apRemoval","mpRemoval","apDodge","mpDodge","initiative","heals","prospecting"];
 const elems=["Neutre","Terre","Feu","Eau","Air"];
 const limit=(value,min,max)=>Math.max(min,Math.min(max,Number(value)));
