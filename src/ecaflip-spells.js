@@ -61,7 +61,8 @@ function scaleLine(value,element,crit,stats){
  const power=stats?.power;
  const flat=stats?.flatDamage?.[element];
  if(!Number.isFinite(stat)||!Number.isFinite(power)||!Number.isFinite(flat))return null;
- return Math.max(0,Math.floor(value*(100+stat+power)/100+1e-9)+flat+(crit?(stats.criticalDamage||0):0));
+ const unbuffed=Math.floor(value*(100+stat+power)/100+1e-9)+flat+(crit?(stats.criticalDamage||0):0);
+ return Math.max(0,Math.floor(unbuffed*(1+(stats.spellDamagePercent||0)/100)+1e-9));
 }
 const cardName={club:"Trèfle",spade:"Pique",heart:"Cœur",diamond:"Carreau"};
 export const ECAFLIP_SPELLS=ECAFLIP_PAIRS.flatMap((pair,i)=>pair.map((name,j)=>{
