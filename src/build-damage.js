@@ -16,8 +16,8 @@
  * Effects with unknown additional lines/conditional rules remain approximate.
  */
 import {SACRIER_CATALOG} from "./sacrier-catalog.js";
-import {equippedWeaponSpell} from "./weapons.js?v=1";
-import {prepareEcaflipSpellDamage} from "./ecaflip-spells.js?v=1";
+import {equippedWeaponSpell} from "./weapons.js?v=3.20";
+import {prepareEcaflipSpellDamage} from "./ecaflip-spells.js?v=3.20";
 
 export const SACRIER_DOFUSBOOK_GEAR_STATS={
  agility:1368,chance:410,strength:100,intelligence:100,power:160,critical:-44,
