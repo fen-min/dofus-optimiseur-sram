@@ -4,6 +4,7 @@
  * Les tours individuels ne sont jamais planifiés à l'avance sur 50 tours.
  */
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.11";
+import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=1";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -91,7 +92,10 @@ function projectedCarryoverValue(ctx,state,actions){
  };
  const before=state.buffs.reduce((sum,b)=>sum+lifetime(b),0);
  const value=after.buffs.reduce((sum,b)=>sum+lifetime(b),0);
- return Math.max(0,value-before);
+ const cards=ctx.settings.classId==="ecaflip"?
+   estimatedCardFutureValue(after.ecaHand,ctx.settings.ecaflipStats)-
+   estimatedCardFutureValue(state.ecaHand,ctx.settings.ecaflipStats):0;
+ return Math.max(0,value-before+cards);
 }
 function evaluateTrial(ctx,state,settings,forcedSpell=null){
  let seed=state;
