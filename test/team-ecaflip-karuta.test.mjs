@@ -112,3 +112,50 @@ test("Equipe Sacrieur–Karuta–Sram : ordre d'initiative, un seul tour et main
  assert.ok(Array.isArray(initialHand));
  assert.ok(Array.isArray(state.session.actors.find(a=>a.id===eca.id).state.ecaHand));
 });
+
+test("Baraka première pioche conserve sa Dame, puis joue les Trèfles si la main en contenait déjà",()=>{
+ const baraka=spell("Baraka");
+ let state=initialState(settings);
+ state=castSpell(state,baraka,settings);
+ assert.deepEqual(state.ecaHand,[{suit:"club",rank:3}]);
+ assert.equal(state.buffs.filter(b=>b.stat==="Critique").length,0);
+ state=endTurn(state,settings);
+ state=castSpell(state,baraka,settings);
+ assert.equal(state.ecaHand.length,0);
+ assert.ok(state.buffs.some(b=>b.stat==="Critique"&&b.amount===6));
+});
+
+test("les sorts Terre choisis peuvent générer Valet, Dame, Roi, As de Carreau",()=>{
+ const expected=[["Pile ou Face",2],["Belote",3],["Lapement",4],["Destin d'Ecaflip",5]];
+ for(const [name,rank] of expected){
+  const picked=spell(name);
+  assert.ok(picked);
+  assert.deepEqual(picked.drawCard,["diamond",rank]);
+  assert.ok(picked.min>0);
+  assert.equal(picked.damageSource,"active-build-stats");
+ }
+});
+
+test("main jouée : buffs Trèfle actifs trois tours puis expirent",()=>{
+ const baraka=spell("Baraka");
+ let state=initialState(settings);
+ state.ecaHand=[{suit:"club",rank:2}];
+ state=castSpell(state,baraka,settings);
+ assert.ok(state.buffs.some(b=>b.stat==="Critique"&&b.amount===4));
+ state=endTurn(state,settings);
+ assert.ok(state.buffs.some(b=>b.stat==="Critique"&&b.amount===4));
+ state=endTurn(state,settings);
+ assert.ok(state.buffs.some(b=>b.stat==="Critique"&&b.amount===4));
+ state=endTurn(state,settings);
+ assert.ok(!state.buffs.some(b=>b.stat==="Critique"&&b.amount===4));
+});
+
+test("Karuta ne calcule qu'un tour par clic même quand elle a une main en cours",()=>{
+ let prev=null;
+ for(let i=0;i<3;i++){
+  prev=optimizeTeamTurn([context],target,()=>{},prev);
+  assert.equal(prev.turns.length,i+1);
+  assert.ok(prev.turns.every(t=>t.actors[0].spent<=t.actors[0].availablePA));
+  assert.ok(prev.session.actors[0].state.ecaHand.length<=4);
+ }
+});
