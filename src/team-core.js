@@ -68,7 +68,7 @@ export function createTeamContext(build,target,memberOptions={}){
  const spells=prepareBuildSpells(build,cls);
  const settings=cleanSettings({...DEFAULT_SETTINGS,
    classId:cls.id,ap:options.ap,turns:input.turns,longHorizon:true,distance:build.distance,
-  ...(cls.id==="ecaflip"?{ecaflipStats:build.stats||null}:{}),
+  ...(cls.id==="ecaflip"?{ecaflipStats:build.stats||null,dofusTurquoise:build.dofusTurquoise===true}:{}),
   variantPairs:cls.pairs,variants,defaultVariants:cls.defaultVariants,
   resistance:input.resistances.Air,resistanceTerre:input.resistances.Terre,
   resistanceFeu:input.resistances.Feu,resistanceEau:input.resistances.Eau,
