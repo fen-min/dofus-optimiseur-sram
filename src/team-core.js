@@ -3,10 +3,10 @@
  * HP, target vulnerabilities and per-character effects persist between turns.
  */
 import {CLASSES} from "./classes.js?v=3.24";
-import {playSequentialTeam} from "./team-sequential.js?v=3.25";
+import {playSequentialTeam} from "./team-sequential.js?v=3.26";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.24";
-import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.24";
+import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.26";
 
 export const TEAM_STORAGE_KEY="ombre-team-dps-v1";
 export const TEAM_LIMIT=8;
