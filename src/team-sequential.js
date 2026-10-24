@@ -5,6 +5,7 @@
  */
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.20";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.20";
+import {theoreticalCriticalRate} from "./critical.js?v=1";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -121,12 +122,33 @@ function better(a,b,remainingHp){
  return false;
 }
 function selectedBuffs(ctx,state,settings){
- return ctx.spells.filter(s=>s.status?.buff&&offensive.has(s.status.buff.stat)&&
-  s.status.buff.value>0&&eligible(s,state,settings)&&
-  (!s.nonDirect||!state.buffs.some(b=>
-   b.until>=state.turn&&(b.key===s.name||b.key.startsWith(s.name+":")))))
-  .sort((a,b)=>((b.status.buff.value||0)/Math.max(1,b.pa))-
-                 ((a.status.buff.value||0)/Math.max(1,a.pa))).slice(0,5);
+ const amount=spell=>spell.status?.buff?.value||
+  spell.ecaflipCriticalRateBuff?.critical||0;
+ return ctx.spells.filter(spell=>(
+  (spell.status?.buff&&offensive.has(spell.status.buff.stat)&&spell.status.buff.value>0)||
+  (spell.ecaflipCriticalRateBuff?.critical>0)
+ )&&eligible(spell,state,settings)&&
+  (!spell.nonDirect||!state.buffs.some(buff=>
+   buff.until>=state.turn&&(buff.key===spell.name||buff.key.startsWith(spell.name+":")))))
+  .sort((a,b)=>amount(b)/Math.max(1,b.pa)-amount(a)/Math.max(1,a.pa)).slice(0,5);
+}
+/** Crit reliability is a strategic criterion, not a fictitious damage bonus.
+ * No action of a subsequent turn is simulated here.
+ */
+function criticalGoalScore(ctx,state,actions){
+ if(ctx.settings.classId!=="ecaflip"||!actions?.length)return 0;
+ const attacks=ctx.spells.filter(sp=>
+  (sp.isWeapon||ctx.settings.variants?.[sp.variantGroup]===sp.name)&&
+  (sp.min>0||sp.ecaflipRekop)&&!sp.nonDirect&&sp.critChance>0);
+ if(!attacks.length)return 0;
+ const before=Math.min(...attacks.map(sp=>theoreticalCriticalRate(sp,state)));
+ if(before>=1-1e-8)return 0;
+ const after=replay(state,actions,ctx);
+ if(!after)return 0;
+ const reached=Math.min(...attacks.map(sp=>theoreticalCriticalRate(sp,after)));
+ const gain=Math.max(0,reached-before);
+ const remaining=Math.max(0,ctx.settings.turns-state.turn);
+ return gain*(remaining>0?1800:350)+(reached>=1-1e-8?150:0);
 }
 function replay(seed,actions,ctx){
  let state=seed;
@@ -215,7 +237,8 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
  const potentials=new Map();
  const value=(trial,extra=0)=>trial?Math.min(remainingHp,Math.max(0,trial.score))+
   Math.max(0,trial.carry||0)+
-  estimateTeamVulnerability(ctx,state,trial.actions,following,remainingHp,potentials)+extra:-Infinity;
+  estimateTeamVulnerability(ctx,state,trial.actions,following,remainingHp,potentials)+
+   criticalGoalScore(ctx,state,trial.actions)+extra:-Infinity;
  let bestScore=value(best);
  const consider=(trial,extra=0)=>{
   const score=value(trial,extra);
