@@ -10,6 +10,19 @@ const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Ai
 const emptyDebuff=()=>({multiplier:1,expires:0});
 const activeDebuff=(effect,turn)=>effect&&effect.expires>=turn?effect:emptyDebuff();
 
+/**
+ * Compact deterministic fingerprint of the actual battle configuration,
+ * including selected variants, equipment damage, stats, AP and initiative.
+ * This prevents continuing a saved round using a modified build.
+ */
+function combatConfigurationSignature(entries){
+ const payload=JSON.stringify(entries.map(({ctx})=>[ctx.build,ctx.settings,ctx.spells]));
+ let hash=2166136261;
+ for(let i=0;i<payload.length;i++){
+  hash=Math.imul(hash^payload.charCodeAt(i),16777619);
+ }
+ return "v1-"+payload.length+"-"+(hash>>>0).toString(16);
+}
 function orderContexts(contexts){
  return contexts.map((ctx,index)=>({ctx,index,state:initialState(ctx.settings),trials:0,
   teamBuffs:[],currentPA:ctx.settings.ap,
@@ -312,9 +325,12 @@ function blankActor(entry,remainingHp){
 export function playSequentialTeam(contexts,target,onProgress=()=>{},options={}){
  const previous=options.previous||null;
  const entries=orderContexts(contexts);
+ const configSignature=combatConfigurationSignature(entries);
  if(previous){
   if(!previous.session||!Array.isArray(previous.session.actors))
    throw Error("État précédent manquant : recommence au tour 1.");
+  if(previous.session.configSignature!==configSignature)
+   throw Error("Le build ou la composition de l'équipe a changé : recommence au tour 1.");
   const saved=new Map(previous.session.actors.map(actor=>[actor.id,actor]));
   if(saved.size!==entries.length)throw Error("La composition a changé : recommence au tour 1.");
   for(const entry of entries){
@@ -410,7 +426,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
   finished:remainingHp<=0||turns.length>=target.turns,
   session:{
-   remainingHp,shared,
+   remainingHp,shared,configSignature,
    actors:entries.map(entry=>({
     id:entry.ctx.build.id,state:entry.state,trials:entry.trials,teamBuffs:entry.teamBuffs
    }))
