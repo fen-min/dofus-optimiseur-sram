@@ -61,7 +61,10 @@ function appliedSettings(){
  values.variantPairs=model.pairs;
  values.defaultVariants=model.defaultVariants;
  values.classId=model.id;
- if(model.id==="ecaflip")values.ecaflipStats=current.stats;
+ if(model.id==="ecaflip"){
+  values.ecaflipStats=current.stats;
+  values.dofusTurquoise=current.dofusTurquoise===true;
+ }
  return values;
 }
 function saveActiveSettings(){
@@ -507,7 +510,7 @@ function activateBuild(id){
  $("#bar-chart").innerHTML='<p class="empty">Lance le calcul pour afficher les dégâts.</p>';
  $("#turn-results").innerHTML='<p class="muted">Aucune simulation pour ce build. Lance le calcul pour commencer.</p>';
  $("#explored-count").textContent="";
- $("#status").textContent=model.id==="ecaflip"?"Karuta : dégâts du build actif, main de cartes et Rekop estimés ; RNG encore non simulé.":model.id==="sacrieur"?"Sacrieur : dégâts du build actif ; Souffrance et PV estimés.":"Sram : dégâts du build actif, pièges et placement estimés.";
+ $("#status").textContent=model.id==="ecaflip"?"Karuta : objectif 100 % critique via Yams et cartes Trèfle ; Turquoise +1 % dommages finaux par critique pendant 3 tours (10 cumuls max, estimation du hasard).":model.id==="sacrieur"?"Sacrieur : dégâts du build actif ; Souffrance et PV estimés.":"Sram : dégâts du build actif, pièges et placement estimés.";
  renderProfileSelect();renderBuilds();renderCharacterStats();renderVariantPicker();renderSpellbook();renderEquippedWeapon();renderSpells();
  updateCombatButtons();
  $("#spellbook-selection-message").textContent="Variantes de "+current.character+" enregistrées pour ce build.";
