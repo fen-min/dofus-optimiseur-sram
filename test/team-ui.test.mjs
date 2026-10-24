@@ -204,7 +204,7 @@ test("Sacrier can select Pacte de Sang from team; callback persists the actual b
  assert.match(node("team-status").textContent,/Pacte de Sang équipé/);
  assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
  assert.ok(typeof team.refresh==="function");
-});
+}));
 test("Sram Manigance option follows its saved variant instead of silently casting an unavailable buff",()=>withBrowser(({root,node})=>{
  const builds=structuredClone(INITIAL_BUILDS);
  const sram=builds.find(b=>b.classId==="sram");
@@ -227,4 +227,4 @@ test("Sram Manigance option follows its saved variant instead of silently castin
  assert.equal(calls.length,1);
  assert.equal(sram.variants[i],"Manigance");
  assert.match(node("team-members").innerHTML,/Manigance équipé/);
-});
+}));
