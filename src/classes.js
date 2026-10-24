@@ -2,7 +2,7 @@ import {SIM_SPELLS,VARIANT_PAIRS,DEFAULT_VARIANTS,SRAM_SCREENSHOT_VARIANTS} from
 import {SACRIER_SPELLS,SACRIER_DEFAULT_VARIANTS,SACRIER_SOURCE} from "./sacrier-spells.js?v=3.2";
 import {SACRIER_CATALOG,SACRIER_VARIANTS} from "./sacrier-catalog.js";
 import {SRAM_CATALOG} from "./sram-catalog.js?v=1.8";
-import {ECAFLIP_SOURCE,ECAFLIP_PAIRS,ECAFLIP_KARUTA_VARIANTS,ECAFLIP_SPELLS,ECAFLIP_CATALOG} from "./ecaflip-spells.js?v=3.22";
+import {ECAFLIP_SOURCE,ECAFLIP_PAIRS,ECAFLIP_KARUTA_VARIANTS,ECAFLIP_SPELLS,ECAFLIP_CATALOG} from "./ecaflip-spells.js?v=3.24";
 import {SOURCE_URL} from "./spells.js";
 import {normalizedWeaponId} from "./weapons.js?v=3.22";
 import {SACRIER_AIR_REFERENCE_STATS,SRAM_AIR_REFERENCE_STATS,ECAFLIP_KARUTA_STATS,sanitizeCharacterStats} from "./character-stats.js?v=3.20";
