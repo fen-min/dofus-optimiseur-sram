@@ -80,8 +80,13 @@ export function rekopBaseHits(hand){
  }
  if(combo.kind==="rainbow"||combo.kind==="rainbow-straight")
   return ["Terre","Feu","Eau","Air"].map(element=>({element,base:combo.kind==="rainbow"?8:14}));
+ // Suite Royale d'une couleur : quatre impacts mono-élément, un par
+ // carte. Ne jamais condenser en une seule frappe (dommages fixes / CC
+ // s'appliquent séparément à chaque impact dans le jeu).
  if(combo.kind==="flush-straight")
-  return single(56,SUIT_ELEMENT[combo.suit]);
+  return Array.from({length:4},()=>({
+   element:SUIT_ELEMENT[combo.suit],base:14,criticalBase:16
+  }));
  if(combo.kind==="straight")return single(54);
  if(combo.kind==="two-pairs"){
   const key=combo.ranks.join(":");
@@ -98,22 +103,34 @@ export function winningHand(hand){return rekopBaseHits(hand).length>0;}
  */
 export function estimatedCardFutureValue(hand,stats){
  if(!Array.isArray(hand)||!hand.length||!stats)return 0;
- const direct=rekopBaseHits(hand);
- const characteristic=element=>stats[{
+ const characteristic=element=>stats?.[{
   Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"
  }[element]]||0;
  const weighted=hits=>hits.reduce((sum,hit)=>sum+
   hit.base*(100+characteristic(hit.element)+(stats.power||0))/100+
   (stats.flatDamage?.[hit.element]||0),0);
- if(direct.length)return weighted(direct)*0.45;
- // A partial suit might become the 2/3/4/5 same-suit royal sequence.
- const suited={club:0,spade:0,heart:0,diamond:0};
- for(const card of hand)suited[card.suit]=(suited[card.suit]||0)+1;
- const dominant=Object.entries(suited).sort((a,b)=>b[1]-a[1])[0];
- const missing=4-dominant[1];
- const element=SUIT_ELEMENT[dominant[0]];
- const royal=56*(100+characteristic(element)+(stats.power||0))/100+
-  (stats.flatDamage?.[element]||0);
- return royal*0.32*Math.pow(0.77,Math.max(0,missing-1))*
-  (dominant[1]/Math.max(1,hand.length));
+ const direct=rekopBaseHits(hand);
+ // Full winning hand: projected payoff after 4 PA for Rekop,
+ // conservative relative to the full hit value.
+ if(direct.length)return weighted(direct)*0.65;
+ // A nearly complete suited 2/3/4/5 is especially valuable: each
+ // completed rank creates its own future water/elemental Rekop hit.
+ // This is an analytical discounted option value, NOT fake damage
+ // nor execution of a future round.
+ const suitCounts=new Map();
+ for(const card of hand){
+  const ranks=suitCounts.get(card.suit)||new Set();
+  ranks.add(card.rank);
+  suitCounts.set(card.suit,ranks);
+ }
+ let best=0;
+ for(const [suit,ranks] of suitCounts){
+  const count=ranks.size;
+  const element=SUIT_ELEMENT[suit];
+  const full=weighted(Array.from({length:4},()=>({element,base:14})));
+  // Partial hands are less certain than a completed royal straight.
+  const chance=[0,0.13,0.31,0.57,1][Math.min(4,count)];
+  best=Math.max(best,full*chance*0.65);
+ }
+ return best;
 }
