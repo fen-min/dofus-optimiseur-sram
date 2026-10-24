@@ -136,6 +136,55 @@ function improveCurrentBuffOrder(actions,ctx,state){
  }
  return best;
 }
+/**
+ * Estimation de la contribution d'un malus de résistance/vulnérabilité à
+ * l'équipe pour les alliés qui joueront encore CE tour. Aucune action du
+ * tour suivant n'est exécutée.
+ */
+function estimateAllyDirectDamage(entry){
+ const turn=entry.state.turn;
+ const ap=appliedPa(entry,turn);
+ const state={...entry.state,pa:ap};
+ const c=entry.ctx.settings;
+ const options=entry.ctx.spells.filter(spell=>
+  !spell.nonDirect&&!spell.isTrap&&!spell.status?.poison&&
+  Number(spell.pa)>0&&Number(spell.max)>0&&eligible(spell,state,c)
+ ).map(spell=>{
+  const norm=(Number(spell.min)||0)+(Number(spell.max)||0);
+  const crit=(Number(spell.critMin)||0)+(Number(spell.critMax)||0);
+  const chance=c.criticals?Math.max(0,Math.min(1,spell.critChance||0)):0;
+  const before=(norm*(1-chance)+crit*chance)/2;
+  const res=Number(c.resistances?.[spell.element])||0;
+  const total=Math.max(0,before*(1-res/100));
+  const max=Math.min(Math.max(0,spell.maxPerTurn||0),Math.max(0,spell.perTarget||spell.maxPerTurn||0));
+  return {pa:spell.pa,max,damage:total};
+ }).filter(spell=>spell.damage>0).sort((a,b)=>b.damage/b.pa-a.damage/a.pa);
+ let available=ap,damage=0;
+ for(const spell of options){
+  const casts=Math.min(spell.max,Math.floor(available/spell.pa));
+  damage+=casts*spell.damage;
+  available-=casts*spell.pa;
+ }
+ return damage;
+}
+function estimateTeamVulnerability(ctx,state,actions,following,remainingHp,potential){
+ if(!following.length||!actions?.length||!ctx.spells.some(s=>s.status?.vulnerability))return 0;
+ if(!actions.some(a=>ctx.spells.some(s=>s.id===a.id&&s.status?.vulnerability)))return 0;
+ const after=replay(state,actions,ctx);
+ if(!after)return 0;
+ const current=state.turn;
+ const before=activeDebuff(state.enemyDebuff,current).multiplier;
+ const next=activeDebuff(after.enemyDebuff,current).multiplier;
+ if(next<=before+0.001)return 0;
+ let gain=0;
+ for(const ally of following){
+  if(!potential.has(ally))potential.set(ally,estimateAllyDirectDamage(ally));
+  // Estimate instead of predicting the ally's next action: the ally will
+  // still make its own decision when its initiative turn arrives.
+  gain+=potential.get(ally)*(next/before-1);
+ }
+ return Math.min(remainingHp,Math.max(0,gain))*0.8;
+}
 export function planCurrentTurn(entry,remainingHp,following=[]){
  const {ctx,state}=entry;
  const turn=state.turn;
@@ -146,21 +195,36 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
   beamWidth:8,refreshTimedBuffs:false});
  let best=evaluateTrial(ctx,state,settings);
  entry.trials++;
+ const potentials=new Map();
+ const value=(trial,extra=0)=>trial?Math.min(remainingHp,Math.max(0,trial.score))+
+  Math.max(0,trial.carry||0)+
+  estimateTeamVulnerability(ctx,state,trial.actions,following,remainingHp,potentials)+extra:-Infinity;
+ let bestScore=value(best);
+ const consider=(trial,extra=0)=>{
+  const score=value(trial,extra);
+  if(score>bestScore+.01){best=trial;bestScore=score;}
+ };
  if(turn>1){
   const maintained=evaluateTrial(ctx,state,cleanSettings({...settings,refreshTimedBuffs:true}));
   entry.trials++;
-  if(better(maintained,best,remainingHp))best=maintained;
+  consider(maintained);
  }
- // Les buffs personnels peuvent être lancés si rentables sur CE tour.
- // Aucun calcul du tour suivant pour choisir une ouverture.
+ // Les buffs personnels et vols de caractéristiques sont estimés sur leur
+ // durée, sans exécuter les tours futurs.
  for(const spell of selectedBuffs(ctx,state,settings)){
   const trial=evaluateTrial(ctx,state,settings,spell);
   entry.trials++;
-  if(better(trial,best,remainingHp))best=trial;
+  consider(trial);
  }
- // Un soutien +PA s'évalue sur les personnages qui joueront PLUS TARD
- // dans le même tour. Il ne simule jamais les tours T+1.
- let bestScore=Math.min(remainingHp,Math.max(0,best?.score||0))+Math.max(0,best?.carry||0);
+ // Une vulnérabilité peut coûter du DPS à son lanceur mais être supérieure
+ // pour l'équipe : tester explicitement les ouvertures qui en appliquent.
+ for(const spell of ctx.spells.filter(x=>x.status?.vulnerability&&
+  Number(x.status.vulnerability)>1&&eligible(x,state,settings)).slice(0,5)){
+  const trial=evaluateTrial(ctx,state,settings,spell);
+  entry.trials++;
+  consider(trial);
+ }
+ // Les +PA soutiennent les personnages suivants dans le même tour.
  for(const spell of ctx.spells.filter(x=>!!paTeamBuff(x)&&eligible(x,state,settings)).slice(0,3)){
   const bonus=paTeamBuff(spell);
   const recipients=following.filter(x=>targetsTeamBuff(bonus,entry,x));
@@ -177,8 +241,7 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
   const trial=evaluateTrial(ctx,state,settings,spell);
   entry.trials++;
   if(!trial)continue;
-  const score=Math.min(remainingHp,Math.max(0,trial.score))+Math.max(0,trial.carry||0)+gain;
-  if(score>bestScore+.01){best=trial;bestScore=score;}
+  consider(trial,gain);
  }
  return {actions:improveCurrentBuffOrder(best?.actions||[],ctx,state),
   label:best?.label||"Rotation dynamique",settings};
