@@ -8,7 +8,7 @@ import {initialSacrierHealth,sacrificeHealth,restoreHealth,sufferingFinalBonus,s
 // Toutes les 44 actions existent, mais des effets de placement nécessitent des hypothèses.
 const round=n=>Math.round(n*10)/10;
 const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
-const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice(),ecaHand:(x.ecaHand||[]).map(c=>({...c})),ecaTable:(x.ecaTable||[]).map(c=>({...c})),turquoiseProcs:(x.turquoiseProcs||[]).map(p=>({...p}))});
+const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice(),ecaHand:(x.ecaHand||[]).map(c=>({...c})),ecaTable:(x.ecaTable||[]).map(c=>({...c})),turquoiseProcs:(x.turquoiseProcs||[]).map(p=>({...p})),enemyCriticalShreds:(x.enemyCriticalShreds||[]).map(p=>({...p}))});
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
  c.ap=clamp(c.ap,6,20,12);
@@ -51,7 +51,7 @@ export function turnActionPoints(c,turn){
 }
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],ecaHand:[],ecaTable:[],turquoiseProcs:[]};
+ return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],ecaHand:[],ecaTable:[],turquoiseProcs:[],enemyCriticalShreds:[]};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return spell.isWeapon===true||c.variants[spell.variantGroup]===spell.name;}
@@ -67,6 +67,10 @@ export function eligible(spell,s,c){
  if(spell.name==="Comploteur"&&s.invocations.some(x=>x.kind==="Comploteur"))return false;
  return true;
 }
+function activeEnemyCriticalShred(s){
+ return (s.enemyCriticalShreds||[]).filter(x=>x.until>=s.turn)
+  .reduce((sum,x)=>sum+x.amount,0);
+}
 function directRow(spell,c,s){
  // The DofusBook lines for low HP, charges etc. are exclusive cases.
  // User-adjusted normal / crit values serve as the default baseline.
@@ -77,7 +81,7 @@ function directRow(spell,c,s){
  if(spell.name==="Chausse-trappe"){norm+=s.charges*29;crit+=s.charges*29;}
  const p=effectiveCriticalRate(spell,s,c);
  const extraCritDamage=buffsNow(s).reduce((v,b)=>v+(b.stat==="Dommages Critiques"?b.amount:0),0);
- return (1-p)*norm+p*(crit+extraCritDamage);
+ return (1-p)*norm+p*(crit+extraCritDamage+activeEnemyCriticalShred(s));
 }
 /**
  * Compute an equipped weapon's normal and critical damage per hit.
@@ -93,7 +97,7 @@ function equippedWeaponDamage(spell,s,c){
  const line=(hit,critical)=>{
   const basis=critical?hit.crit:hit.normal;
   if(!basis)return 0;
-  const critBonus=critical?buffs.reduce((n,b)=>n+(b.stat==="Dommages Critiques"?b.amount:0),0):0;
+  const critBonus=critical?buffs.reduce((n,b)=>n+(b.stat==="Dommages Critiques"?b.amount:0),0)+activeEnemyCriticalShred(s):0;
   const extra=buffs.reduce((n,b)=>{
    if(b.stat==="Dommages")return n+b.amount;
    if(b.stat==="Puissance"||b.stat===hit.element)
@@ -130,7 +134,7 @@ function rekopDamage(spell,s,c){
   const scale=(100+(stats[attr[e]]||0)+(stats.power||0)+bonus)/100;
   const fixed=stats.flatDamage?.[e]||0;
   const plain=Math.floor(hit.base*scale+fixed);
-  const critical=Math.floor((hit.base+Math.max(2,hit.base*.12))*scale+fixed+(stats.criticalDamage||0)+buffsNow(s).reduce((n,b)=>n+(b.stat==="Dommages Critiques"?b.amount:0),0));
+  const critical=Math.floor((hit.criticalBase??(hit.base+Math.max(2,hit.base*.12)))*scale+fixed+(stats.criticalDamage||0)+activeEnemyCriticalShred(s)+buffsNow(s).reduce((n,b)=>n+(b.stat==="Dommages Critiques"?b.amount:0),0));
   const fixedRes=c.fixedResistances[e]||0;
   const percent=c.resistances[e]||0;
   sum+=((1-p)*Math.max(0,plain-fixedRes)+p*Math.max(0,critical-fixedRes))*(1-percent/100);
@@ -292,6 +296,27 @@ export function castSpell(origin,spell,input={}){
     "/"+s.sacrierHealth.maxHp+" PV");
   }
  }
+ // Conditional Infortune: the Poutch in the supplied combat log did not
+ // score a critical hit. We assume no enemy critical for the virtual target.
+ // It is booked as deferred damage and shown in the turn breakdown.
+ if(spell.ecaflipDelayed&&c.classId==="ecaflip"){
+  const extra=spell.ecaflipDelayed;
+  const delayedSpell={...spell,
+   min:extra.min,max:extra.max,critMin:extra.critMin,critMax:extra.critMax,
+   baseDamage:extra.baseDamage,ecaflipDelayed:null};
+  const value=damage(delayedSpell,s,c);
+  s.dots["eca-infortune:"+s.turn+":"+spell.id]={
+   name:"Infortune",phase:"end",left:1,base:value,element:"Eau"
+  };
+  action.notes.push("Infortune : dégâts Eau différés si la cible ne critique pas (hypothèse Poutch)");
+ }
+ if(spell.ecaflipCritResistanceShred){
+  const meta=spell.ecaflipCritResistanceShred;
+  const avg=(meta.normal[0]+meta.normal[1])/2;
+  const amount=avg*(1-criticalRateAtCast)+meta.critical*criticalRateAtCast;
+  s.enemyCriticalShreds.push({amount,until:s.turn+meta.duration-1});
+  action.notes.push("Griffe Joueuse : -"+round(amount)+" résistances critiques ("+meta.duration+" tours)");
+ }
  if(spell.ecaflip)applyEcaflipAction(s,spell);
  if(spell.ecaflipCriticalRateBuff){
   const meta=spell.ecaflipCriticalRateBuff;
@@ -439,6 +464,7 @@ export function endTurn(original,input={}){
  s.turn++;s.pa=turnActionPoints(c,s.turn);s.used={};s.actions=[];s.turnDamage=0;s.turnImmediate=0;s.trapActivatedThisTurn=false;
  s.buffs=s.buffs.filter(b=>b.until>=s.turn);
  s.turquoiseProcs=(s.turquoiseProcs||[]).filter(p=>p.until>=s.turn);
+ s.enemyCriticalShreds=(s.enemyCriticalShreds||[]).filter(p=>p.until>=s.turn);
  // At the start of the next turn, reconcile expired temporary Vitalité.
  // Recasting Pacte while active refreshes its duration without stacking HP.
  if(s.sacrierHealth?.temporaryVitality&&!s.buffs.some(b=>b.stat==="Vitalité"&&b.until>=s.turn))
@@ -483,6 +509,7 @@ function signature(s){
  s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,
  handKey(s.ecaHand||[]),(s.ecaTable||[]).map(c=>c.suit+c.rank+"-"+c.expires).sort().join(","),
  (s.turquoiseProcs||[]).map(p=>p.value.toFixed(3)+":"+p.until).join(","),
+ (s.enemyCriticalShreds||[]).map(p=>p.amount.toFixed(2)+":"+p.until).join(","),
  s.sacrierHealth?Math.round(s.sacrierHealth.hp):"HP OFF",
  s.sacrierHealth?Math.round(s.sacrierHealth.maxHp):"MAX OFF",
  s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
