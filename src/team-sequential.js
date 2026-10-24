@@ -3,7 +3,7 @@
  * en tenant compte de la cible et des états laissés par les actions précédentes.
  * Les tours individuels ne sont jamais planifiés à l'avance sur 50 tours.
  */
-import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.24";
+import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
 
