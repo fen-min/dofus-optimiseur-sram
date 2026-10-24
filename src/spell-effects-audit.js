@@ -1,4 +1,4 @@
-import {ECAFLIP_SPELLS,ECAFLIP_SOURCE} from "./ecaflip-spells.js?v=3.20";
+import {ECAFLIP_SPELLS,ECAFLIP_SOURCE} from "./ecaflip-spells.js?v=3.24";
 /** Référentiel d'effets de classe : 44 Sram + 44 Sacrieur.
  * Mise à jour Sram : 22 octobre 2026, OpenDofusDB 3.7.12.12
  * Une description répertoriée ne signifie pas que le moteur reproduit cet effet.
