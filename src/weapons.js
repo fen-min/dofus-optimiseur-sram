@@ -4,6 +4,17 @@
  * This module models the offensive use of the equipped weapon only.
  */
 export const WEAPONS=Object.freeze({
+ "sceptre-roi-joueur":{
+  id:"sceptre-roi-joueur",name:"Sceptre du Roi Joueur",
+  level:200,type:"Bâton",ap:3,minRange:1,range:2,maxPerTurn:2,
+  criticalChance:20,criticalBonus:10,direction:"ligne",
+  huntWeapon:true,
+  hits:[
+   {element:"Eau",min:12,max:15,lifeSteal:false},
+   {element:"Eau",min:4,max:5,lifeSteal:true}
+  ],
+  description:"12–15 dommages Eau et 4–5 vol de vie Eau ; zone en ligne perpendiculaire de 3 cases (zone non simulée)."
+ },
  manthache:{
   id:"manthache",name:"Manthache",level:200,type:"Hache",ap:5,
   minRange:1,range:1,maxPerTurn:1,criticalChance:10,criticalBonus:8,
@@ -51,7 +62,7 @@ export function equippedWeaponSpell(build){
  return {
   id:"weapon:"+item.id,name:item.name,pa:item.ap,
   variantGroup:-1,isWeapon:true,nonDirect:false,isTrap:false,
-  target:"enemy",minRange:item.minRange,range:item.range,lineOnly:false,los:true,
+  target:"enemy",minRange:item.minRange,range:item.range,lineOnly:item.direction==="ligne",los:true,
   maxPerTurn:item.maxPerTurn,perTarget:item.maxPerTurn,cooldown:0,
   element:item.hits[0].element,
   min:totals?totals[0].normal:0,max:totals?totals[1].normal:0,
@@ -61,6 +72,6 @@ export function equippedWeaponSpell(build){
   weaponHits:hits,weaponCriticalBonus:item.criticalBonus,
   damageSource:valid?"active-build-weapon":"weapon-stats-missing",
   status:{},weaponType:item.type,weaponDirection:item.direction,
-  utility:"2 lignes Air, dont une en vol de vie. Diagonale non vérifiée sans carte."
+  utility:item.description+" La zone et les soins réels ne sont pas simulés."
  };
 }
