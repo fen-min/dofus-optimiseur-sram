@@ -136,6 +136,52 @@ function selectedBuffs(ctx,state,settings){
 /** Crit reliability is a strategic criterion, not a fictitious damage bonus.
  * No action of a subsequent turn is simulated here.
  */
+/** Four-Trèfle plan: Valet (Yams), Dame (Kraps), Roi (Griffe Joueuse),
+ * As (Infortune), then Baraka / Tout ou Rien / Rekop. Only this round runs.
+ * The strategy bonus is NOT displayed as inflicted damage.
+ */
+function royalClubCount(state){
+ const count=cards=>{
+  const ranks=new Set((cards||[]).filter(c=>c.suit==="club").map(c=>c.rank));
+  return [2,3,4,5].filter(rank=>ranks.has(rank)).length;
+ };
+ return Math.max(count(state.ecaHand),count(state.ecaTable));
+}
+function royalClubGoalScore(ctx,state,actions){
+ if(ctx.settings.classId!=="ecaflip"||!actions?.length||
+    !ctx.spells.some(x=>x.name==="Rekop"))return 0;
+ const after=replay(state,actions,ctx);
+ if(!after)return 0;
+ const before=royalClubCount(state),afterCount=royalClubCount(after);
+ return (afterCount*afterCount-before*before)*220;
+}
+function ecaflipRoyalPrefixes(ctx,state){
+ if(ctx.settings.classId!=="ecaflip"||
+    !ctx.spells.some(x=>x.name==="Rekop"))return [];
+ const hand=new Set((state.ecaHand||[]).filter(x=>x.suit==="club").map(x=>x.rank));
+ const table=new Set((state.ecaTable||[]).filter(x=>x.suit==="club").map(x=>x.rank));
+ const full=ranks=>[2,3,4,5].every(rank=>ranks.has(rank));
+ const get=name=>ctx.spells.find(x=>x.name===name);
+ const map=names=>names.map(get).filter(Boolean);
+ const prefixes=[];
+ if(full(hand))prefixes.push(map(["Baraka","Tout ou Rien","Rekop"]));
+ if(full(table))prefixes.push(map(["Tout ou Rien","Rekop"]));
+ if(!full(hand)){
+  const missing=[[2,"Yams"],[3,"Kraps"],[4,"Griffe Joueuse"],[5,"Infortune"]]
+   .filter(([rank])=>!hand.has(rank)).map(([,name])=>name);
+  let ap=state.pa,sequence=[];
+  for(const name of missing){
+   const sp=get(name);
+   if(sp&&sp.pa<=ap){sequence.push(sp);ap-=sp.pa;}
+  }
+  if(sequence.length)prefixes.push(sequence);
+  if(hand.size===0){
+   const together=map(["Yams","Yams","Kraps","Griffe Joueuse"]);
+   if(together.length===4)prefixes.push(together);
+  }
+ }
+ return prefixes.filter(prefix=>prefix.length>0);
+}
 function criticalGoalScore(ctx,state,actions){
  if(ctx.settings.classId!=="ecaflip"||!actions?.length)return 0;
  const attacks=ctx.spells.filter(sp=>
@@ -239,7 +285,8 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
  const value=(trial,extra=0)=>trial?Math.min(remainingHp,Math.max(0,trial.score))+
   Math.max(0,trial.carry||0)+
   estimateTeamVulnerability(ctx,state,trial.actions,following,remainingHp,potentials)+
-   criticalGoalScore(ctx,state,trial.actions)+extra:-Infinity;
+   criticalGoalScore(ctx,state,trial.actions)+
+   royalClubGoalScore(ctx,state,trial.actions)+extra:-Infinity;
  let bestScore=value(best);
  const consider=(trial,extra=0)=>{
   const score=value(trial,extra);
@@ -264,6 +311,12 @@ export function planCurrentTurn(entry,remainingHp,following=[]){
    entry.trials++;
    consider(two);
   }
+ }
+ // Compare the 4-club combo against direct DPS using THIS round only.
+ for(const seq of ecaflipRoyalPrefixes(ctx,state)){
+  const trial=evaluateTrial(ctx,state,settings,seq);
+  entry.trials++;
+  consider(trial);
  }
  // Une vulnérabilité peut coûter du DPS à son lanceur mais être supérieure
  // pour l'équipe : tester explicitement les ouvertures qui en appliquent.
