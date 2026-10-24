@@ -16,6 +16,7 @@ on:
       - "test/spell-effects-audit.test.mjs"
       - "test/team-ecaflip-karuta.test.mjs"
       - "test/ecaflip-critical-turquoise.test.mjs"
+      - "test/ecaflip-four-club-combo.test.mjs"
       - "src/critical.js"
       - "test/team-weapon-mantache.test.mjs"
       - "test/team-choice-audit.test.mjs"
