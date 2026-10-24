@@ -67,7 +67,7 @@ const cardName={club:"Trèfle",spade:"Pique",heart:"Cœur",diamond:"Carreau"};
 export const ECAFLIP_SPELLS=ECAFLIP_PAIRS.flatMap((pair,i)=>pair.map((name,j)=>{
  const raw=DATA[name]||{},element=raw.e||null;
  const done=!!raw.n&&!(raw.n[0]===0&&raw.n[1]===0)&&!raw.rekop;
- const passive=raw.self===true||!done;
+ const passive=raw.rekop?false:raw.self===true||!done;
  return {
   id:"eca-"+i+"-"+j,name,pa:raw.pa||3,minRange:raw.r?.[0]??0,
   range:raw.r?.[1]??6,lineOnly:raw.line||false,los:!raw.self,
@@ -84,7 +84,7 @@ export const ECAFLIP_SPELLS=ECAFLIP_PAIRS.flatMap((pair,i)=>pair.map((name,j)=>{
   ecaflipRandomDraw:raw.randomDraw||0,refundPA:raw.refundPA||0,
   conditionalDamage:raw.conditional||"",ecaflipCritDamageBuff:raw.critDamageBuff||0,
   modelingConfidence:done?"verified-base-damage":raw.rekop?"poker-dependent":"non-modeled",
-  status:{...(raw.buff?{buff:raw.buff}:{}),...(passive&&!raw.rekop&&!raw.card&&!raw.randomDraw&&!raw.playHand&&!raw.buff?{unsupported:true}:{})},
+  status:{...(raw.buff?{buff:raw.buff}:{}),...((raw.randomDraw||passive&&!raw.rekop&&!raw.playHand&&!raw.buff)?{unsupported:true}:{})},
   utility:raw.conditional||(!done&&!raw.rekop?"Effet non chiffré : éviter de fabriquer un DPS de substitution":""),
   cardSource:raw.card?("Pioche "+raw.card[1]+" de "+cardName[raw.card[0]]):"",
   classId:"ecaflip"
