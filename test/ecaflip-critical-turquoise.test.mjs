@@ -99,6 +99,10 @@ test("Optimiseur d'équipe : Karuta cherche à atteindre 100% critique dès le t
  const final=res.session.actors[0].state;
  console.log("ECACRIT FIRST TURN",JSON.stringify({actions,critYams:theoreticalCriticalRate(spell("Yams"),final),critWeapon:theoreticalCriticalRate(spell("Sceptre du Roi Joueur"),final),turquoise:activeTurquoiseBonus(final)}));
  assert.ok(actions.includes("Yams"),"Le tour initial doit au moins chercher son bonus Critique Yams");
- assert.ok(theoreticalCriticalRate(spell("Yams"),final)>.68);
+ assert.equal(theoreticalCriticalRate(spell("Yams"),final),1,
+  "Karuta doit atteindre CC 100% au tour 1 si deux Yams sont accessibles");
+ assert.equal(res.turns[0].actors[0].criticalRate,1);
+ assert.equal(res.turns[0].actors[0].criticalGuaranteed,true);
+ assert.ok(res.turns[0].actors[0].turquoiseBonus>0);
  assert.ok(activeTurquoiseBonus(final)>0);
 });
