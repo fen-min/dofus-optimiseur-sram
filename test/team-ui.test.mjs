@@ -85,11 +85,15 @@ test("invalid team PA cannot be stored or propagated",()=>withBrowser(({root,loc
 
 
 
-test("team roster is compact and shows no manual buff dropdowns or checkboxes",()=>withBrowser(({node})=>{
+test("team roster includes build variant choices but no obsolete buff checkboxes",()=>withBrowser(({node})=>{
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  const html=node("team-members").innerHTML;
  assert.equal((html.match(/data-team-ap=/g)||[]).length,2);
  assert.doesNotMatch(html,/data-team-support|data-team-force-buff|data-team-refresh-buffs/);
+ assert.match(html,/data-team-buff="sacri-air-pvm"/);
+ assert.match(html,/data-team-buff="sram-air-pvm"/);
+ assert.match(html,/Pacte de Sang indisponible/);
+ assert.match(html,/Manigance équipé/);
  assert.doesNotMatch(html,/<input[^>]+type="checkbox"/);
  assert.equal((html.match(/<article class="team-slot/g)||[]).length,8);
 }));
@@ -102,7 +106,8 @@ test("legacy saved buff overrides are discarded while custom PA survives",()=>wi
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  const html=node("team-members").innerHTML;
  assert.match(html,/data-team-ap="sacri-air-pvm"[^>]+value="14"/);
- assert.doesNotMatch(html,/Pacte de Sang|forceOpeningBuff|refreshTimedBuffs/);
+ assert.match(html,/data-team-buff="sacri-air-pvm"/);
+ assert.doesNotMatch(html,/forceOpeningBuff|refreshTimedBuffs/);
  root.listeners.change({target:{closest(selector){
   if(selector==="input[data-team-ap]")return {dataset:{teamAp:"sacri-air-pvm"},value:"15"};
   return null;
@@ -173,3 +178,52 @@ test("long calculations can be cancelled without changing the selected builds",(
   assert.equal(node("team-count").textContent,"2 / 8 personnages");
  }finally{globalThis.Worker=previousWorker;globalThis.URL=previousURL;}
 }));
+
+test("Sacrier can select Pacte de Sang from team; callback persists the actual build variant",()=>withBrowser(({root,node})=>{
+ const builds=structuredClone(INITIAL_BUILDS);
+ const calls=[];
+ const team=mountTeamModule({
+  getBuilds:()=>builds,
+  onChangeVariant:(id,group,name)=>{
+   calls.push({id,group,name});
+   const b=builds.find(x=>x.id===id);
+   b.variants[group]=name;
+   return true;
+  }
+ });
+ const before=node("team-members").innerHTML;
+ assert.match(before,/Pacte de Sang indisponible/);
+ root.listeners.change({target:{closest(selector){
+  if(selector==="select[data-team-buff]")
+   return {dataset:{teamBuff:"sacri-air-pvm",teamGroup:"5"},value:"Pacte de Sang"};
+  return null;
+ }}});
+ assert.deepEqual(calls,[{id:"sacri-air-pvm",group:5,name:"Pacte de Sang"}]);
+ assert.equal(builds.find(b=>b.classId==="sacrieur").variants[5],"Pacte de Sang");
+ assert.match(node("team-members").innerHTML,/Pacte de Sang équipé/);
+ assert.match(node("team-status").textContent,/Pacte de Sang équipé/);
+ assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
+ assert.ok(typeof team.refresh==="function");
+});
+test("Sram Manigance option follows its saved variant instead of silently casting an unavailable buff",()=>withBrowser(({root,node})=>{
+ const builds=structuredClone(INITIAL_BUILDS);
+ const sram=builds.find(b=>b.classId==="sram");
+ const i=18;
+ sram.variants[i]="Piège Scélérat";
+ const calls=[];
+ mountTeamModule({getBuilds:()=>builds,onChangeVariant:(id,group,name)=>{
+  const b=builds.find(x=>x.id===id);
+  b.variants[group]=name;
+  calls.push({id,group,name});
+  return true;
+ }});
+ assert.match(node("team-members").innerHTML,/Manigance indisponible/);
+ root.listeners.change({target:{closest(selector){
+  if(selector==="select[data-team-buff]")
+   return {dataset:{teamBuff:sram.id,teamGroup:String(i)},value:"Manigance"};
+  return null;
+ }}});
+ assert.equal(calls.length,1);
+ assert.equal(sram.variants[i],"Manigance");
+ assert.match(node("team-members").innerHTML,/Manigance équipé/);
+});
