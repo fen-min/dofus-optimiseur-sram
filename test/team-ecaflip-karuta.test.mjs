@@ -63,7 +63,8 @@ test("Baraka joue les Trèfles accumulés et confère leurs buffs critiques",()=
  const before=s.ecaHand.length;
  assert.equal(before,2);
  s=castSpell(s,baraka,settings);
- assert.equal(s.ecaHand.length,0);
+ assert.deepEqual(s.ecaHand,[{suit:"club",rank:3}]);
+ assert.equal(s.ecaTable.length,2);
  assert.ok(s.buffs.some(b=>b.stat==="Critique"&&b.amount>=4));
  assert.equal(cardHandDamageBonus([{suit:"club",rank:2},{suit:"club",rank:4}],"club"),6);
 });
@@ -77,7 +78,8 @@ test("Cartes : brelan As +170 Puissance; suite Trèfle +140 Chance; carré As +2
  const payout=playedHandBonuses(four).bonuses;
  for(const stat of ["Air","Eau","Feu","Terre"])
   assert.ok(payout.some(b=>b.stat===stat&&b.value===200));
- assert.equal(rekopBaseHits(straight)[0].base,56);
+ assert.equal(rekopBaseHits(straight).length,4);
+ assert.equal(rekopBaseHits(straight).reduce((n,h)=>n+h.base,0),56);
 });
 test("Rekop impossible sans main gagnante, puis utilisable après collecte de cartes",()=>{
  const rekop=spell("Rekop");
@@ -121,7 +123,8 @@ test("Baraka première pioche conserve sa Dame, puis joue les Trèfles si la mai
  assert.equal(state.buffs.filter(b=>b.stat==="Critique").length,0);
  state=endTurn(state,settings);
  state=castSpell(state,baraka,settings);
- assert.equal(state.ecaHand.length,0);
+ assert.deepEqual(state.ecaHand,[{suit:"club",rank:3}]);
+ assert.equal(state.ecaTable.length,1);
  assert.ok(state.buffs.some(b=>b.stat==="Critique"&&b.amount===6));
 });
 
