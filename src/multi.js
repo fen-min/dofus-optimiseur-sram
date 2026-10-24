@@ -1,5 +1,5 @@
 import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.20";
-import {cleanSettings,turnActionPoints} from "./engine.js?v=3.20";
+import {cleanSettings,turnActionPoints} from "./engine.js?v=3.24";
 import {
  SIZE,MAX_MONSTERS,MULTI_STORE,SHAPES,makeBoard,validateBoard,shapeHits,
  defaultShape,dist,selectedSpells,legalActions,manualActions,possibleTargets,replay,newHistory,
