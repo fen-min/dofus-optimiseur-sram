@@ -112,3 +112,26 @@ test("team scheduler chooses cards or attacks while keeping one round per click"
   names.indexOf("Tout ou Rien")<names.indexOf("Rekop"));
  console.log("KARUTA OPTIMIZED THREE ROUNDS",JSON.stringify(summaries));
 });
+
+test("audit multi-cycle Karuta: log every round and confirm a SECOND 4-club Rekop within 10 turns",()=>{
+ let session=null;
+ const history=[];
+ for(let i=1;i<=10;i++){
+  session=optimizeTeamTurn([ctx],target,()=>{},session);
+  const actor=session.turns.at(-1).actors[0];
+  const state=session.session.actors[0].state;
+  history.push({
+   turn:i,actions:actor.actions.map(a=>a.name),damage:actor.damage,
+   hand:state.ecaHand.map(c=>c.suit+":"+c.rank),
+   table:state.ecaTable.map(c=>c.suit+":"+c.rank),
+   buffs:state.buffs.filter(b=>b.until>=state.turn).map(b=>b.key)
+  });
+  assert.equal(session.turns.length,i,"one team round per click");
+  assert.ok(actor.spent<=actor.availablePA);
+ }
+ console.log("KARUTA TEN ROUND AUDIT",JSON.stringify(history));
+ const cycles=history.filter(row=>row.actions.includes("Rekop")&&
+  row.actions.includes("Baraka")&&row.actions.includes("Tout ou Rien"));
+ assert.ok(cycles.length>=2,
+  "Karuta doit reconstruire la suite Royale et rejouer Rekop sur 10 tours");
+});
