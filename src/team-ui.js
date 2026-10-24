@@ -23,7 +23,7 @@ const saveStore=(ids,target,memberOptions)=>{
  try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions:paOnly}));}catch{}
 };
 
-export function mountTeamModule({getBuilds}){
+export function mountTeamModule({getBuilds,onChangeVariant}){
  const root=document.getElementById("tab-team");
  if(!root)return {refresh(){}};
  const $=id=>root.querySelector("#"+id);
@@ -48,6 +48,25 @@ export function mountTeamModule({getBuilds}){
   $("team-calculate").disabled=false;
   $("team-cancel").disabled=true;
  }
+ function buffSelector(build,cls){
+  if(!cls||!["sram","sacrieur"].includes(build.classId))return "";
+  const preferred=build.classId==="sram"?"Manigance":"Pacte de Sang";
+  const group=cls.pairs.findIndex(pair=>pair.includes(preferred));
+  if(group<0)return "";
+  const variants=cls.pairs[group];
+  const chosen=variants.includes(build.variants?.[group])?
+    build.variants[group]:cls.defaultVariants[group];
+  const options=variants.map(name=>'<option value="'+safe(name)+'"'+
+    (name===chosen?' selected':'')+'>'+safe(name)+'</option>').join("");
+  return '<label class="team-slot-buff" for="team-buff-'+safe(build.id)+'">'+
+    'Sort de buff <select id="team-buff-'+safe(build.id)+
+    '" data-team-buff="'+safe(build.id)+'" data-team-group="'+group+
+    '" aria-label="Choisir le buff de '+safe(build.character)+'">'+options+
+    '</select></label><small class="team-buff-info">'+
+    (chosen===preferred?'✓ '+safe(preferred)+' équipé':
+      '⚠ '+safe(preferred)+' indisponible : '+safe(chosen)+' sélectionné')+
+    '</small>';
+ }
  function renderMembers(){
   const roster=getMembers(),all=getBuilds().filter(b=>CLASSES[b.classId]);
   const taken=new Set(roster.map(b=>b.id));
@@ -68,7 +87,8 @@ export function mountTeamModule({getBuilds}){
     '<div class="team-slot-body"><label for="team-pick-'+i+'">'+(b?safe(b.character):'Emplacement libre')+'</label>'+
     '<select id="team-pick-'+i+'" data-team-slot="'+i+'" aria-label="Personnage en position '+(i+1)+'">'+options+'</select>'+
     '<small>'+(b?(b.initiative===null?'Initiative non renseignée':fmt(b.initiative)+' initiative')+
-     ' · '+safe(cls.name):'Choisir parmi Personnages & builds')+'</small>'+extra+'</div></article>';
+     ' · '+safe(cls.name):'Choisir parmi Personnages & builds')+'</small>'+extra+
+     (b?buffSelector(b,cls):'')+'</div></article>';
   }).join("");
   $("team-count").textContent=roster.length+" / "+TEAM_LIMIT+" personnages";
  }
@@ -201,6 +221,21 @@ export function mountTeamModule({getBuilds}){
   }
  }
  root.addEventListener("change",event=>{
+  const buff=event.target.closest("select[data-team-buff]");
+  if(buff){
+   const build=getMembers().find(b=>b.id===buff.dataset.teamBuff);
+   const group=Number(buff.dataset.teamGroup),name=buff.value;
+   if(!build||!CLASSES[build.classId]?.pairs[group]?.includes(name)||
+     typeof onChangeVariant!=="function"){renderMembers();return;}
+   if(build.variants?.[group]!==name){
+    cancel();result=null;activeTurn=1;
+    if(!onChangeVariant(build.id,group,name)){render();return;}
+    storeState();render();
+    status(name+" équipé sur "+build.character+
+     " et enregistré dans Sorts & variantes. Recommence au tour 1.");
+   }
+   return;
+  }
   const slot=event.target.closest("select[data-team-slot]");
   if(slot){changeSlot(Number(slot.dataset.teamSlot),slot.value);return;}
   const pa=event.target.closest("input[data-team-ap]");
