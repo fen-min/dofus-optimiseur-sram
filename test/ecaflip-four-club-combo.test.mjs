@@ -132,6 +132,17 @@ test("audit multi-cycle Karuta: log every round and confirm a SECOND 4-club Reko
  console.log("KARUTA TEN ROUND AUDIT",JSON.stringify(history));
  const cycles=history.filter(row=>row.actions.includes("Rekop")&&
   row.actions.includes("Baraka")&&row.actions.includes("Tout ou Rien"));
- assert.ok(cycles.length>=2,
-  "Karuta doit reconstruire la suite Royale et rejouer Rekop sur 10 tours");
+ assert.ok(cycles.length>=3,
+  "Karuta doit reconstruire la suite Royale plusieurs fois après le premier Rekop");
+ assert.deepEqual(cycles.map(c=>c.turn),[3,5,7,9],
+  "Le combo doit se relancer dès que Tout ou Rien est à nouveau disponible");
+ for(let turn=4;turn<=10;turn++){
+  const row=history[turn-1];
+  assert.ok(!row.hand.some(card=>card.startsWith("diamond:")),
+   "La main à Trèfles ne doit pas être bloquée par un Carreau avant Rekop");
+  if(turn%2===0)assert.deepEqual(row.hand.slice().sort(),
+   ["club:2","club:3","club:4","club:5"],
+   "Les tours intermédiaires doivent reconstruire la suite complète");
+ }
+ assert.ok(history.every(x=>Number.isFinite(x.damage)&&x.damage>0));
 });
