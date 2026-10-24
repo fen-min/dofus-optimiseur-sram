@@ -27,12 +27,12 @@ export const ECAFLIP_KARUTA_VARIANTS=[
 // Rangs 200 vérifiés sur la page de référence, hors dommages secondaires
 // conditionnels. Absence de définition = sort montré, mais non chiffré.
 const DATA={
- "Yams":{pa:2,e:"Eau",n:[3,18],c:[21,21],cc:5,r:[0,6],turn:3,target:2,card:["club",2],randomCrit:true},
+ "Yams":{pa:2,e:"Eau",n:[3,18],c:[21,21],cc:5,r:[0,6],turn:3,target:2,card:["club",2],randomCrit:true,criticalRateBuff:{normal:[3,18],critical:21,duration:3,stacks:3}},
  "Baraka":{pa:3,e:"Eau",n:[27,30],c:[35,35],cc:10,r:[0,6],turn:3,target:2,card:["club",3],playSuit:"club"},
  "Félintion":{pa:4,e:"Eau",n:[33,36],c:[43,43],cc:15,r:[1,6],turn:2,card:["club",4]},
  "Griffe Joueuse":{pa:4,e:"Eau",n:[31,35],c:[42,42],cc:15,r:[1,6],turn:2,card:["club",4],line:true},
  "Infortune":{pa:5,e:"Eau",n:[41,45],c:[54,54],cc:20,r:[1,7],turn:1,card:["club",5],conditional:"Dégâts différés si aucun critique adverse : non comptés"},
- "Kraps":{pa:3,e:"Eau",n:[28,30],c:[34,34],cc:10,r:[0,6],turn:2,card:["club",3],critDamageBuff:29},
+ "Kraps":{pa:3,e:"Eau",n:[28,30],c:[34,34],cc:10,r:[0,6],turn:2,card:["club",3],critDamageBuff:29,critDamageBuffOnCrit:34},
  "Réflexes":{pa:2,e:"Air",n:[14,17],c:[20,20],cc:5,r:[0,6],turn:3,target:2,card:["spade",2]},
  "Jass":{pa:3,e:"Air",n:[26,29],c:[35,35],cc:10,r:[0,6],turn:3,target:2,card:["spade",3],playSuit:"spade"},
  "Coussinets":{pa:4,e:"Air",n:[35,38],c:[46,46],cc:15,r:[1,6],turn:2,card:["spade",4]},
@@ -87,6 +87,8 @@ export const ECAFLIP_SPELLS=ECAFLIP_PAIRS.flatMap((pair,i)=>pair.map((name,j)=>{
   playSuit:raw.playSuit||null,playHand:!!raw.playHand,
   restoreTable:!!raw.restoreTable,ecaflipRekop:!!raw.rekop,
   ecaflipRandomDraw:raw.randomDraw||0,refundPA:raw.refundPA||0,
+  ecaflipCriticalRateBuff:raw.criticalRateBuff||null,
+  ecaflipCritDamageOnCrit:raw.critDamageBuffOnCrit||0,
   conditionalDamage:raw.conditional||"",ecaflipCritDamageBuff:raw.critDamageBuff||0,
   modelingConfidence:done?"verified-base-damage":raw.rekop?"poker-dependent":"non-modeled",
   status:{...(raw.buff?{buff:raw.buff}:{}),...((raw.randomDraw||passive&&!raw.rekop&&!raw.playHand&&!raw.buff)?{unsupported:true}:{})},
@@ -103,7 +105,7 @@ export function prepareEcaflipSpellDamage(spell,stats){
   const fields=[output.min,output.max,output.critMin,output.critMax].map((n,i)=>scaleLine(n,e,i>=2,stats));
   if(fields.every(v=>v!==null)){
    [output.min,output.max,output.critMin,output.critMax]=fields;
-   output.critChance=Math.min(.95,Math.max(.05,output.critChance+(stats.critical||0)/100));
+   output.critChance=Math.min(1,Math.max(0,output.critChance+(stats.critical||0)/100));
    output.damageSource="active-build-stats";
    return output;
   }
