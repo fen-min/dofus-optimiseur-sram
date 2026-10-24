@@ -4,7 +4,7 @@
  * Fixed 9x9 abstract cells, Manhattan distance, no obstacles or line of sight.
  * AOE templates are USER-ADJUSTABLE hypotheses, NOT official DOFUS hitboxes.
  */
-import {initialState,castSpell,endTurn,cleanSettings} from "./engine.js?v=3.20";
+import {initialState,castSpell,endTurn,cleanSettings} from "./engine.js?v=3.24";
 import {geometryFor,inMask,MASK_LABELS} from "./spell-zones.js?v=2.0";
 
 export const SIZE=9;
