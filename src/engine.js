@@ -1,12 +1,13 @@
 import {SIM_SPELLS,DEFAULT_VARIANTS,VARIANT_PAIRS} from "./sim-spells.js?v=1.8";
 import {DEFAULT_SETTINGS} from "./spells.js";
+import {handKey,nextHand,cardHandDamageBonus,playedHandBonuses,rekopBaseHits,winningHand,estimatedCardFutureValue} from "./ecaflip-cards.js?v=1";
 import {initialSacrierHealth,sacrificeHealth,restoreHealth,sufferingFinalBonus,setTemporaryVitality} from "./sacrier-state.js?v=3.2";
 // Monocible, sans carte : estimation paramétrée, PAS simulateur du serveur DOFUS.
 // Un état contient PA, variantes, buffs, altérations, pièges et poisons.
 // Toutes les 44 actions existent, mais des effets de placement nécessitent des hypothèses.
 const round=n=>Math.round(n*10)/10;
 const clamp=(v,a,b,d=a)=>Math.min(b,Math.max(a,Number.isFinite(+v)?+v:d));
-const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice()});
+const cpy=x=>({...x,used:{...x.used},ready:{...x.ready},buffs:x.buffs.map(b=>({...b})),invocations:x.invocations.map(x=>({...x})),dots:Object.fromEntries(Object.entries(x.dots).map(([k,v])=>[k,{...v}])),traps:x.traps.map(p=>({...p})),actions:x.actions.slice(),turns:x.turns.slice(),ecaHand:(x.ecaHand||[]).map(c=>({...c})),ecaTable:(x.ecaTable||[]).map(c=>({...c}))});
 export function cleanSettings(input={}){
  const c={...DEFAULT_SETTINGS,...input};
  c.ap=clamp(c.ap,6,20,12);
@@ -48,13 +49,13 @@ export function turnActionPoints(c,turn){
 }
 export function initialState(input={}){
  const c=cleanSettings(input);
- return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],};
+ return {turn:1,pa:turnActionPoints(c,1),used:{},ready:{},buffs:[],dots:{},traps:[],charges:0,mutilationStage:0,berserkActive:false,trapActivatedThisTurn:false,concentrationExpires:0,enemyDebuff:{multiplier:1,expires:0},visible:true,position:c.distance,invocations:[],sacrierHealth:c.sacrierHealthSimulation?initialSacrierHealth(c.sacrierMaxHp,c.sacrierStartingHpPercent):null,total:0,immediate:0,delayed:0,turnDamage:0,actions:[],turns:[],turnStartEffects:[],warnings:[],ecaHand:[],ecaTable:[]};
 }
 const buffsNow=s=>s.buffs.filter(b=>b.until>=s.turn);
 function selected(spell,c){return spell.isWeapon===true||c.variants[spell.variantGroup]===spell.name;}
 function effectivePA(spell,s){return spell.name==="Perfidie"?Math.max(2,spell.pa-Math.min(4,s.charges)):spell.pa;}
 export function eligible(spell,s,c){
- if((spell.isWeapon&&spell.damageSource==="weapon-stats-missing")||!selected(spell,c)||effectivePA(spell,s)>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
+ if((spell.status?.unsupported===true)||(spell.ecaflipRekop&&!winningHand(s.ecaHand||[]))||(spell.isWeapon&&spell.damageSource==="weapon-stats-missing")||!selected(spell,c)||effectivePA(spell,s)>s.pa|| (s.used[spell.id]||0)>=spell.maxPerTurn||s.turn<(s.ready[spell.id]||1))return false;
  const dist=spell.target==="self"||spell.target==="tile"?Math.max(spell.minRange,Math.min(s.position,spell.range)):s.position;
  if(dist<spell.minRange||dist>spell.range)return false;
  if(spell.lineOnly&&!c.inLine)return false;
@@ -105,9 +106,91 @@ function equippedWeaponDamage(spell,s,c){
  return Math.max(0,((1-probability)*average(false)+probability*average(true))*
   vulnerability*(1+finalBonus/100)*(1+suffering/100)*berserk);
 }
+function bestEcaflipElement(stats){
+ const elements={Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"};
+ return Object.keys(elements).sort((a,b)=>(stats?.[elements[b]]||0)-(stats?.[elements[a]]||0))[0];
+}
+/** Multiples lignes de Rekop : caractéristiques et résistances par élément.
+ * La distribution aléatoire réelle des CC et des secondaires reste estimée.
+ */
+function rekopDamage(spell,s,c){
+ const stats=c.ecaflipStats;
+ if(!stats)return 0;
+ const hits=rekopBaseHits(s.ecaHand||[]);
+ if(!hits.length)return 0;
+ const best=bestEcaflipElement(stats);
+ const attr={Air:"agility",Eau:"chance",Terre:"strength",Feu:"intelligence"};
+ const bonusCrit=buffsNow(s).reduce((sum,b)=>sum+(b.stat==="Critique"?b.amount:0),0);
+ const p=c.criticals?Math.max(0,Math.min(1,spell.critChance+bonusCrit/100)):0;
+ let sum=0;
+ for(const hit of hits){
+  const e=hit.element||best;
+  const bonus=buffsNow(s).reduce((n,b)=>n+(b.stat==="Puissance"||b.stat===e?b.amount:0),0);
+  const scale=(100+(stats[attr[e]]||0)+(stats.power||0)+bonus)/100;
+  const fixed=stats.flatDamage?.[e]||0;
+  const plain=Math.floor(hit.base*scale+fixed);
+  const critical=Math.floor((hit.base+Math.max(2,hit.base*.12))*scale+fixed+(stats.criticalDamage||0));
+  const fixedRes=c.fixedResistances[e]||0;
+  const percent=c.resistances[e]||0;
+  sum+=((1-p)*Math.max(0,plain-fixedRes)+p*Math.max(0,critical-fixedRes))*(1-percent/100);
+ }
+ const percent=buffsNow(s).reduce((n,b)=>n+(b.stat==="Dommages finaux"?b.amount:0),0);
+ const vuln=s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1;
+ return sum*vuln*(1+percent/100);
+}
+function playEcaCards(s,cards,note){
+ if(!cards.length)return;
+ const outcome=playedHandBonuses(cards);
+ for(const buff of outcome.bonuses)
+  addBuff(s,buff.key,buff.stat,buff.value,buff.duration,1);
+ s.ecaTable.push(...cards.map(card=>({...card,expires:s.turn+2})));
+ if(s.actions.length){
+  const last=s.actions.at(-1);
+  last.notes.push(note||"Main jouée : "+(outcome.combo.kind||"aucune combinaison"));
+ }
+}
+function applyEcaflipAction(s,spell){
+ if(!spell.ecaflip)return;
+ if(spell.ecaflipRekop){
+  s.ecaHand=[];
+  s.actions.at(-1).notes.push("Rekop : combinaison consommée, main défaussée");
+  return;
+ }
+ if(spell.restoreTable){
+  s.ecaHand=s.ecaTable.filter(card=>card.expires>=s.turn)
+   .map(({suit,rank})=>({suit,rank})).slice(0,4);
+  s.ecaTable=[];
+  s.actions.at(-1).notes.push("Table récupérée ; bonus de soins non estimé");
+  return;
+ }
+ if(spell.drawCard){
+  const [suit,rank]=spell.drawCard;
+  if(s.ecaHand.length>=4){
+   playEcaCards(s,s.ecaHand,"Main complète jouée avant pioche");
+   s.ecaHand=[];
+  }
+  s.ecaHand=nextHand(s.ecaHand,suit,rank);
+ }
+ if(spell.playSuit){
+  const played=s.ecaHand.filter(card=>card.suit===spell.playSuit);
+  if(played.length){
+   playEcaCards(s,played,spell.name+" : "+played.length+" carte(s) jouée(s)");
+   s.ecaHand=s.ecaHand.filter(card=>card.suit!==spell.playSuit);
+  }
+ }else if(spell.playHand){
+  playEcaCards(s,s.ecaHand,spell.name+" : main jouée");
+  s.ecaHand=[];
+ }
+}
 function damage(spell,s,c,override=null){
+ if(spell.ecaflipRekop)return rekopDamage(spell,s,c);
  if(spell.isWeapon)return equippedWeaponDamage(spell,s,c);
- const row=override??directRow(spell,c,s);
+ const row=(override??directRow(spell,c,s))+
+  (spell.ecaflip&&spell.playSuit?
+   cardHandDamageBonus(s.ecaHand||[],spell.playSuit)*
+   (1+((c.ecaflipStats?.[{
+     Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"
+   }[spell.element]]||0)+(c.ecaflipStats?.power||0))/100):0);
  const element=spell.element||"Air";
  const buff=buffsNow(s).reduce((tot,b)=>{
   if(b.stat==="Dommages")return tot+b.amount;
@@ -185,7 +268,7 @@ export function castSpell(origin,spell,input={}){
   action.notes.push("Piège posé");
   if(c.triggerTraps){trapActivation(s,c);action.notes.push("Déclenchement supposé");}
  }else if(status.poison){dot(s,spell,c);action.notes.push("Poison différé");}
- else if(!spell.nonDirect&&spell.min>0){
+ else if(!spell.nonDirect&&(spell.min>0||spell.ecaflipRekop)){
   const dealt=damage(spell,s,c);
   addDamage(s,dealt);
   if(spell.isWeapon&&spell.weaponHits?.some(hit=>hit.lifeSteal))
@@ -200,6 +283,8 @@ export function castSpell(origin,spell,input={}){
     "/"+s.sacrierHealth.maxHp+" PV");
   }
  }
+ if(spell.ecaflip)applyEcaflipAction(s,spell);
+ if(spell.refundPA)s.pa+=spell.refundPA;
  // Personal buffs may change max HP as well as the offense.
  // Pacte de Sang's observed +25% Vitalité changes current AND max HP.
  if(status.berserk){
@@ -288,6 +373,7 @@ export function snapshotEffects(state,atTurn=state.turn){
   entries.push({kind:"state",name:"Invisibilité (modèle simplifié)",
    remaining:null,source:"Invisibilité"});
  }
+ if(state.ecaHand?.length)entries.push({kind:"state",name:"Main Écaflip",source:handKey(state.ecaHand),remaining:null});
  return entries;
 }
 
@@ -338,6 +424,7 @@ export function endTurn(original,input={}){
  if(s.berserkActive&&s.sacrierHealth&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
  summary.sacrierNextHealth=s.sacrierHealth?{...s.sacrierHealth}:null;
  s.traps=s.traps.slice(-12);
+ s.ecaTable=s.ecaTable.filter(card=>card.expires>=s.turn);
  if(s.enemyDebuff.expires<s.turn)s.enemyDebuff={multiplier:1,expires:0};
  // Le tour suivant commence après la consommation des poisons et
  // l'expiration des buffs du tour courant.
@@ -358,6 +445,7 @@ function potential(s,c){
   },0);
  }
  if(c.triggerOnPush)a+=s.traps.reduce((sum,t)=>sum+Math.max(0,t.base)*.15,0);
+ if(c.classId==="ecaflip")a+=estimatedCardFutureValue(s.ecaHand||[],c.ecaflipStats);
  return a;
 }
 function signature(s){
@@ -365,6 +453,7 @@ function signature(s){
  s.buffs.map(b=>b.key+","+b.amount+","+b.until).sort().join("/"),Object.values(s.dots).map(p=>p.name+","+p.left+","+Math.round(p.base)).sort().join("/"),
  s.traps.map(t=>t.spell.id).sort().join("/"),s.charges,s.mutilationStage,s.berserkActive,s.trapActivatedThisTurn,
  s.concentrationExpires,s.visible,s.position,s.enemyDebuff.multiplier,s.enemyDebuff.expires,
+ handKey(s.ecaHand||[]),(s.ecaTable||[]).map(c=>c.suit+c.rank+"-"+c.expires).sort().join(","),
  s.sacrierHealth?Math.round(s.sacrierHealth.hp):"HP OFF",
  s.sacrierHealth?Math.round(s.sacrierHealth.maxHp):"MAX OFF",
  s.invocations.map(x=>x.kind+","+x.turn+","+x.charges).join("/"),
