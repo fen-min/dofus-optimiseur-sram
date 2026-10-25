@@ -106,7 +106,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(!manualDraft){
    board.innerHTML='<p class="manual-guide">Choisis tes sorts toi-même. Les dégâts cumulés apparaissent dans le classement bleu.</p>'+
     '<button type="button" data-manual-start'+(result?.finished?' disabled':'')+'>'+
-    (result?'▶ Commencer le tour suivant':'▶ Commencer le tour 1')+'</button>';
+    (result?'▶ Commencer le tour suivant':'▶ Commencer le tour 1')+'</button>'+
+    '<button type="button" data-manual-restart>↻ Recommencer au tour 1</button>';
    return;
   }
   try{
@@ -148,6 +149,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      (actions.length?'':' disabled')+'>↶ Annuler le dernier sort</button>'+
     '<button type="button" data-manual-reset'+(actions.length?'':' disabled')+
      '>Réinitialiser le personnage</button>'+
+    '<button type="button" data-manual-restart>↻ Nouveau combat</button>'+
     '<button type="button" class="manual-next" data-manual-next>'+
     (manualDraft.cursor===order.length-1?'✓ Terminer le tour '+state.turn:
      '→ Valider et passer au suivant')+'</button></div>'+
@@ -166,7 +168,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   $("team-calculate").textContent=displayed?(displayed.finished?"✓ Combat terminé":"▶ Tour suivant ("+(displayed.turns.length+1)+")"):"▶ Calculer le tour 1";
   $("team-calculate").disabled=!!worker||!!displayed?.finished;
   $("team-restart").disabled=!displayed||!!worker;
-  $("team-turn-select").disabled=!present;
+  $("team-turn-select").disabled=!present||(mode==="manual"&&!!manualDraft);
   $("team-turn-select").innerHTML=present?displayed.turns.map(t=>
    '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+displayed.turns.length+'</option>').join(""):
    '<option value="">Calcule d\'abord une rotation</option>';
@@ -234,7 +236,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
   if(field!=="ap")return;
   memberOptions={...memberOptions,[id]:{ap:value}};
-  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();
+  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();renderManual();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
  }
  function changeTarget(){
@@ -242,7 +244,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    hp:INTERNAL_TARGET_HP,turns:100,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
-  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();
+  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();renderManual();
   status("Cible modifiée. Lance le calcul pour actualiser les résultats.");
  }
  function calculate(){
@@ -320,11 +322,13 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
-  const button=event.target.closest("button[data-manual-start],button[data-manual-cast],button[data-manual-undo],button[data-manual-reset],button[data-manual-next]");
+  const button=event.target.closest("button[data-manual-start],button[data-manual-cast],button[data-manual-undo],button[data-manual-reset],button[data-manual-next],button[data-manual-restart]");
   if(!button||mode!=="manual")return;
   try{
    const contexts=manualContexts();
-   if(button.hasAttribute("data-manual-start")){
+   if(button.hasAttribute("data-manual-restart")){
+    result=null;manualDraft=newManualDraft(contexts,target);
+   }else if(button.hasAttribute("data-manual-start")){
     manualDraft=newManualDraft(contexts,target,result);
    }else if(button.hasAttribute("data-manual-cast")){
     manualDraft=chooseManualSpell(contexts,target,manualDraft,button.dataset.manualCast);
@@ -355,12 +359,12 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  });
  $("team-turn-select").addEventListener("change",event=>{
   const turn=Number(event.target.value);
-  if(!result||!Number.isInteger(turn)||turn<1||turn>result.turns.length)return;
+  if(manualDraft||!result||!Number.isInteger(turn)||turn<1||turn>result.turns.length)return;
   activeTurn=turn;renderResult();
  });
  $("team-turn-buttons").addEventListener("click",event=>{
   const button=event.target.closest("button[data-team-turn]");
-  if(!button||!result)return;
+  if(!button||!result||manualDraft)return;
   const turn=Number(button.dataset.teamTurn);
   if(turn<1||turn>result.turns.length)return;
   activeTurn=turn;renderResult();
