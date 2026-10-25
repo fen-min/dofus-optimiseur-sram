@@ -172,7 +172,7 @@ const report={
    everyTen:Array.from({length:10},(_,i)=>({
     from:i*10+1,to:(i+1)*10,
     damage:R(parsed.slice(i*10,(i+1)*10).reduce((s,t)=>s+t.degats,0))
-   })),firstTwenty:parsed.slice(0,20),lastTen:parsed.slice(-10)}
+   })),fullRotation:parsed,firstTwenty:parsed.slice(0,20),lastTen:parsed.slice(-10)}
  },
  counts:{transitions,opens}
 };
