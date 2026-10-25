@@ -42,7 +42,13 @@
           <div class="team-shell">
             <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
               <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
-              <div id="team-settings" class="team-settings">
+              <fieldset class="team-mode-picker" aria-label="Mode de combat">
+                 <legend>Mode de jeu</legend>
+                 <label><input type="radio" name="team-mode" value="automatic" checked> ⚡ Optimisation automatique</label>
+                 <label><input type="radio" name="team-mode" value="manual"> ✋ Choix manuel</label>
+               </fieldset>
+               <section id="team-manual-board" class="team-manual-board" aria-label="Choix manuels du personnage actuel" aria-live="polite"></section>
+               <div id="team-settings" class="team-settings">
                 <div class="team-settings-row">
                   
                   <label class="team-critical" for="team-critical"><input id="team-critical" type="checkbox" checked> Inclure les critiques probables</label>
