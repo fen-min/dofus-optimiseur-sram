@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget} from "../src/team-core.js";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
- undoManualSpell,resetManualActor,nextManualActor} from "../src/team-manual.js";
+ undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA} from "../src/team-manual.js";
 const target=cleanTeamTarget({turns:100,hp:1_000_000_000_000,criticals:true});
 const ctx=INITIAL_BUILDS.map(build=>createTeamContext(build,target));
 test("Choix manuel : chaque sort doit respecter PA, variantes, cooldowns et coups critiques",()=>{
@@ -92,4 +92,54 @@ test("Mode manuel : les effets d'un sort restent suivis après validation du tou
  if(buff?.enabled)assert.ok(state.buffs.some(b=>b.key==="Mutilation"));
  let next=newManualDraft(ctx,target,prior);
  assert.equal(previewManualDraft(ctx,target,next).state.turn,2);
+});
+
+test("Choix manuel : PA réglables directement de 1 à 30 pour le personnage en cours",()=>{
+ let draft=newManualDraft(ctx,target);
+ const first=previewManualDraft(ctx,target,draft);
+ assert.equal(first.actor.availablePA,12);
+ draft=setManualTurnPA(ctx,target,draft,16);
+ const changed=previewManualDraft(ctx,target,draft);
+ assert.equal(changed.actor.availablePA,16);
+ assert.equal(changed.state.pa,16);
+ assert.equal(draft.paOverrides[changed.current.build.id],16);
+ const choices=manualSpellChoices(ctx,target,draft);
+ const playable=choices.find(sp=>sp.enabled&&sp.pa>=2);
+ assert.ok(playable);
+ draft=chooseManualSpell(ctx,target,draft,playable.id);
+ const after=previewManualDraft(ctx,target,draft);
+ assert.equal(after.actor.availablePA,16);
+ assert.equal(after.state.pa,16-playable.pa);
+ assert.throws(()=>setManualTurnPA(ctx,target,draft,1),/Annule le dernier sort|augmente les PA/);
+ assert.equal(previewManualDraft(ctx,target,draft).state.pa,after.state.pa);
+ assert.throws(()=>setManualTurnPA(ctx,target,draft,0),/entre 1 et 30/);
+ assert.throws(()=>setManualTurnPA(ctx,target,draft,31),/entre 1 et 30/);
+ assert.throws(()=>setManualTurnPA(ctx,target,draft,2.5),/entre 1 et 30/);
+ assert.throws(()=>setManualTurnPA(ctx,target,draft,""),/entre 1 et 30/);
+ const rollback=undoManualSpell(ctx,target,draft);
+ assert.equal(previewManualDraft(ctx,target,rollback).state.pa,16);
+});
+test("Les PA manuels sont indépendants pour chaque personnage et ne changent ni build ni tour suivant",()=>{
+ let draft=newManualDraft(ctx,target);
+ draft=setManualTurnPA(ctx,target,draft,15);
+ const firstId=previewManualDraft(ctx,target,draft).current.build.id;
+ let step=nextManualActor(ctx,target,draft);draft=step.draft;
+ const second=previewManualDraft(ctx,target,draft);
+ assert.equal(second.actor.availablePA,ctx.find(x=>x.build.id===second.current.build.id).settings.ap);
+ draft=setManualTurnPA(ctx,target,draft,7);
+ const secondId=previewManualDraft(ctx,target,draft).current.build.id;
+ assert.equal(draft.paOverrides[firstId],15);
+ assert.equal(draft.paOverrides[secondId],7);
+ step=nextManualActor(ctx,target,draft);draft=step.draft;
+ const third=previewManualDraft(ctx,target,draft);
+ assert.equal(third.actor.availablePA,12);
+ step=nextManualActor(ctx,target,draft);
+ const committed=step.result;
+ assert.equal(committed.turns.length,1);
+ assert.equal(committed.turns[0].actors.find(a=>a.id===firstId).availablePA,15);
+ assert.equal(committed.turns[0].actors.find(a=>a.id===secondId).availablePA,7);
+ assert.deepEqual(ctx.map(c=>c.settings.ap),[12,12,12]);
+ const nextDraft=newManualDraft(ctx,target,committed);
+ assert.deepEqual(nextDraft.paOverrides,{});
+ assert.equal(previewManualDraft(ctx,target,nextDraft).actor.availablePA,12);
 });
