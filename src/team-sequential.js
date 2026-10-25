@@ -10,6 +10,7 @@ import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.41";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.40";
+import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.42";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -602,8 +603,13 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     actions:(manualOverrides[entry.ctx.build.id]||[]).map(id=>({id})),
     settings:entry.ctx.settings,label:"Choix manuel"
    }:(()=>{
-    const fast=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
     const strategy=cleanTeamStrategy(options.teamStrategy||{mode:"fast"});
+    // The best manual Sram routes are validated against the actual cards,
+    // buffs, poison and cooldown timeline before every recommendation.
+    // Skip unnecessary beam searches when the validated route still applies.
+    const sram=sramAuditedPlan(entry,strategy);
+    if(sram)return sram;
+    const fast=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
     // Karuta's 15-round manual champion is state-validated on every turn.
     // When the build, cards, cooldowns or ally AP diverge, return to the
     // generic team planner without forcing an illegal/obsolete sequence.
@@ -614,7 +620,23 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // three-round fight, the other delays Pacte for sustained 10-round DPS.
     // Compare them against the generic planner using actual simulated casts.
     const audited=planSacrierAuditedDps(entry,strategy,planned);
-    return safeAutomaticActions(entry,audited||planned,strategy.minHpPercent);
+    const proposed=safeAutomaticActions(entry,audited||planned,strategy.minHpPercent);
+    // Manigance lasts multiple rounds and has one stack. In the generic
+    // fallback, do not spend 2 PA recasting an active Manigance.
+    if(entry.ctx.settings.classId!=="sram"||strategy.mode!=="long")return proposed;
+    let after=entry.state;
+    const cleaned=[];
+    for(const action of proposed.actions||[]){
+     const spell=entry.spells.get(String(action.id));
+     if(!spell)continue;
+     if(spell.name==="Manigance"&&after.buffs.some(buff=>
+       buff.until>=after.turn&&(buff.key==="Manigance"||
+        buff.key.startsWith("Manigance:"))))continue;
+     if(!eligible(spell,after,entry.ctx.settings))continue;
+     cleaned.push(action);
+     after=castSpell(after,spell,entry.ctx.settings);
+    }
+    return {...proposed,actions:cleaned};
    })();
     let played=0;
     for(const action of plan.actions){
