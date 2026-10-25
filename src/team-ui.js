@@ -1,7 +1,7 @@
 import {CLASSES} from "./classes.js?v=3.24";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
- undoManualSpell,resetManualActor,nextManualActor} from "./team-manual.js?v=3.28";
+ undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA} from "./team-manual.js?v=3.28";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
@@ -112,7 +112,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
   try{
    const contexts=manualContexts();
-   const {current,state,order}=previewManualDraft(contexts,target,manualDraft);
+   const {current,state,actor,order}=previewManualDraft(contexts,target,manualDraft);
    const choices=manualSpellChoices(contexts,target,manualDraft);
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
@@ -122,7 +122,12 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    board.innerHTML='<div class="manual-heading"><div><small>Tour '+state.turn+
     ' · personnage '+(manualDraft.cursor+1)+'/'+order.length+'</small>'+
     '<h3>'+safe(current.build.character)+'</h3></div>'+
-    '<div class="manual-ap"><strong>'+fmt(state.pa)+' PA</strong> restants</div></div>'+
+    '<div class="manual-ap">'+
+     '<label for="manual-turn-pa">PA disponibles au début du tour</label>'+
+     '<input id="manual-turn-pa" data-manual-turn-pa type="number" min="1" max="30" step="1" '+
+     'value="'+actor.availablePA+'" aria-label="Choisir les PA de départ pour '+safe(current.build.character)+'">'+
+     '<span class="manual-pa-remaining"><strong>'+fmt(state.pa)+' PA</strong> restants</span>'+
+     '</div></div>'+
     '<p class="manual-guide">Clique sur un sort. Les recommandations se recalculent après chaque action.</p>'+
     '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
     (state.ecaHand?.length?' · Cartes : '+state.ecaHand.map(c=>safe(c.rank+' '+c.suit)).join(', '):'')+'</div>'+
@@ -287,6 +292,19 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
  }
  root.addEventListener("change",event=>{
+  const paChoice=event.target.closest('input[data-manual-turn-pa]');
+  if(paChoice&&mode==="manual"&&manualDraft){
+   try{
+    manualDraft=setManualTurnPA(manualContexts(),target,manualDraft,paChoice.value);
+    activeTurn=(result?.turns.length||0)+1;
+    renderResult();renderManual();
+    status("PA modifiés pour ce personnage et ce tour. Sorts et dégâts actualisés.");
+   }catch(error){
+    renderManual();
+    status("Choix des PA : "+error.message);
+   }
+   return;
+  }
   const selector=event.target.closest('input[name="team-mode"]');
   if(selector){
    mode=selector.value==="manual"?"manual":"automatic";
