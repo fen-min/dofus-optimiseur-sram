@@ -338,3 +338,25 @@ test("Interface manuelle : dégâts de ce tour mis à jour et Table Écaflip vis
  assert.match(html,/Dégâts de ce tour/);
  assert.match(html,/data-manual-turn-damage/);
 }));
+
+test("Pacte missing in a saved Sacrier is explained beside rotations, and one click equips it",()=>withBrowser(({root,node})=>{
+ const builds=structuredClone(INITIAL_BUILDS);
+ const calls=[];
+ mountTeamModule({getBuilds:()=>builds,onChangeVariant:(id,group,name)=>{
+  calls.push({id,group,name});
+  const b=builds.find(x=>x.id===id);
+  b.variants[group]=name;
+  return true;
+ }});
+ assert.match(node("team-rotations").innerHTML,/Pacte de Sang non équipé/);
+ assert.match(node("team-rotations").innerHTML,/data-team-equip-pact="sacri-air-pvm"/);
+ const item={dataset:{teamEquipPact:"sacri-air-pvm"}};
+ root.listeners.click({target:{closest(selector){
+  return selector==="button[data-team-equip-pact]"?item:null;
+ }}});
+ assert.deepEqual(calls,[{id:"sacri-air-pvm",group:5,name:"Pacte de Sang"}]);
+ assert.doesNotMatch(node("team-rotations").innerHTML,/Pacte de Sang non équipé/);
+ assert.match(node("team-members").innerHTML,/Pacte de Sang équipé/);
+ assert.match(node("team-status").textContent,/Pacte de Sang équipé/);
+ assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
+}));
