@@ -153,10 +153,17 @@ function narrow(states,width,lastTurn){
 function futureRollout(seed,ctx,lastTurn,width,minHpPercent=50){
  let current=seed;
  const spells=ctx.spells.filter(s=>isSelected(s,ctx)&&!s.status?.unsupported);
+ const originTurn=current.turn;
  for(let turn=current.turn;turn<=lastTurn;turn++){
   if(current.turn!==turn)break;
+  // Preserve detailed depth for near-term decisions; use narrower, genuinely
+  // simulated continuations further out. 100 deep-beam rounds per candidate
+  // would otherwise stall the browser for every member of a large team.
+  const distance=turn-originTurn;
+  const breadth=distance<10?width:distance<25?2:1;
   let frontier=[current],finished=[current];
-  const limit=Math.min(10,Math.ceil(current.pa/2)+2);
+  const limit=distance<10?Math.min(10,Math.ceil(current.pa/2)+2):
+   Math.min(8,Math.ceil(current.pa/2)+1);
   for(let depth=0;depth<limit;depth++){
    const next=[];
    for(const state of frontier)for(const spell of spells){
@@ -166,7 +173,7 @@ function futureRollout(seed,ctx,lastTurn,width,minHpPercent=50){
     next.push(after);
    }
    if(!next.length)break;
-   frontier=narrow(next,width,lastTurn);
+   frontier=narrow(next,breadth,lastTurn);
    finished.push(...frontier);
   }
   const chosen=narrow(finished,1,lastTurn)[0]||current;
