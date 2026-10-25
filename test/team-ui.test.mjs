@@ -302,7 +302,9 @@ test("Interface manuelle : dégâts de ce tour mis à jour et Table Écaflip vis
  assert.match(html,/data-manual-turn-damage/);
  assert.match(html,/Dégâts de ce tour/);
  assert.match(html,/≈ 0</);
- assert.doesNotMatch(html,/data-manual-eca-table/);
+ assert.match(html,/data-manual-eca-hand/);
+ assert.match(html,/data-manual-eca-table/);
+ assert.match(html,/Aucune carte jouée/);
  root.listeners.change({target:{closest(selector){
   return selector==='input[data-manual-turn-pa]'?{value:"26"}:null;
  }}});
@@ -320,15 +322,19 @@ test("Interface manuelle : dégâts de ce tour mis à jour et Table Écaflip vis
  };
  html=cast("Yams");
  assert.match(html,/data-manual-turn-damage/);
- assert.doesNotMatch(html,/data-manual-eca-table/);
+ assert.match(html,/data-manual-eca-hand/);
+ assert.match(html,/data-table-card="club:2"/);
+ assert.match(html,/Aucune carte jouée/);
  for(const name of ["Kraps","Griffe Joueuse","Infortune"])html=cast(name);
- assert.doesNotMatch(html,/data-manual-eca-table/,"quatre cartes en main ne sont pas encore une Table");
+ assert.match(html,/Aucune carte jouée/,"quatre cartes restent en main avant Baraka");
+ for(const rank of [2,3,4,5])assert.match(html,new RegExp('data-table-card="club:'+rank+'"'));
  html=cast("Baraka");
  assert.match(html,/data-manual-eca-table/);
  for(const rank of [2,3,4,5])assert.match(html,new RegExp('data-table-card="club:'+rank+'"'));
- assert.match(html,/4 cartes jouées/);
+ assert.match(html,/4 carte\(s\) jouée\(s\)/);
  html=cast("Tout ou Rien");
- assert.doesNotMatch(html,/data-manual-eca-table/,"la Table a été consommée");
+ assert.match(html,/data-manual-eca-table/);
+ assert.match(html,/Aucune carte jouée/,"les cartes ont quitté la Table");
  assert.match(html,/Dégâts de ce tour/);
  assert.match(html,/data-manual-turn-damage/);
 }));
