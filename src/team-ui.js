@@ -2,7 +2,7 @@ import {CLASSES} from "./classes.js?v=3.24";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
  undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
- manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=3.29";
+ manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=3.30";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
