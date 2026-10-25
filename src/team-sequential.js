@@ -6,9 +6,9 @@
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
-import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.32";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.38";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
-import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.33";
+import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
