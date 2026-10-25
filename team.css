@@ -187,3 +187,37 @@
 @media(max-width:540px){.manual-spells{grid-template-columns:repeat(2,minmax(0,1fr))}
  .manual-controls .manual-next{margin-left:0;width:100%}}
 @media(prefers-reduced-motion:reduce){.manual-spell{transition:none}}
+
+/* Manual turn summary in the action footer and the Ecaflip's actual Table,
+   deliberately separate from the hand and persistent combo buffs. */
+.manual-turn-damage{display:flex;flex-direction:column;gap:3px;align-items:center;
+ justify-content:center;min-width:188px;min-height:54px;margin-left:auto;
+ padding:7px 11px;border:1px solid #597db6;border-radius:10px;
+ background:linear-gradient(125deg,#23304b,#172237);color:#e6f0ff;text-align:center}
+.manual-turn-damage span{font-size:10px;color:#bbcff9;font-weight:800;letter-spacing:.03em}
+.manual-turn-damage strong{font-size:19px;line-height:1.2;color:#fff;font-variant-numeric:tabular-nums}
+.manual-turn-damage small{font-size:10px;line-height:1.4;color:#a9c9e8;white-space:normal}
+.manual-controls .manual-turn-damage+.manual-next{margin-left:0}
+.manual-eca-table{flex:1 1 245px;max-width:490px;min-width:225px;
+ border-radius:12px;border:1px solid #608054;
+ padding:9px 12px;background:linear-gradient(110deg,#21362e,#192938);
+ display:flex;flex-direction:column;gap:8px;align-self:stretch}
+.manual-table-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.manual-table-title strong{font-size:12px;color:#d7f5cb}
+.manual-table-title small{font-size:10px;color:#b1d1aa;white-space:nowrap}
+.manual-table-cards{display:flex;gap:7px;flex-wrap:wrap}
+.manual-table-card{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:3px;min-width:56px;min-height:77px;padding:6px 5px;border-radius:8px;
+ background:#d9f0d3;color:#17432d;box-shadow:0 1px 5px #08141f70;
+ border:1px solid #9bc699}
+.manual-table-rank{font-size:11px;font-weight:850}
+.manual-table-suit{font-size:23px;line-height:1}
+.manual-table-lifetime{font-size:9px;font-weight:700}
+.manual-table-card.suit-spade{background:#dce6fa;color:#283d71;border-color:#a3b8e2}
+.manual-table-card.suit-heart{background:#fbe1df;color:#8a2b40;border-color:#e5a6ac}
+.manual-table-card.suit-diamond{background:#ffe8cc;color:#875018;border-color:#e7b880}
+@media(max-width:760px){
+ .manual-turn-damage{order:3;min-width:160px;flex:1 1 175px;margin-left:0}
+ .manual-controls .manual-turn-damage+.manual-next{order:4;flex:1 1 190px}
+ .manual-eca-table{min-width:0;max-width:none;flex-basis:100%;order:3}
+}
