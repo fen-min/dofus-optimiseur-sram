@@ -7,7 +7,8 @@ import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
 } from "./team-core.js?v=3.31";
-import {cleanTeamStrategy} from "./team-long-plan.js?v=3.31";
+import {cleanTeamStrategy} from "./team-long-plan.js?v=3.32";
+import {sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -103,6 +104,7 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   $("team-strategy-long").checked=strategy.mode==="long";
   $("team-horizon").value=String(strategy.horizon);
   $("team-effort").value=strategy.effort;
+  $("team-min-hp").value=String(strategy.minHpPercent);
   $("team-long-options").hidden=strategy.mode!=="long";
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
  }
@@ -123,6 +125,10 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    const preview=previewManualDraft(contexts,target,manualDraft);
    const {current,state,actor,order}=preview;
    const turnDamage=manualCurrentTurnDamage(preview);
+   const lowHp=current.settings.classId==="sacrieur"&&!sacrierHealthAboveFloor(state,strategy.minHpPercent);
+   const hpWarning=lowHp?'<p class="manual-hp-warning" role="alert">⚠ Attention : '+fmt(state.sacrierHealth.hp)+
+    ' / '+fmt(state.sacrierHealth.maxHp)+' PV — sous le seuil conseillé de '+strategy.minHpPercent+
+    ' %. Choix manuel autorisé, mais risqué.</p>':'';
    const ecaTable=manualActiveEcaflipTable(preview);
    const suits={
     club:{label:"Trèfle",glyph:"♣"},
@@ -164,6 +170,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      '<span class="manual-pa-remaining"><strong>'+fmt(state.pa)+' PA</strong> restants</span>'+
      '</div></div>'+
     '<p class="manual-guide">Clique sur un sort. Les recommandations se recalculent après chaque action.</p>'+
+    hpWarning+
     '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
     '</div>'+
     tableHtml+
@@ -305,7 +312,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   $("team-cancel").disabled=false;
   status("Calcul du tour "+(previous?previous.turns.length+1:1)+" · "+(strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.31",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.32",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -345,21 +352,23 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    }
    return;
   }
+  const minHpChoice=event.target.closest("#team-min-hp");
   const strategyRadio=event.target.closest('input[name="team-strategy"]');
   const horizonChoice=event.target.closest("#team-horizon");
   const effortChoice=event.target.closest("#team-effort");
-  if(strategyRadio||horizonChoice||effortChoice){
+  if(strategyRadio||horizonChoice||effortChoice||minHpChoice){
    strategy=cleanTeamStrategy({
     ...strategy,
     ...(strategyRadio?{mode:strategyRadio.value}:{}),
     ...(horizonChoice?{horizon:Number(horizonChoice.value)}:{}),
-    ...(effortChoice?{effort:effortChoice.value}:{})
+    ...(effortChoice?{effort:effortChoice.value}:{}),
+    ...(minHpChoice?{minHpPercent:Number(minHpChoice.value)}:{})
    });
    storeState();cancel();result=null;manualDraft=null;activeTurn=1;
    renderTarget();renderResult();renderManual();
    status(strategy.mode==="long"?
-    "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, profondeur "+strategy.effort+".":
-    "Optimisation rapide : priorité au prochain tour.");
+    "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, profondeur "+strategy.effort+", Sacrieur ≥ "+strategy.minHpPercent+" % PV.":
+    "Optimisation rapide : priorité au prochain tour, Sacrieur ≥ "+strategy.minHpPercent+" % PV.");
    return;
   }
   const selector=event.target.closest('input[name="team-mode"]');
