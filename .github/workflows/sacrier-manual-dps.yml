@@ -1,0 +1,23 @@
+name: OMBRE - DPS manuel Sacrieur 3 et 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-manual-dps.mjs"
+      - ".github/workflows/sacrier-manual-dps.yml"
+  workflow_dispatch:
+jobs:
+  recherche:
+    strategy:
+      fail-fast: false
+      matrix:
+        turns: [3, 10]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche Sacrieur manuel
+        run: node scripts/sacrier-manual-dps.mjs ${{ matrix.turns }}
