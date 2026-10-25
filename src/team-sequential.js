@@ -516,6 +516,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
  let effective=previous?previous.effective:0;
  const stopAt=options.oneRound?Math.min(target.turns,turns.length+1):target.turns;
  const manualOverrides=options.manualOverrides||null;
+ const manualPaOverrides=options.manualPaOverrides||null;
  const previewStates=options.manualPreview?{}:null;
  for(let turn=turns.length+1;turn<=stopAt;turn++){
   if(remainingHp<=0)break;
@@ -526,7 +527,14 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // L'effet placé sur la cible par un allié profite aux suivants.
     // Les effets de soutien sur les alliés ne sont pas encore modélisés.
     entry.state.enemyDebuff={...activeDebuff(shared,turn)};
-    entry.currentPA=appliedPa(entry,turn);
+    // Manual PA selection is the total available at the start of this
+    // character's current turn (including any already granted team buffs).
+    // It never mutates the saved build or later rounds.
+    const paOverride=manualOverrides?manualPaOverrides?.[entry.ctx.build.id]:null;
+    entry.currentPA=paOverride===null||paOverride===undefined?
+     appliedPa(entry,turn):Number(paOverride);
+    if(!Number.isInteger(entry.currentPA)||entry.currentPA<1||entry.currentPA>30)
+     throw Error("PA manuels invalides : choisis entre 1 et 30.");
     entry.state.pa=entry.currentPA;
     actor.availablePA=entry.currentPA;
     actor.paBonus=entry.currentPA-basePa(entry,turn);
@@ -538,7 +546,12 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     for(const action of plan.actions){
      if(remainingHp<=0)break;
      const spell=entry.spells.get(String(action.id));
-     if(!spell||!eligible(spell,entry.state,entry.ctx.settings))continue;
+     if(!spell||!eligible(spell,entry.state,entry.ctx.settings)){
+      if(manualOverrides)
+       throw Error("Le sort manuel "+(spell?.name||String(action.id))+
+        " n'est plus disponible avec les PA et effets de ce tour. Annule un sort ou augmente les PA.");
+      continue;
+     }
      const before=entry.state.total;
      entry.state=castSpell(entry.state,spell,plan.settings);
      grantPaBuff(entry,spell,entries,turn);
