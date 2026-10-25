@@ -10,9 +10,11 @@ const sac=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
 const eca=INITIAL_BUILDS.find(b=>b.classId==="ecaflip");
 
 test("DPS équipe longue durée est le mode par défaut et borne les paramètres",()=>{
- assert.deepEqual(cleanTeamStrategy(),{mode:"long",horizon:10,effort:"balanced",minHpPercent:50});
- assert.deepEqual(cleanTeamStrategy({mode:"fast",horizon:30,effort:"deep"}),
+ assert.deepEqual(cleanTeamStrategy(),{mode:"long",horizon:10,effort:"deep",minHpPercent:50});
+ assert.deepEqual(cleanTeamStrategy({mode:"fast",horizon:30,effort:"quick"}),
   {mode:"fast",horizon:10,effort:"deep",minHpPercent:50});
+ assert.equal(cleanTeamStrategy({effort:"balanced"}).effort,"deep");
+ assert.equal(cleanTeamStrategy({effort:"quick"}).effort,"deep");
  assert.equal(cleanTeamStrategy({horizon:-1}).horizon,3);
  assert.equal(cleanTeamStrategy({horizon:"abc"}).horizon,10);
  assert.equal(cleanTeamStrategy({mode:"unrecognized"}).mode,"long");
