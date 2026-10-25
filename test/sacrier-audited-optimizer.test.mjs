@@ -107,3 +107,32 @@ test("Diagnostic reproduit capture avec critiques décochés et trois personnage
   console.log("SACRIER_SCREENSHOT_DIAGNOSTIC "+JSON.stringify({label,summary}));
  }
 });
+
+test("DPS approfondi sur combat de 100 tours : Pacte lance au T2, rafraîchi T5/T8", {timeout:240000},()=>{
+ for(const criticals of [false,true]){
+  const t=cleanTeamTarget({turns:100,hp:1e12,criticals,
+   resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
+  const team=[pact,...INITIAL_BUILDS.filter(b=>b.classId!=="sacrieur")]
+   .map(b=>createTeamContext(b,t));
+  // Saved old settings ("quick" or "balanced") must also run deep.
+  const policy={mode:"long",horizon:10,effort:"balanced",minHpPercent:50};
+  let previous=null;
+  for(let turn=1;turn<=9;turn++){
+   previous=optimizeTeamTurn(team,t,()=>{},previous,policy);
+   const actor=previous.turns.at(-1).actors.find(a=>a.id===pact.id);
+   assert.ok(actor,"Sacrieur non présent tour "+turn);
+   assert.ok(actor.health.hp>=actor.health.maxHp/2,
+    "Le Sacrieur descend sous 50% tour "+turn);
+   if([2,5,8].includes(turn))
+    assert.ok(actor.actions.some(a=>a.name==="Pacte de Sang"),
+     "Pacte reporté au tour "+turn+" (critiques "+criticals+") : "+actor.actions.map(a=>a.name));
+  }
+  const rounds=previous.turns.map(t=>t.actors.find(a=>a.id===pact.id));
+  assert.ok(rounds[0].actions.every(a=>a.name!=="Pacte de Sang"));
+  assert.ok(rounds[1].actions.some(a=>a.name==="Pacte de Sang"));
+  console.log("SACRIER_PACTE_100_DEPTH "+JSON.stringify({
+   criticals,effort:previous.session.teamStrategy.effort,damage:previous.members.find(m=>m.id===pact.id).estimated,
+   spells:rounds.map(a=>a.actions.map(s=>s.name))
+  }));
+ }
+});
