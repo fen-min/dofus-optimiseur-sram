@@ -1,0 +1,19 @@
+name: OMBRE - Karuta DPS manuel 15 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-fifteen-turns.mjs"
+      - ".github/workflows/karuta-fifteen-turns.yml"
+  workflow_dispatch:
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche manuelle Karuta sur 15 tours - cartes buffs et relances
+        run: node scripts/karuta-fifteen-turns.mjs
