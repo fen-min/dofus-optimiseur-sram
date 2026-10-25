@@ -92,3 +92,18 @@ test("En équipe, le Sacrieur applique ses meilleurs enchaînements sans toucher
   teammates:previous.members.filter(m=>m.id!==pact.id).map(m=>({name:m.character,damage:m.estimated}))
  }));
 });
+
+test("Diagnostic reproduit capture avec critiques décochés et trois personnages",()=>{
+ const t=cleanTeamTarget({turns:10,hp:1e12,criticals:false,
+  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
+ for(const [label,b] of [["Pacte",pact],["Mutilation",base]]){
+  const team=[b,...INITIAL_BUILDS.filter(x=>x.classId!=="sacrieur")].map(x=>createTeamContext(x,t));
+  let prev=null;
+  for(let i=0;i<9;i++)prev=optimizeTeamTurn(team,t,()=>{},prev,strategy);
+  const summary=prev.turns.map((turn,index)=>{
+   const a=turn.actors.find(x=>x.id===b.id);
+   return {turn:index+1,actions:a.actions.map(x=>x.name),damage:a.damage,hp:a.health?.hp,maxHp:a.health?.maxHp};
+  });
+  console.log("SACRIER_SCREENSHOT_DIAGNOSTIC "+JSON.stringify({label,summary}));
+ }
+});
