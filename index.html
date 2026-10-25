@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=3.11">
-  <link rel="stylesheet" href="./team.css?v=3.31">
+  <link rel="stylesheet" href="./team.css?v=3.32">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -68,13 +68,19 @@
                      </select>
                    </label>
                  </div>
-                 <small>Les prévisions servent à choisir ce tour ; les tours suivants restent recalculés séparément. Les bonus alliés futurs sont estimés.</small>
+                 <small>Les prévisions servent à choisir ce tour ; les tours suivants restent recalculés séparément. Le seuil de PV du Sacrieur est appliqué aux recommandations automatiques.</small>
                </fieldset>
                <section id="team-manual-board" class="team-manual-board" aria-label="Choix manuels du personnage actuel" aria-live="polite"></section>
                <div id="team-settings" class="team-settings">
                 <div class="team-settings-row">
                   
                   <label class="team-critical" for="team-critical"><input id="team-critical" type="checkbox" checked> Inclure les critiques probables</label>
+                  <label class="team-hp-floor" for="team-min-hp">Sacrieur · PV minimum
+                   <select id="team-min-hp" aria-label="Seuil minimum de PV du Sacrieur">
+                    <option value="0">Désactivé</option><option value="30">30 %</option><option value="40">40 %</option>
+                    <option value="50" selected>50 %</option><option value="60">60 %</option>
+                    <option value="70">70 %</option><option value="80">80 %</option>
+                   </select></label>
                 </div>
                 <div class="team-resistances">
                   <label for="team-res-Air">Rés. Air %<input id="team-res-Air" type="number" min="0" max="90" step="1" value="0"></label>
@@ -319,6 +325,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.31"></script>
+  <script type="module" src="./src/app.js?v=3.32"></script>
 </body>
 </html>
