@@ -264,3 +264,30 @@ test("manual UI switches mode, chooses spells, supports undo and advances to nex
  assert.match(node("team-manual-board").innerHTML,/Tour 1/);
  assert.ok(node("team-damage").innerHTML);
 }));
+
+test("Choix manuel : modifier ses PA dans le compteur ne réinitialise pas le combat",()=>withBrowser(({root,node})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ root.listeners.change({target:{closest(s){
+  return s==='input[name="team-mode"]'?{value:"manual"}:null;
+ }}});
+ const before=node("team-manual-board").innerHTML;
+ assert.match(before,/data-manual-turn-pa/);
+ assert.match(before,/value="12"/);
+ root.listeners.change({target:{closest(s){
+  return s==='input[data-manual-turn-pa]'?{value:"17"}:null;
+ }}});
+ assert.match(node("team-manual-board").innerHTML,/value="17"/);
+ assert.match(node("team-manual-board").innerHTML,/17 PA/);
+ assert.match(node("team-status").textContent,/PA modifiés/);
+ const choose=()=>root.listeners.click({target:{closest(){
+  return {dataset:{},hasAttribute(key){return key==="data-manual-next";}};
+ }}});
+ choose();
+ assert.match(node("team-manual-board").innerHTML,/Matryoshka/);
+ assert.match(node("team-manual-board").innerHTML,/value="12"/);
+ root.listeners.change({target:{closest(s){
+  return s==='input[data-manual-turn-pa]'?{value:"0"}:null;
+ }}});
+ assert.match(node("team-status").textContent,/entre 1 et 30/);
+ assert.match(node("team-manual-board").innerHTML,/value="12"/);
+}));
