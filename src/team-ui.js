@@ -126,7 +126,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    const ranks={2:"Valet",3:"Dame",4:"Roi",5:"As"};
    const showEcaCards=current.settings.classId==="ecaflip";
    const renderEcaCard=(card,remaining)=>'<div class="manual-table-card suit-'+safe(card.suit)+
-    '" title="'+safe(ranks[card.rank]+' de '+suits[card.suit].label)+'">'+
+    '" data-table-card="'+safe(card.suit+':'+card.rank)+'" title="'+safe(ranks[card.rank]+' de '+suits[card.suit].label)+'">'+
     '<span class="manual-table-rank">'+safe(ranks[card.rank])+'</span>'+
     '<span class="manual-table-suit" aria-hidden="true">'+suits[card.suit].glyph+'</span>'+
     '<span class="manual-table-lifetime">'+(remaining?remaining+' tour(s)':'En main')+'</span></div>';
