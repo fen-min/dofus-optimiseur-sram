@@ -1,5 +1,7 @@
 import {CLASSES} from "./classes.js?v=3.24";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
+import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
+ undoManualSpell,resetManualActor,nextManualActor} from "./team-manual.js?v=1";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
@@ -36,7 +38,7 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
   ap:options?.ap
  }]));
- let result=null,activeTurn=1,worker=null,job=0;
+ let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
  const storeState=()=>saveStore(ids,target,memberOptions);
@@ -95,6 +97,62 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  function renderTarget(){
   $("team-critical").checked=target.criticals;
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
+ }
+const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOptions[b.id]));
+ function renderManual(){
+  const board=$("team-manual-board");
+  root.dataset??={};root.dataset.teamMode=mode;
+  if(mode!=="manual"){board.innerHTML="";return;}
+  if(!manualDraft){
+   board.innerHTML='<p class="manual-guide">Choisis tes sorts toi-même. Les dégâts cumulés apparaissent dans le classement bleu.</p>'+
+    '<button type="button" data-manual-start'+(result?.finished?' disabled':'')+'>'+
+    (result?'▶ Commencer le tour suivant':'▶ Commencer le tour 1')+'</button>';
+   return;
+  }
+  try{
+   const contexts=manualContexts();
+   const {current,state,order}=previewManualDraft(contexts,target,manualDraft);
+   const choices=manualSpellChoices(contexts,target,manualDraft);
+   const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
+    ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
+   const actions=(manualDraft.actions[current.build.id]||[]).map(id=>
+    current.spells.find(sp=>String(sp.id)===String(id))?.name||String(id));
+   const max=Math.max(1,...choices.map(c=>c.score));
+   board.innerHTML='<div class="manual-heading"><div><small>Tour '+state.turn+
+    ' · personnage '+(manualDraft.cursor+1)+'/'+order.length+'</small>'+
+    '<h3>'+safe(current.build.character)+'</h3></div>'+
+    '<div class="manual-ap"><strong>'+fmt(state.pa)+' PA</strong> restants</div></div>'+
+    '<p class="manual-guide">Clique sur un sort. Les recommandations se recalculent après chaque action.</p>'+
+    '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
+    (state.ecaHand?.length?' · Cartes : '+state.ecaHand.map(c=>safe(c.rank+' '+c.suit)).join(', '):'')+'</div>'+
+    '<div class="manual-spells" role="group" aria-label="Sorts manuels">'+choices.map((c,index)=>{
+     const image=c.icon?'<img src="'+safe(c.icon)+'" alt="" loading="lazy">':'';
+     return '<button type="button" class="manual-spell'+(c.enabled?'':' is-unavailable')+
+      '" data-manual-cast="'+safe(c.id)+'"'+(c.enabled?'':' disabled')+
+      ' title="'+safe(c.reason)+'"><span class="manual-icon">'+image+
+      '<span class="manual-icon-fallback">'+(c.isWeapon?'⚔':'✦')+'</span></span>'+
+      '<span class="manual-name">'+safe(c.name)+(index===0&&c.enabled?' <em>Conseillé</em>':'')+'</span>'+
+      '<span class="manual-cost">'+fmt(c.pa)+' PA</span>'+
+      '<strong class="manual-damage">'+(c.enabled?'≈ '+fmt(c.damage)+' dégâts':'Indisponible')+'</strong>'+
+      '<span class="manual-extra">'+(c.enabled?
+       (c.delayed?'+'+fmt(c.delayed)+' différés · ':'')+
+       '≈ '+fmt(c.damage/Math.max(1,c.pa))+' dégâts/PA · '+safe(c.reason):
+       safe(c.reason))+'</span>'+
+      '<span class="manual-score" style="width:'+Math.max(0,Math.min(100,100*c.score/max)).toFixed(1)+'%"></span>'+
+      '</button>';
+    }).join('')+'</div>'+
+    '<div class="manual-picked"><strong>Actions choisies</strong> '+
+    (actions.length?actions.map(a=>'<span>'+safe(a)+'</span>').join(''):
+     '<small>Aucune — tu peux passer le tour.</small>')+'</div>'+
+    '<div class="manual-controls"><button type="button" data-manual-undo'+
+     (actions.length?'':' disabled')+'>↶ Annuler le dernier sort</button>'+
+    '<button type="button" data-manual-reset'+(actions.length?'':' disabled')+
+     '>Réinitialiser le personnage</button>'+
+    '<button type="button" class="manual-next" data-manual-next>'+
+    (manualDraft.cursor===order.length-1?'✓ Terminer le tour '+state.turn:
+     '→ Valider et passer au suivant')+'</button></div>'+
+    '<p class="manual-footnote">Dégâts approximatifs par lancer ; le tri estime aussi la valeur des buffs et des cartes. Certains effets et le placement ne sont pas simulés.</p>';
+  }catch(error){board.innerHTML='<p class="manual-guide">'+safe(error.message)+'</p>';}
  }
  function renderResult(){
   const present=!!result;
