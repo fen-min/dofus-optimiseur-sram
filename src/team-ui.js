@@ -238,7 +238,20 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     '<span class="team-order-name">'+safe(actor.character)+'</span>'+
 
     '</div>').join("");
-  $("team-rotations").innerHTML=present?turn.actors.map((a,i)=>
+  // Explicitly expose unequipped Pacte at the point where the suggested
+  // Sacrier rotation is displayed (not only in the roster sidebar).
+  // An unselected variant can NEVER be cast by the engine.
+  const pactWarnings=getMembers().filter(b=>b.classId==="sacrieur").map(b=>{
+   const group=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+   const active=b.variants?.[group]??CLASSES.sacrieur.defaultVariants[group];
+   if(active==="Pacte de Sang")return "";
+   return '<div class="team-pact-warning" role="alert">'+
+    '<strong>⚠ '+safe(b.character)+' : Pacte de Sang non équipé.</strong> '+
+    'Le sort actif est '+safe(active)+'. OMBRE ne peut pas utiliser Pacte dans la rotation. '+
+    '<button type="button" data-team-equip-pact="'+safe(b.id)+'">Équiper Pacte de Sang</button>'+
+    '</div>';
+  }).join("");
+  $("team-rotations").innerHTML=pactWarnings+(present?turn.actors.map((a,i)=>
    '<div class="team-rotation-item"><div class="team-rotation-heading"><span>'+
    '<b>'+String(i+1).padStart(2,"0")+'</b> '+safe(a.character)+'</span><strong>'+fmt(a.damage)+' dégâts</strong></div>'+
    '<div class="team-rotation-spells">'+(a.actions.length?a.actions.map(s=>
@@ -259,7 +272,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    (activeTurn===1&&displayed.members.find(m=>m.id===a.id)?.chosenOpening?
     ' · ouverture choisie : '+safe(displayed.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
-   '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
+   '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>');
   updateDamageLeaderboard($("team-damage"),displayed,activeTurn,{safe,fmt});
   const info=$("team-assumptions");
   info.textContent=present?displayed.warnings.filter(note=>!/PV de la cible|cible possède des PV/i.test(note)).join(" "):
@@ -406,6 +419,22 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
+  const equip=event.target.closest("button[data-team-equip-pact]");
+  if(equip){
+   const build=getMembers().find(b=>b.id===equip.dataset.teamEquipPact);
+   const group=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+   if(!build||build.classId!=="sacrieur"||group<0||
+      typeof onChangeVariant!=="function")return;
+   if(build.variants?.[group]==="Pacte de Sang")return;
+   if(!onChangeVariant(build.id,group,"Pacte de Sang")){
+    status("Impossible de sélectionner Pacte de Sang sur ce build.");return;
+   }
+   cancel();manualDraft=null;result=null;activeTurn=1;
+   storeState();render();
+   status("Pacte de Sang équipé sur "+build.character+
+    ". Le combat repart au tour 1 pour recalculer correctement les bonus de PV.");
+   return;
+  }
   const button=event.target.closest("button[data-manual-start],button[data-manual-cast],button[data-manual-undo],button[data-manual-reset],button[data-manual-next],button[data-manual-restart]");
   if(!button||mode!=="manual")return;
   try{
