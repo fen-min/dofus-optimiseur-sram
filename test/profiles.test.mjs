@@ -55,3 +55,28 @@ test("Sacrieur ten-turn prototype obeys PA and class-specific variants",()=>{
  assert.ok(output.turns.every(x=>x.spent<=12));
  assert.ok(Number.isFinite(output.total));
 });
+
+test("Le Sacrieur de référence inchangé passe automatiquement de Mutilation à Pacte de Sang",()=>{
+ const original=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
+ assert.ok(original.variants.includes("Mutilation"),"Le preset historique sert à la migration");
+ const normalized=normalizeBuild(original);
+ const index=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+ assert.equal(normalized.variants[index],"Pacte de Sang");
+ assert.ok(!normalized.variants.includes("Mutilation"));
+ // Repeated localStorage loads must not change it back.
+ assert.equal(normalizeBuild(normalized).variants[index],"Pacte de Sang");
+});
+
+test("Les variantes Sacrieur personnalisées et les autres builds ne sont jamais remplacés",()=>{
+ const original=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
+ const selected=structuredClone(original);
+ const i=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+ const j=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Hémorragie"));
+ selected.variants[j]="Décimation";
+ assert.equal(normalizeBuild(selected).variants[i],"Mutilation");
+ const custom={...original,id:"custom-sacri-39"};
+ assert.equal(normalizeBuild(custom).variants[i],"Mutilation");
+ const explicit={...original,variants:original.variants.slice()};
+ explicit.variants[i]="Pacte de Sang";
+ assert.equal(normalizeBuild(explicit).variants[i],"Pacte de Sang");
+});
