@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=3.11">
-  <link rel="stylesheet" href="./team.css?v=3.30">
+  <link rel="stylesheet" href="./team.css?v=3.31">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -46,6 +46,29 @@
                  <legend>Mode de jeu</legend>
                  <label><input type="radio" name="team-mode" value="automatic" checked> ⚡ Optimisation automatique</label>
                  <label><input type="radio" name="team-mode" value="manual"> ✋ Choix manuel</label>
+               </fieldset>
+               <fieldset class="team-strategy-picker" aria-label="Stratégie du DPS automatique">
+                 <legend>Stratégie DPS d'équipe</legend>
+                 <label><input id="team-strategy-long" type="radio" name="team-strategy" value="long" checked> 🧠 DPS longue durée (conseillé)</label>
+                 <label><input id="team-strategy-fast" type="radio" name="team-strategy" value="fast"> ⚡ Dégâts immédiats</label>
+                 <div id="team-long-options" class="team-long-options">
+                   <label for="team-horizon">Tours anticipés
+                     <select id="team-horizon" aria-label="Nombre de tours anticipés">
+                       <option value="3">3 tours</option><option value="4">4 tours</option>
+                       <option value="5">5 tours</option><option value="6">6 tours</option>
+                       <option value="7">7 tours</option><option value="8">8 tours</option>
+                       <option value="9">9 tours</option><option value="10" selected>10 tours</option>
+                     </select>
+                   </label>
+                   <label for="team-effort">Recherche
+                     <select id="team-effort" aria-label="Profondeur de recherche">
+                       <option value="quick">Rapide</option>
+                       <option value="balanced" selected>Équilibrée</option>
+                       <option value="deep">Approfondie</option>
+                     </select>
+                   </label>
+                 </div>
+                 <small>Les prévisions servent à choisir ce tour ; les tours suivants restent recalculés séparément. Les bonus alliés futurs sont estimés.</small>
                </fieldset>
                <section id="team-manual-board" class="team-manual-board" aria-label="Choix manuels du personnage actuel" aria-live="polite"></section>
                <div id="team-settings" class="team-settings">
@@ -296,6 +319,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.30"></script>
+  <script type="module" src="./src/app.js?v=3.31"></script>
 </body>
 </html>
