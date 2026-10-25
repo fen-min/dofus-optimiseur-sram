@@ -124,20 +124,23 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     diamond:{label:"Carreau",glyph:"♦"}
    };
    const ranks={2:"Valet",3:"Dame",4:"Roi",5:"As"};
-   const tableHtml=ecaTable.length?
+   const showEcaCards=current.settings.classId==="ecaflip";
+   const renderEcaCard=(card,remaining)=>'<div class="manual-table-card suit-'+safe(card.suit)+
+    '" title="'+safe(ranks[card.rank]+' de '+suits[card.suit].label)+'">'+
+    '<span class="manual-table-rank">'+safe(ranks[card.rank])+'</span>'+
+    '<span class="manual-table-suit" aria-hidden="true">'+suits[card.suit].glyph+'</span>'+
+    '<span class="manual-table-lifetime">'+(remaining?remaining+' tour(s)':'En main')+'</span></div>';
+   const tableHtml=showEcaCards?
+    '<div class="manual-eca-card-zones">'+
+    '<section class="manual-eca-table" data-manual-eca-hand aria-label="Cartes en main">'+
+    '<div class="manual-table-title"><strong>🃏 Main</strong><small>'+(state.ecaHand||[]).length+' carte(s)</small></div>'+
+    '<div class="manual-table-cards">'+((state.ecaHand||[]).length?
+     state.ecaHand.map(card=>renderEcaCard(card,null)).join(''):'Aucune carte en main')+'</div></section>'+
     '<section class="manual-eca-table" data-manual-eca-table aria-label="Table active de l’Écaflip">'+
-    '<div class="manual-table-title"><strong>♣ Table active</strong><small>'+
-     ecaTable.length+' carte'+(ecaTable.length>1?'s':'')+' jouée'+(ecaTable.length>1?'s':'')+'</small></div>'+
-    '<div class="manual-table-cards">'+ecaTable.map(card=>
-      '<div class="manual-table-card suit-'+safe(card.suit)+
-      '" data-table-card="'+safe(card.suit+':'+card.rank)+
-      '" title="'+safe(ranks[card.rank]+' de '+suits[card.suit].label)+
-      ' · '+card.remainingTurns+' tour(s) restant(s)">'+
-      '<span class="manual-table-rank">'+safe(ranks[card.rank])+'</span>'+
-      '<span class="manual-table-suit" aria-hidden="true">'+suits[card.suit].glyph+'</span>'+
-      '<span class="manual-table-lifetime">'+card.remainingTurns+' tour'+
-       (card.remainingTurns>1?'s':'')+'</span></div>'
-     ).join('')+'</div></section>':'';
+    '<div class="manual-table-title"><strong>♣ Table active</strong><small>'+ecaTable.length+' carte(s) jouée(s)</small></div>'+
+    '<div class="manual-table-cards">'+(ecaTable.length?
+     ecaTable.map(card=>renderEcaCard(card,card.remainingTurns)).join(''):'Aucune carte jouée')+
+    '</div></section></div>':'';
    const choices=manualSpellChoices(contexts,target,manualDraft);
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
@@ -147,8 +150,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    board.innerHTML='<div class="manual-heading"><div><small>Tour '+state.turn+
     ' · personnage '+(manualDraft.cursor+1)+'/'+order.length+'</small>'+
     '<h3>'+safe(current.build.character)+'</h3></div>'+
-    tableHtml+
-    '<div class="manual-ap">'+
+        '<div class="manual-ap">'+
      '<label for="manual-turn-pa">PA disponibles au début du tour</label>'+
      '<input id="manual-turn-pa" data-manual-turn-pa type="number" min="1" max="30" step="1" '+
      'value="'+actor.availablePA+'" aria-label="Choisir les PA de départ pour '+safe(current.build.character)+'">'+
@@ -156,7 +158,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      '</div></div>'+
     '<p class="manual-guide">Clique sur un sort. Les recommandations se recalculent après chaque action.</p>'+
     '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
-    (state.ecaHand?.length?' · Cartes : '+state.ecaHand.map(c=>safe(c.rank+' '+c.suit)).join(', '):'')+'</div>'+
+    '</div>'+
+    tableHtml+
     '<div class="manual-spells" role="group" aria-label="Sorts manuels">'+choices.map((c,index)=>{
      const image=c.icon?'<img src="'+safe(c.icon)+'" alt="" loading="lazy">':'';
      return '<button type="button" class="manual-spell'+(c.enabled?'':' is-unavailable')+
