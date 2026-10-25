@@ -379,4 +379,4 @@ test("UI: horizon 100 tours par défaut et ancien réglage 10 migré",()=>withBr
  assert.match(html,/<option value="100" selected>100 tours/);
  assert.match(html,/<option value="15">15 tours/);
  assert.doesNotMatch(html,/value="101"/);
-});
+}));
