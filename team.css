@@ -228,7 +228,7 @@
 .team-strategy-picker>label{display:flex;align-items:center;gap:8px;font-size:12px;color:#dfe8ff}
 .team-strategy-picker input{accent-color:#d29a40}
 .team-strategy-picker small{font-size:10px;color:#aebcda;line-height:1.45}
-.team-long-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:4px}
+.team-long-options{display:grid;grid-template-columns:minmax(0,230px);gap:9px;margin-top:4px}
 .team-long-options[hidden]{display:none}
 .team-long-options label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;color:#c4d6f5}
 .team-long-options select{width:100%;min-height:33px;border-radius:7px;color:#fff;background:#20283d;border:1px solid #53617e;padding:5px 8px;font-size:12px}
