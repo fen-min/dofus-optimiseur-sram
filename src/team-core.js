@@ -4,6 +4,7 @@
  */
 import {CLASSES} from "./classes.js?v=3.24";
 import {playSequentialTeam} from "./team-sequential.js?v=3.29";
+import {cleanTeamStrategy} from "./team-long-plan.js?v=3.31";
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {prepareBuildSpells} from "./build-damage.js?v=3.24";
 import {optimize,optimizeFromState,initialState,castSpell,eligible,endTurn,cleanSettings} from "./engine.js?v=3.26";
@@ -324,7 +325,7 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
  * Interactive team mode: run EXACTLY one complete team round on demand.
  * Previous actor states are restored; no later rounds are executed.
  */
-export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null){
+export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null,strategy={mode:"fast"}){
  if(!Array.isArray(contexts)||contexts.length<1||contexts.length>TEAM_LIMIT)
   throw Error("Sélectionne entre 1 et 8 builds.");
  const ids=new Set();
@@ -334,10 +335,17 @@ export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null
   ids.add(ctx.build.id);
  }
  const config=cleanTeamTarget(target);
+ const policy=cleanTeamStrategy(strategy);
  if(previous){
   if(JSON.stringify(previous.target)!==JSON.stringify(config))
    throw Error("La cible a changé : recommence au tour 1.");
   if(previous.finished)throw Error("Le combat est terminé : recommence au tour 1.");
+  // Previous manual sessions do not carry a strategy. They remain compatible,
+  // while an automatic run cannot silently change policy between rounds.
+  if(previous.session?.teamStrategy&&JSON.stringify(previous.session.teamStrategy)!==JSON.stringify(policy))
+   throw Error("La stratégie d'optimisation a changé : recommence au tour 1.");
  }
- return playSequentialTeam(contexts,config,onProgress,{previous,oneRound:true});
+ const result=playSequentialTeam(contexts,config,onProgress,{previous,oneRound:true,teamStrategy:policy});
+ result.session.teamStrategy=policy;
+ return result;
 }
