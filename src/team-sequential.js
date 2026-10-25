@@ -515,6 +515,8 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
  let shared=previous?previous.session.shared:emptyDebuff();
  let effective=previous?previous.effective:0;
  const stopAt=options.oneRound?Math.min(target.turns,turns.length+1):target.turns;
+ const manualOverrides=options.manualOverrides||null;
+ const previewStates=options.manualPreview?{}:null;
  for(let turn=turns.length+1;turn<=stopAt;turn++){
   if(remainingHp<=0)break;
   const actors=[],roundStart=remainingHp;
@@ -528,7 +530,10 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     entry.state.pa=entry.currentPA;
     actor.availablePA=entry.currentPA;
     actor.paBonus=entry.currentPA-basePa(entry,turn);
-    const plan=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
+    const plan=manualOverrides?{
+    actions:(manualOverrides[entry.ctx.build.id]||[]).map(id=>({id})),
+    settings:entry.ctx.settings,label:"Choix manuel"
+   }:planCurrentTurn(entry,remainingHp,entries.slice(index+1));
     let played=0;
     for(const action of plan.actions){
      if(remainingHp<=0)break;
@@ -565,6 +570,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     }
     // Les poisons en attente évoluent après le tour de leur lanceur.
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
+    if(previewStates)previewStates[entry.ctx.build.id]=structuredClone(entry.state);
     const beforeEnd=entry.state.total;
     entry.state=endTurn(entry.state,plan.settings);
     const delayed=remainingHp>0?round(Math.max(0,entry.state.total-beforeEnd)):0;
@@ -593,7 +599,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
    cappedDamage:effective,roundStartHp:roundStart});
   if(shared.expires<turn+1)shared=emptyDebuff();
  }
- return {target,members,turns,theoretical:round(theoretical),direct:round(directTotal),
+ return {target,members,turns,...(previewStates?{previewStates}:{}),theoretical:round(theoretical),direct:round(directTotal),
   poison:round(poisonTotal),effective:round(effective),
   overkill:round(Math.max(0,theoretical-effective)),
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
