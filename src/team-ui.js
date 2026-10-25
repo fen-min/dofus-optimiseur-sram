@@ -6,7 +6,8 @@ import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.29";
+} from "./team-core.js?v=3.31";
+import {cleanTeamStrategy} from "./team-long-plan.js?v=3.31";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -18,12 +19,12 @@ const readStore=()=>{
  try{const data=JSON.parse(localStorage.getItem(TEAM_STORAGE_KEY)||"null");return data&&typeof data==="object"?data:null;}
  catch{return null;}
 };
-const saveStore=(ids,target,memberOptions)=>{
+const saveStore=(ids,target,memberOptions,strategy)=>{
  // Do not re-save obsolete manual buff controls from the earlier team UI.
  const paOnly=Object.fromEntries(Object.entries(memberOptions||{}).map(([id,options])=>[
   id,{ap:options.ap}
  ]));
- try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions:paOnly}));}catch{}
+ try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions:paOnly,strategy:cleanTeamStrategy(strategy)}));}catch{}
 };
 
 export function mountTeamModule({getBuilds,onChangeVariant}){
@@ -40,9 +41,10 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   ap:options?.ap
  }]));
  let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
+ let strategy=cleanTeamStrategy(saved?.strategy);
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
- const storeState=()=>saveStore(ids,target,memberOptions);
+ const storeState=()=>saveStore(ids,target,memberOptions,strategy);
  const memberSettings=b=>cleanTeamMemberOptions(b,memberOptions[b.id]);
  const status=text=>{$("team-status").textContent=text;};
  function cancel(){
@@ -97,6 +99,11 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  }
  function renderTarget(){
   $("team-critical").checked=target.criticals;
+  $("team-strategy-fast").checked=strategy.mode==="fast";
+  $("team-strategy-long").checked=strategy.mode==="long";
+  $("team-horizon").value=String(strategy.horizon);
+  $("team-effort").value=strategy.effort;
+  $("team-long-options").hidden=strategy.mode!=="long";
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
  }
 const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOptions[b.id]));
@@ -296,9 +303,9 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const currentJob=++job;
   $("team-calculate").disabled=true;
   $("team-cancel").disabled=false;
-  status("Calcul du tour "+(previous?previous.turns.length+1:1)+" uniquement, dans l’ordre d’initiative…");
+  status("Calcul du tour "+(previous?previous.turns.length+1:1)+" · "+(strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.29",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.31",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -318,7 +325,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
     status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
-   worker.postMessage({contexts,target,previous});
+   worker.postMessage({contexts,target,previous,strategy});
   }catch(error){
    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
    status("Impossible de lancer le calcul : "+error.message);
@@ -336,6 +343,23 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     renderManual();
     status("Choix des PA : "+error.message);
    }
+   return;
+  }
+  const strategyRadio=event.target.closest('input[name="team-strategy"]');
+  const horizonChoice=event.target.closest("#team-horizon");
+  const effortChoice=event.target.closest("#team-effort");
+  if(strategyRadio||horizonChoice||effortChoice){
+   strategy=cleanTeamStrategy({
+    ...strategy,
+    ...(strategyRadio?{mode:strategyRadio.value}:{}),
+    ...(horizonChoice?{horizon:Number(horizonChoice.value)}:{}),
+    ...(effortChoice?{effort:effortChoice.value}:{})
+   });
+   storeState();cancel();result=null;manualDraft=null;activeTurn=1;
+   renderTarget();renderResult();renderManual();
+   status(strategy.mode==="long"?
+    "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, profondeur "+strategy.effort+".":
+    "Optimisation rapide : priorité au prochain tour.");
    return;
   }
   const selector=event.target.closest('input[name="team-mode"]');
@@ -435,7 +459,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:100});memberOptions=other.memberOptions||{};cancel();manualDraft=null;result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:100});memberOptions=other.memberOptions||{};strategy=cleanTeamStrategy(other.strategy);cancel();manualDraft=null;result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
