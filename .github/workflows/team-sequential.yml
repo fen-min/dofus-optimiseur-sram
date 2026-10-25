@@ -24,6 +24,8 @@ on:
       - "test/team-one-turn-pa.test.mjs"
       - "test/team-stepwise.test.mjs"
       - "test/team-ui.test.mjs"
+      - "test/team-manual.test.mjs"
+      - "src/team-manual.js"
       - "test/team-dps-board.test.mjs"
       - "test/team-sram-buffs.test.mjs"
       - "test/team-pacte-manigance-regression.test.mjs"
