@@ -4,15 +4,17 @@
  * actor turn is committed by playSequentialTeam. Manual mode never calls this.
  */
 import {cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
+import {cleanSacrierMinHpPercent,sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
-export const DEFAULT_TEAM_STRATEGY=Object.freeze({mode:"long",horizon:10,effort:"balanced"});
+export const DEFAULT_TEAM_STRATEGY=Object.freeze({mode:"long",horizon:10,effort:"balanced",minHpPercent:50});
 export function cleanTeamStrategy(raw={}){
  const obj=raw&&typeof raw==="object"?raw:{};
  const horizon=Number(obj.horizon);
  return {
   mode:obj.mode==="fast"?"fast":"long",
   horizon:Number.isInteger(horizon)?Math.max(3,Math.min(10,horizon)):10,
-  effort:["quick","balanced","deep"].includes(obj.effort)?obj.effort:"balanced"
+  effort:["quick","balanced","deep"].includes(obj.effort)?obj.effort:"balanced",
+  minHpPercent:cleanSacrierMinHpPercent(obj.minHpPercent)
  };
 }
 const isSelected=(spell,ctx)=>spell.isWeapon||ctx.settings.variants?.[spell.variantGroup]===spell.name;
@@ -148,7 +150,7 @@ function narrow(states,width,lastTurn){
  return [...unique.values()].sort((a,b)=>
   projectionValue(b,lastTurn)-projectionValue(a,lastTurn)).slice(0,width);
 }
-function futureRollout(seed,ctx,lastTurn,width){
+function futureRollout(seed,ctx,lastTurn,width,minHpPercent=50){
  let current=seed;
  const spells=ctx.spells.filter(s=>isSelected(s,ctx)&&!s.status?.unsupported);
  for(let turn=current.turn;turn<=lastTurn;turn++){
@@ -159,7 +161,9 @@ function futureRollout(seed,ctx,lastTurn,width){
    const next=[];
    for(const state of frontier)for(const spell of spells){
     if(!eligible(spell,state,ctx.settings))continue;
-    next.push(castSpell(state,spell,ctx.settings));
+    const after=castSpell(state,spell,ctx.settings);
+    if(!sacrierCastAboveFloor(state,spell,after,minHpPercent))continue;
+    next.push(after);
    }
    if(!next.length)break;
    frontier=narrow(next,width,lastTurn);
@@ -167,6 +171,7 @@ function futureRollout(seed,ctx,lastTurn,width){
   }
   const chosen=narrow(finished,1,lastTurn)[0]||current;
   current=endTurn(chosen,ctx.settings);
+  if(!sacrierHealthAboveFloor(current,minHpPercent))return -Infinity;
  }
  return current.total;
 }
@@ -202,15 +207,19 @@ export function planLongTeamTurn(entry,following=[],strategy=DEFAULT_TEAM_STRATE
   for(const action of actions){
    const spell=ctx.spells.find(sp=>id(sp)===id(action));
    if(!spell||!eligible(spell,after,ctx.settings)){legal=false;break;}
-   after=castSpell(after,spell,ctx.settings);
+   const next=castSpell(after,spell,ctx.settings);
+   if(!sacrierCastAboveFloor(after,spell,next,config.minHpPercent)){legal=false;break;}
+   after=next;
   }
   if(!legal)continue;
   let forecast=0;
   try{
    const ended=endTurn(after,ctx.settings);
+   if(!sacrierHealthAboveFloor(ended,config.minHpPercent))continue;
    forecast=futureRollout(ended,ctx,forecastSettings.turns,
-    {quick:3,balanced:5,deep:9}[config.effort])-state.total;
+    {quick:3,balanced:5,deep:9}[config.effort],config.minHpPercent)-state.total;
   }catch{continue;}
+  if(!Number.isFinite(forecast))continue;
   const allyValue=supportValue(state,after,actions,ctx,following,horizon);
   const value=forecast+allyValue;
   if(!best||value>best.value+.01)best={
