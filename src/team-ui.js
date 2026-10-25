@@ -6,8 +6,8 @@ import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.34";
-import {cleanTeamStrategy} from "./team-long-plan.js?v=3.32";
+} from "./team-core.js?v=3.38";
+import {cleanTeamStrategy} from "./team-long-plan.js?v=3.38";
 import {sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
@@ -324,7 +324,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   $("team-cancel").disabled=false;
   status("Calcul du tour "+(previous?previous.turns.length+1:1)+" · "+(strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.34",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.38",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
