@@ -6,7 +6,8 @@
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
-import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.31";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.32";
+import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -333,6 +334,62 @@ function preferredBuildBuff(entry,settings){
     (buff.key===spell.name||buff.key.startsWith(spell.name+":"))))return null;
  return eligible(spell,state,settings)?spell:null;
 }
+/**
+ * Enforce the configured Sacrieur health floor for automatic suggestions.
+ * Manual choices stay free: the user may deliberately override a suggestion.
+ * Also look ahead to Pacte expiration at the end of the current turn.
+ */
+function safeAutomaticActions(entry,plan,minHpPercent){
+ if(entry.ctx.settings.classId!=="sacrieur"||!entry.state.sacrierHealth||minHpPercent<=0)
+  return plan;
+ const replay=actions=>{
+  let state=entry.state,ok=true;
+  for(const action of actions){
+   const spell=entry.spells.get(String(action.id));
+   if(!spell||!eligible(spell,state,entry.ctx.settings)){ok=false;break;}
+   const next=castSpell(state,spell,entry.ctx.settings);
+   if(!sacrierCastAboveFloor(state,spell,next,minHpPercent)){ok=false;break;}
+   state=next;
+  }
+  return ok?state:null;
+ };
+ let kept=[],state=entry.state;
+ for(const action of plan.actions||[]){
+  const candidate=[...kept,action];
+  const trial=replay(candidate);
+  if(!trial)continue;
+  kept=candidate;state=trial;
+ }
+ // If Pacte is about to expire, restore enough health before finishing
+ // rather than suggesting a turn which would cross below the limit.
+ const safeEnd=actions=>{
+  const current=replay(actions);
+  return current&&sacrierHealthAboveFloor(endTurn(current,entry.ctx.settings),minHpPercent);
+ };
+ if(!safeEnd(kept)){
+  const heals=entry.ctx.spells.filter(sp=>
+   (sp.isWeapon||entry.ctx.settings.variants?.[sp.variantGroup]===sp.name)&&sp.lifeSteal);
+  let repaired=false;
+  for(let attempt=0;attempt<3&&!repaired;attempt++){
+   let winner=null,restored=-Infinity;
+   for(const heal of heals){
+    const test=[...kept,{id:heal.id}];
+    const after=replay(test);
+    if(!after)continue;
+    const health=after.sacrierHealth?.hp||0;
+    if(health>restored){winner=test;restored=health;}
+   }
+   if(!winner)break;
+   kept=winner;
+   repaired=!!safeEnd(kept);
+  }
+  if(!repaired&&!safeEnd(kept)){
+   // No safe finish with this ordering; remove latest actions first.
+   while(kept.length&&!safeEnd(kept))kept.pop();
+  }
+ }
+ return {...plan,actions:kept};
+}
 export function planCurrentTurn(entry,remainingHp,following=[]){
  const {ctx,state}=entry;
  const turn=state.turn;
@@ -545,8 +602,9 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
    }:(()=>{
     const fast=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
     const strategy=cleanTeamStrategy(options.teamStrategy||{mode:"fast"});
-    return strategy.mode==="long"?
+    const planned=strategy.mode==="long"?
      planLongTeamTurn(entry,entries.slice(index+1),strategy,fast):fast;
+    return safeAutomaticActions(entry,planned,strategy.minHpPercent);
    })();
     let played=0;
     for(const action of plan.actions){
