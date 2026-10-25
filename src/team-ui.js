@@ -103,7 +103,6 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   $("team-strategy-fast").checked=strategy.mode==="fast";
   $("team-strategy-long").checked=strategy.mode==="long";
   $("team-horizon").value=String(strategy.horizon);
-  $("team-effort").value=strategy.effort;
   $("team-min-hp").value=String(strategy.minHpPercent);
   $("team-long-options").hidden=strategy.mode!=="long";
   for(const name of RESIST_ELEMENTS)$("team-res-"+name).value=String(target.resistances[name]);
@@ -368,19 +367,17 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const minHpChoice=event.target.closest("#team-min-hp");
   const strategyRadio=event.target.closest('input[name="team-strategy"]');
   const horizonChoice=event.target.closest("#team-horizon");
-  const effortChoice=event.target.closest("#team-effort");
-  if(strategyRadio||horizonChoice||effortChoice||minHpChoice){
+  if(strategyRadio||horizonChoice||minHpChoice){
    strategy=cleanTeamStrategy({
     ...strategy,
     ...(strategyRadio?{mode:strategyRadio.value}:{}),
     ...(horizonChoice?{horizon:Number(horizonChoice.value)}:{}),
-    ...(effortChoice?{effort:effortChoice.value}:{}),
     ...(minHpChoice?{minHpPercent:Number(minHpChoice.value)}:{})
    });
    storeState();cancel();result=null;manualDraft=null;activeTurn=1;
    renderTarget();renderResult();renderManual();
    status(strategy.mode==="long"?
-    "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, profondeur "+strategy.effort+", Sacrieur ≥ "+strategy.minHpPercent+" % PV.":
+    "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, recherche approfondie, Sacrieur ≥ "+strategy.minHpPercent+" % PV.":
     "Optimisation rapide : priorité au prochain tour, Sacrieur ≥ "+strategy.minHpPercent+" % PV.");
    return;
   }
