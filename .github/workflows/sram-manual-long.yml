@@ -1,0 +1,21 @@
+name: OMBRE - Sram verification longue 15 et 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sram-manual-extend.mjs"
+      - ".github/workflows/sram-manual-long.yml"
+  workflow_dispatch:
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verification 15 et 100 tours - politique de base
+        run: node scripts/sram-manual-extend.mjs
+      - name: Verification 15 et 100 tours - Manigance sans renouvellement inutile
+        run: SRAM_AVOID_REDUNDANT=1 node scripts/sram-manual-extend.mjs
