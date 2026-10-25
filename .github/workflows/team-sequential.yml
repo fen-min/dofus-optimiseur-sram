@@ -27,6 +27,8 @@ on:
       - "test/team-manual.test.mjs"
       - "test/team-long-plan.test.mjs"
       - "src/team-long-plan.js"
+      - "src/sacrier-safety.js"
+      - "test/sacrier-safety.test.mjs"
       - "src/team-worker.js"
       - "src/team-ui.js"
       - "src/team-manual.js"
