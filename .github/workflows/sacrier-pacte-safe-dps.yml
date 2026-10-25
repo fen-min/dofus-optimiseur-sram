@@ -1,0 +1,23 @@
+name: OMBRE - DPS Sacrieur Pacte securise
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-pacte-safe-dps.mjs"
+      - ".github/workflows/sacrier-pacte-safe-dps.yml"
+  workflow_dispatch:
+jobs:
+  simulation:
+    strategy:
+      fail-fast: false
+      matrix:
+        turns: [3, 10]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Simuler le Sacrieur avec 50 pourcent de PV minimum
+        run: node scripts/sacrier-pacte-safe-dps.mjs ${{ matrix.turns }}
