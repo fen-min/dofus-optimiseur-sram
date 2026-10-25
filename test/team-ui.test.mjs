@@ -1,3 +1,4 @@
+import {readFileSync} from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS,CLASSES} from "../src/classes.js";
@@ -360,3 +361,10 @@ test("Pacte missing in a saved Sacrier is explained beside rotations, and one cl
  assert.match(node("team-status").textContent,/Pacte de Sang équipé/);
  assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
 }));
+
+test("La profondeur de recherche est toujours approfondie sans sélecteur",()=>{
+ const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+ assert.doesNotMatch(html,/id="team-effort"/);
+ assert.doesNotMatch(html,/for="team-effort"/);
+ assert.match(html,/id="team-horizon"/);
+});
