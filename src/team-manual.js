@@ -55,7 +55,7 @@ export function previewManualDraft(contexts,target,draft){
   throw Error("Personnage courant invalide.");
  const preview=playSequentialTeam(contexts,target,()=>{},{
   previous:draft.previous,oneRound:true,
-  manualOverrides:draft.actions,manualPreview:true
+  manualOverrides:draft.actions,manualPreview:true,manualCursor:draft.cursor
  });
  const current=ordered[draft.cursor],id=current.build.id;
  const state=preview.previewStates?.[id];
@@ -139,6 +139,8 @@ export function nextManualActor(contexts,target,draft){
   return {draft:{...draft,cursor:draft.cursor+1},result:null};
  }
  // A full team round is now committed, *exactly once*.
- const {previewStates,...committed}=result;
+ const committed=playSequentialTeam(contexts,target,()=>{},{
+  previous:draft.previous,oneRound:true,manualOverrides:draft.actions
+ });
  return {draft:null,result:committed};
 }
