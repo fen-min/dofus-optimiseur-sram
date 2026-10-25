@@ -67,3 +67,28 @@ test("La rotation de référence ne s'impose pas sans Pacte ou avec des PA diff�
  const other=createTeamContext(pact,t);
  assert.equal(planSacrierAuditedDps({ctx:other,state:{},currentPA:14},strategy),null);
 });
+
+test("En équipe, le Sacrieur applique ses meilleurs enchaînements sans toucher aux alliés",()=>{
+ const t=target(10);
+ const allies=INITIAL_BUILDS.filter(x=>x.classId!=="sacrieur");
+ const contexts=[pact,...allies].map(b=>createTeamContext(b,t));
+ let previous=null;
+ for(let i=0;i<3;i++){
+  previous=optimizeTeamTurn(contexts,t,()=>{},previous,strategy);
+  assert.equal(previous.turns.length,i+1);
+  assert.equal(previous.turns[i].actors.length,3);
+  assert.ok(previous.turns[i].actors.every(a=>a.spent<=a.availablePA+0.01));
+  const sac=previous.turns[i].actors.find(a=>a.id===pact.id);
+  assert.ok(sac,"Sacrieur absent du tour d'équipe "+(i+1));
+  assert.ok(sac.health.hp>=sac.health.maxHp/2,"PV insuffisants dans l'équipe");
+ }
+ const first=previous.turns[0].actors.find(a=>a.id===pact.id).actions.map(a=>a.name);
+ const second=previous.turns[1].actors.find(a=>a.id===pact.id).actions.map(a=>a.name);
+ assert.deepEqual(first,["Furie","Furie","Désolation","Assaut"]);
+ assert.deepEqual(second,["Pacte de Sang","Furie","Furie","Assaut","Assaut"]);
+ console.log("SACRIER_AUDITED_TEAM_3 "+JSON.stringify({
+  teamDamage:previous.theoretical,
+  sacrierDamage:previous.members.find(m=>m.id===pact.id).estimated,
+  teammates:previous.members.filter(m=>m.id!==pact.id).map(m=>({name:m.character,damage:m.estimated}))
+ }));
+});
