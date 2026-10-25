@@ -8,11 +8,11 @@ const sram=INITIAL_BUILDS.find(b=>b.id==="sram-air-pvm");
 const target=turns=>cleanTeamTarget({turns,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
 const policy={mode:"long",horizon:100,effort:"deep",minHpPercent:50};
-function run(n,team=false){
+function run(n,team=false,steps=n){
  const t=target(n);
  const ctx=team?INITIAL_BUILDS.map(b=>createTeamContext(b,t)):[createTeamContext(sram,t)];
  let prior=null;let actions=[];
- for(let i=0;i<n;i++){
+ for(let i=0;i<steps;i++){
   prior=optimizeTeamTurn(ctx,t,()=>{},prior,policy);
   const a=prior.turns[i].actors.find(x=>x.id===sram.id);
   assert.ok(a,"Matryoshka missing turn "+(i+1));
@@ -46,7 +46,7 @@ test("Matryoshka: fifteen-round and 100-round safe Manigance policy", {timeout:2
  }));
 });
 test("Matryoshka: team keeps initiative and uses validated first turn",()=>{
- const {prior,actions}=run(2,true);
+ const {prior,actions}=run(100,true,2);
  assert.deepEqual(actions[0],SRAM_AUDITED_100[0]);
  assert.equal(prior.turns.length,2);
  assert.equal(prior.turns[0].actors.length,3);
