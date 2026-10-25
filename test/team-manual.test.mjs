@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget} from "../src/team-core.js";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
- undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA} from "../src/team-manual.js";
+ undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
+ manualCurrentTurnDamage,manualActiveEcaflipTable} from "../src/team-manual.js";
 const target=cleanTeamTarget({turns:100,hp:1_000_000_000_000,criticals:true});
 const ctx=INITIAL_BUILDS.map(build=>createTeamContext(build,target));
 test("Choix manuel : chaque sort doit respecter PA, variantes, cooldowns et coups critiques",()=>{
@@ -142,4 +143,71 @@ test("Les PA manuels sont indépendants pour chaque personnage et ne changent ni
  const nextDraft=newManualDraft(ctx,target,committed);
  assert.deepEqual(nextDraft.paOverrides,{});
  assert.equal(previewManualDraft(ctx,target,nextDraft).actor.availablePA,12);
+});
+
+test("Affichage des dégâts du tour : total des lancers du personnage courant, sans dégâts futurs inventés",()=>{
+ const contexts=[ctx.find(c=>c.build.classId==="sacrieur")];
+ let draft=newManualDraft(contexts,target);
+ const before=previewManualDraft(contexts,target,draft);
+ assert.deepEqual(manualCurrentTurnDamage(before),{
+  damage:0,direct:0,delayed:0,spentPA:0,damagePerPA:0
+ });
+ const attack=manualSpellChoices(contexts,target,draft)
+  .find(c=>c.enabled&&c.damage>0&&c.pa>0);
+ assert.ok(attack);
+ draft=chooseManualSpell(contexts,target,draft,attack.id);
+ const after=previewManualDraft(contexts,target,draft);
+ const metrics=manualCurrentTurnDamage(after);
+ assert.equal(metrics.direct,after.actor.direct);
+ assert.equal(metrics.delayed,after.actor.poison);
+ assert.equal(metrics.damage,after.actor.damage);
+ assert.ok(metrics.damage>0);
+ assert.ok(metrics.damagePerPA>0);
+ draft=undoManualSpell(contexts,target,draft);
+ assert.equal(manualCurrentTurnDamage(previewManualDraft(contexts,target,draft)).damage,0);
+});
+test("La Table de Karuta n'est PAS la main : Baraka la remplit, Tout ou Rien la vide",()=>{
+ const contexts=[ctx.find(c=>c.build.classId==="ecaflip")];
+ let draft=newManualDraft(contexts,target);
+ assert.deepEqual(manualActiveEcaflipTable(previewManualDraft(contexts,target,draft)),[]);
+ draft=setManualTurnPA(contexts,target,draft,30);
+ for(const name of ["Yams","Kraps","Griffe Joueuse","Infortune"]){
+  const spell=manualSpellChoices(contexts,target,draft).find(c=>c.name===name);
+  assert.ok(spell?.enabled,"available "+name);
+  draft=chooseManualSpell(contexts,target,draft,spell.id);
+ }
+ let preview=previewManualDraft(contexts,target,draft);
+ assert.equal(preview.state.ecaHand.length,4);
+ assert.deepEqual(manualActiveEcaflipTable(preview),[],"la main n'est pas la Table");
+ const baraka=manualSpellChoices(contexts,target,draft).find(c=>c.name==="Baraka");
+ assert.ok(baraka?.enabled);
+ draft=chooseManualSpell(contexts,target,draft,baraka.id);
+ preview=previewManualDraft(contexts,target,draft);
+ const cards=manualActiveEcaflipTable(preview);
+ assert.equal(cards.length,4);
+ assert.deepEqual(cards.map(c=>c.rank).sort(),[2,3,4,5]);
+ assert.ok(cards.every(c=>c.suit==="club"&&c.remainingTurns===3));
+ assert.equal(preview.state.ecaHand.length,1,"Baraka ajoute une carte en main, distincte de la Table");
+ const restore=manualSpellChoices(contexts,target,draft).find(c=>c.name==="Tout ou Rien");
+ assert.ok(restore?.enabled);
+ draft=chooseManualSpell(contexts,target,draft,restore.id);
+ preview=previewManualDraft(contexts,target,draft);
+ assert.deepEqual(manualActiveEcaflipTable(preview),[],"la Table disparaît aussitôt consommée");
+ assert.deepEqual(preview.state.ecaHand.map(c=>c.rank).sort(),[2,3,4,5],
+  "Tout ou Rien récupère les cartes en main");
+ assert.ok(preview.state.buffs.some(b=>b.key.startsWith("Combo")),
+  "le buff de combo reste actif sans faire réapparaître la Table");
+});
+test("Table affichée : ne montre pas de carte périmée ou de buff d'un autre personnage",()=>{
+ const eca=ctx.find(c=>c.build.classId==="ecaflip");
+ const state={turn:7,ecaTable:[
+  {suit:"club",rank:2,expires:6},
+  {suit:"heart",rank:5,expires:8},
+  {suit:"invalid",rank:3,expires:9}
+ ],buffs:[{key:"Combo club2|club3|club4|club5",until:9}]};
+ assert.deepEqual(manualActiveEcaflipTable({current:eca,state}),[
+  {suit:"heart",rank:5,remainingTurns:2}
+ ]);
+ assert.deepEqual(manualActiveEcaflipTable({
+  current:ctx.find(c=>c.build.classId==="sram"),state}),[]);
 });
