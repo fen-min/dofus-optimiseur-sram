@@ -71,7 +71,7 @@ function evaluateLine(entry,names,horizon,minHpPercent){
 export function planSacrierAuditedDps(entry,strategy,autoPlan=null){
  const {ctx,state}=entry;
  if(!pactEquipped(ctx)||!state.sacrierHealth||entry.currentPA!==12||
-    strategy.mode!=="long")return null;
+    strategy.mode!=="long"||strategy.minHpPercent<50)return null;
  const floor=strategy.minHpPercent;
  const horizon=Math.min(strategy.horizon,ctx.settings.turns-state.turn+1);
  if(horizon<=0)return null;
