@@ -1,7 +1,8 @@
 import {CLASSES} from "./classes.js?v=3.24";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
- undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA} from "./team-manual.js?v=3.29";
+ undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
+ manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=3.29";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
@@ -112,7 +113,31 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
   try{
    const contexts=manualContexts();
-   const {current,state,actor,order}=previewManualDraft(contexts,target,manualDraft);
+   const preview=previewManualDraft(contexts,target,manualDraft);
+   const {current,state,actor,order}=preview;
+   const turnDamage=manualCurrentTurnDamage(preview);
+   const ecaTable=manualActiveEcaflipTable(preview);
+   const suits={
+    club:{label:"Trèfle",glyph:"♣"},
+    spade:{label:"Pique",glyph:"♠"},
+    heart:{label:"Cœur",glyph:"♥"},
+    diamond:{label:"Carreau",glyph:"♦"}
+   };
+   const ranks={2:"Valet",3:"Dame",4:"Roi",5:"As"};
+   const tableHtml=ecaTable.length?
+    '<section class="manual-eca-table" data-manual-eca-table aria-label="Table active de l’Écaflip">'+
+    '<div class="manual-table-title"><strong>♣ Table active</strong><small>'+
+     ecaTable.length+' carte'+(ecaTable.length>1?'s':'')+' jouée'+(ecaTable.length>1?'s':'')+'</small></div>'+
+    '<div class="manual-table-cards">'+ecaTable.map(card=>
+      '<div class="manual-table-card suit-'+safe(card.suit)+
+      '" data-table-card="'+safe(card.suit+':'+card.rank)+
+      '" title="'+safe(ranks[card.rank]+' de '+suits[card.suit].label)+
+      ' · '+card.remainingTurns+' tour(s) restant(s)">'+
+      '<span class="manual-table-rank">'+safe(ranks[card.rank])+'</span>'+
+      '<span class="manual-table-suit" aria-hidden="true">'+suits[card.suit].glyph+'</span>'+
+      '<span class="manual-table-lifetime">'+card.remainingTurns+' tour'+
+       (card.remainingTurns>1?'s':'')+'</span></div>'
+     ).join('')+'</div></section>':'';
    const choices=manualSpellChoices(contexts,target,manualDraft);
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
@@ -122,6 +147,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    board.innerHTML='<div class="manual-heading"><div><small>Tour '+state.turn+
     ' · personnage '+(manualDraft.cursor+1)+'/'+order.length+'</small>'+
     '<h3>'+safe(current.build.character)+'</h3></div>'+
+    tableHtml+
     '<div class="manual-ap">'+
      '<label for="manual-turn-pa">PA disponibles au début du tour</label>'+
      '<input id="manual-turn-pa" data-manual-turn-pa type="number" min="1" max="30" step="1" '+
@@ -155,6 +181,10 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     '<button type="button" data-manual-reset'+(actions.length?'':' disabled')+
      '>Réinitialiser le personnage</button>'+
     '<button type="button" data-manual-restart>↻ Nouveau combat</button>'+
+    '<output class="manual-turn-damage" data-manual-turn-damage aria-label="Dégâts estimés du tour en cours">'+
+    '<span>Dégâts de ce tour</span><strong>≈ '+fmt(turnDamage.damage)+'</strong>'+
+    '<small>'+fmt(turnDamage.direct)+' directs · '+fmt(turnDamage.delayed)+
+    ' différés · '+fmt(turnDamage.damagePerPA)+' dégâts/PA</small></output>'+
     '<button type="button" class="manual-next" data-manual-next>'+
     (manualDraft.cursor===order.length-1?'✓ Terminer le tour '+state.turn:
      '→ Valider et passer au suivant')+'</button></div>'+
