@@ -143,7 +143,10 @@
 .manual-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .manual-heading h3{font-size:19px;color:#fff;margin:3px 0 0}
 .manual-heading small{font-size:11px;color:#a8baf5}
-.manual-ap{border:1px solid #6a84bd;border-radius:10px;padding:8px 12px;color:#afc9f9;font-size:12px}
+.manual-ap{border:1px solid #6a84bd;border-radius:10px;padding:8px 12px;color:#afc9f9;font-size:12px;display:grid;grid-template-columns:auto auto;align-items:center;gap:5px 10px}
+.manual-ap label{grid-column:1/-1;font-size:10px;font-weight:700;color:#bcd0f7}
+.manual-ap input[data-manual-turn-pa]{width:72px;min-height:38px;background:#101a2d;border:1px solid #7698d6;border-radius:8px;color:#fff;font-size:17px;font-weight:800;padding:4px 7px;text-align:center}
+.manual-ap .manual-pa-remaining{white-space:nowrap;color:#c4d8fc;display:inline-flex;align-items:baseline;gap:4px}
 .manual-ap strong{font-size:18px;color:#fff}
 .manual-guide,.manual-footnote{font-size:12px;color:#aec0df;line-height:1.55;margin:12px 0}
 .manual-buffs{padding:8px 10px;background:#1b2b3c;border:1px solid #354d6b;
