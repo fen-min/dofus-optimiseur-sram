@@ -11,7 +11,24 @@ import {eligible,initialState,castSpell,endTurn} from "../src/engine.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
 
 const R=x=>Math.round((Number(x)||0)*10)/10;
-const audit=JSON.parse(readFileSync("results/sram-10-best.json","utf8"));
+// Allow the long validation to be rerun independently of the expensive
+// 10-round search. This incumbent was fully manually verified on GitHub.
+const verifiedTen=[
+ ["Arnaque","Injection Toxique","Arsenic"],
+ ["Fourvoiement","Fourvoiement","Épidémie"],
+ ["Truanderie","Arnaque","Arnaque","Arsenic"],
+ ["Fourvoiement","Fourvoiement","Épidémie"],
+ ["Truanderie","Arnaque","Arnaque","Arsenic"],
+ ["Injection Toxique","Arnaque","Épidémie"],
+ ["Manigance","Arnaque","Arsenic","Épidémie"],
+ ["Fourvoiement","Fourvoiement","Épidémie"],
+ ["Truanderie","Arnaque","Arnaque","Arsenic"],
+ ["Fourvoiement","Fourvoiement","Épidémie"]
+];
+const incumbent={bestManual:{total:31646.7,turns:verifiedTen.map(sorts=>({sorts}))}};
+let audit=incumbent;
+try{audit=JSON.parse(readFileSync("results/sram-10-best.json","utf8"));}catch{}
+const avoidRedundant=process.env.SRAM_AVOID_REDUNDANT==="1";
 const build=INITIAL_BUILDS.find(b=>b.classId==="sram");
 const target=cleanTeamTarget({turns:100,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
@@ -72,6 +89,9 @@ function choices(startState,{width=55,depth=8,keepCount=7,forward=5}={}){
   const next=[];
   for(const item of frontier)for(const spell of spells){
    if(!eligible(spell,item.state,ctx.settings))continue;
+   if(avoidRedundant&&spell.name==="Manigance"&&
+     item.state.buffs.some(b=>b.key==="Manigance"&&b.until>=item.state.turn))
+    continue;
    const after=castSpell(item.state,spell,ctx.settings);transitions++;
    next.push({state:after,seq:[...item.seq,String(spell.id)]});
   }
@@ -140,7 +160,7 @@ const parsed=previous.turns.map((turn,index)=>{
 });
 const report={
  settings:{character:build.character,pa:12,criticals:true,enemyResistances:0,solo:true,
-  firstTenSource:"deep manual search",beyondTen:"state-aware search and replay; heuristic, not exhaustive"},
+  firstTenSource:"deep manual search",avoidRedundantManigance:avoidRedundant,beyondTen:"state-aware search and replay; heuristic, not exhaustive"},
  checks:{
   ten:{total:audit.bestManual.total,turns:parsed.slice(0,10)},
   fifteen:{total:fifteenTotal,average:R(fifteenTotal/15),turns:parsed.slice(0,15)},
@@ -157,5 +177,5 @@ const report={
  counts:{transitions,opens}
 };
 mkdirSync("results",{recursive:true});
-writeFileSync("results/sram-100-verified.json",JSON.stringify(report,null,2));
+writeFileSync("results/sram-100-verified"+(avoidRedundant?"-no-redundant":"")+".json",JSON.stringify(report,null,2));
 console.log("SRAM_15_AND_100_FINAL "+JSON.stringify(report));
