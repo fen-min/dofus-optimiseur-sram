@@ -1,0 +1,19 @@
+name: OMBRE - Karuta DPS 15 tours rapide
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-fifteen-quick.mjs"
+      - ".github/workflows/karuta-fifteen-quick.yml"
+  workflow_dispatch:
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche rapide du maximum Karuta manuel 15 tours
+        run: node scripts/karuta-fifteen-quick.mjs
