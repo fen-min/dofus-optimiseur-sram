@@ -133,10 +133,10 @@ function runSearch(mode,allowed,configs){
  let best=null,top=[];
  for(const conf of configs){
   let seeds=[{s:initialState(ctx.settings),rotations:[],perTurn:[]}];
-  for(let t=1;t<=turns;t++{
+  for(let t=1;t<=turns;t++){
    const generated=turnSearch(seeds,allowed,{width:conf.width,
     depth:conf.depth,keep:conf.keep,weight:conf.weight});
-   const count=t===3?Math.min(10,conf.turnStates):conf.turnStates;
+   const count=t===turns?Math.min(12,conf.turnStates):conf.turnStates;
    const graded=bestUnique(generated,count,x=>x.s.total+future(x.s,conf.weight));
    seeds=graded;
    if(!seeds.length)throw Error("Recherche "+mode+" vide au tour "+t);
@@ -263,7 +263,7 @@ const donors=[...distinctSeeds.slice(0,34),...improvedSeeds,baseline,noPrep.best
 let crossoverAttempts=0,crossoverLegal=0,crossoverImprovements=0;
 for(let pass=0;pass<6;pass++){
  let top=null;
- for(const donor of donors)for(let start=0;start<10;start++){
+ for(const donor of donors)for(let start=0;start<turns;start++){
   for(let len=1;len<=Math.min(6,turns-start);len++){
    const sequence=globalBest.rotations.map((turn,index)=>
     index>=start&&index<start+len?donor.rotations[index]:turn);
