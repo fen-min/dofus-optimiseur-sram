@@ -127,3 +127,60 @@
  border:1px solid #8a657c;color:#f8f4fa;background:#191a28}
 .team-slot-body .team-buff-info{display:block;font-size:10px;line-height:1.45;
  color:#d8c6db;white-space:normal;overflow-wrap:anywhere}
+
+/* Manual tactical mode */
+.team-mode-picker{border:1px solid #465478;border-radius:12px;padding:10px 14px;
+ display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:10px 0 16px;
+ background:rgba(32,39,61,.66)}
+.team-mode-picker legend{font-size:11px;letter-spacing:.08em;color:#d7dcff;font-weight:800;padding:0 6px}
+.team-mode-picker label{display:flex;align-items:center;gap:8px;font-size:13px;
+ font-weight:700;color:#e4e6fa;cursor:pointer}
+.team-mode-picker input{accent-color:#d29a40}
+#tab-team[data-team-mode="automatic"] #team-manual-board{display:none}
+#tab-team[data-team-mode="manual"] .team-calc-actions{display:none}
+.team-manual-board{border:1px solid #a97b35;background:linear-gradient(125deg,#1d2436,#1a1e30);
+ border-radius:13px;padding:14px;margin:4px 0 18px}
+.manual-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.manual-heading h3{font-size:19px;color:#fff;margin:3px 0 0}
+.manual-heading small{font-size:11px;color:#a8baf5}
+.manual-ap{border:1px solid #6a84bd;border-radius:10px;padding:8px 12px;color:#afc9f9;font-size:12px}
+.manual-ap strong{font-size:18px;color:#fff}
+.manual-guide,.manual-footnote{font-size:12px;color:#aec0df;line-height:1.55;margin:12px 0}
+.manual-buffs{padding:8px 10px;background:#1b2b3c;border:1px solid #354d6b;
+ border-radius:9px;color:#b9dded;font-size:12px;line-height:1.4;margin:10px 0}
+.manual-spells{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:9px;
+ max-height:490px;overflow:auto;padding:3px 1px 10px}
+.manual-spell{min-height:145px;text-align:left;position:relative;display:flex;flex-direction:column;
+ align-items:flex-start;gap:7px;padding:12px;border:1px solid #465679;border-radius:12px;
+ background:linear-gradient(135deg,#222d48,#1a2137);color:#e6edff;cursor:pointer;
+ overflow:hidden;transition:transform .15s,border-color .15s}
+.manual-spell:hover:not(:disabled),.manual-spell:focus-visible{border-color:#efb865;
+ transform:translateY(-2px);outline:2px solid transparent}
+.manual-spell.is-unavailable{opacity:.46;cursor:not-allowed}
+.manual-icon{width:40px;height:40px;display:grid;place-items:center;position:relative;
+ border-radius:8px;background:#14253c;border:1px solid #4f6886;overflow:hidden}
+.manual-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
+.manual-icon-fallback{font-size:24px;color:#a9d9ff}
+.manual-name{font-size:12px;font-weight:800;min-height:31px}
+.manual-name em{display:inline-block;background:#4e653f;color:#dff5bc;font-style:normal;
+ padding:2px 5px;border-radius:4px;font-size:10px}
+.manual-cost{position:absolute;top:13px;right:10px;color:#8cb6ff;font-size:12px;font-weight:800}
+.manual-damage{font-size:15px;color:#fff}
+.manual-extra{font-size:10px;color:#a9bcd5;line-height:1.45}
+.manual-score{height:3px;background:linear-gradient(90deg,#6283e7,#e8b256);
+ position:absolute;bottom:0;left:0;border-radius:3px}
+.manual-picked{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 0;
+ font-size:11px;color:#a8badf}
+.manual-picked strong{margin-right:6px;color:#eef3ff}
+.manual-picked span{border-radius:6px;background:#2c3a59;border:1px solid #526b99;
+ padding:4px 7px;color:#e9efff}
+.manual-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:7px}
+.manual-controls button,.manual-empty button,.manual-guide+button{
+ background:#293551;border:1px solid #6b779c;border-radius:8px;padding:10px 13px;
+ color:#f5f5ff;font-size:12px;font-weight:750;cursor:pointer}
+.manual-controls button:disabled{opacity:.45;cursor:not-allowed}
+.manual-controls .manual-next{margin-left:auto;background:#b8883d;border-color:#d1a253;
+ color:#131322}
+@media(max-width:540px){.manual-spells{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .manual-controls .manual-next{margin-left:0;width:100%}}
+@media(prefers-reduced-motion:reduce){.manual-spell{transition:none}}
