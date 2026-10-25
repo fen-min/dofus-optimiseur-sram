@@ -163,10 +163,10 @@ function runSearch(mode,allowed,configs){
  return {best,top};
 }
 const configs=[
- {weight:0,width:145,depth:9,keep:16,turnStates:9},
- {weight:.5,width:145,depth:9,keep:16,turnStates:9},
- {weight:1.5,width:145,depth:9,keep:16,turnStates:9},
- {weight:4,width:145,depth:9,keep:16,turnStates:9}
+ {weight:0,width:235,depth:9,keep:24,turnStates:14},
+ {weight:.35,width:235,depth:9,keep:24,turnStates:14},
+ {weight:1.1,width:235,depth:9,keep:24,turnStates:14},
+ {weight:3,width:235,depth:9,keep:24,turnStates:14}
 ];
 const broad=runSearch("tous_sort",usable,configs);
 const noPrepSpells=usable.filter(s=>!(s.nonDirect&&s.status?.buff)&&!["Château de Cartes","Tout ou Rien","Baraka","Rekop"].includes(s.name));
@@ -183,6 +183,25 @@ const autoRot=auto.turns.map(t=>t.actors[0].actions.map(a=>{
 const baseline=evalPlan(autoRot);
 assert.ok(Math.abs(baseline.total-auto.theoretical)<.2);
 const seeds=[...broad.top,baseline,...noPrep.top,...withoutRekop.top].filter(Boolean);
+const incumbentNames=[
+ ["Yams","Griffe Joueuse","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Infortune","Pile ou Face","Sceptre du Roi Joueur"],
+ ["Yams","Kraps","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Yams","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Rekop"]
+];
+const incumbent=evalPlan(incumbentNames.map(turn=>turn.map(name=>{
+ const spell=ctx.spells.find(sp=>sp.name===name);
+ assert.ok(spell,"sort attendu "+name);
+ return String(spell.id);
+})));
+assert.ok(incumbent&&Math.abs(incumbent.total-43281.6)<.2,"Ancien record non reproduit");
+seeds.push(incumbent);
 const oldPrefix=[
  ["Yams","Griffe Joueuse","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
  ["Yams","Kraps","Pile ou Face","Pile ou Face","Infortune"],
@@ -245,10 +264,39 @@ function localClimb(seed,maxPasses=25){
 let globalBest=seeds.reduce(max,null);
 const distinctSeeds=[...new Map(seeds.map(x=>[JSON.stringify(x.rotations),x])).values()]
  .sort((a,b)=>b.total-a.total);
-for(const s of distinctSeeds.slice(0,9)){
+const improvedSeeds=[];
+const selectedSeeds=[incumbent,...distinctSeeds.slice(0,12)];
+for(const s of selectedSeeds){
  const improved=localClimb(s,30);
+ improvedSeeds.push(improved);
  globalBest=max(globalBest,improved);
  console.log("RESTART "+JSON.stringify({seed:s.total,best:improved.total,global:globalBest.total}));
+}
+// Multi-turn recombination: replace entire spans of the winning rotation with
+// spans from other tested strategies. This can cross card/cooldown barriers
+// that require two or more coordinated turns to change at once.
+const donors=[...distinctSeeds.slice(0,34),...improvedSeeds,baseline,noPrep.best,withoutRekop.best]
+ .filter(Boolean);
+let crossoverAttempts=0,crossoverLegal=0,crossoverImprovements=0;
+for(let pass=0;pass<7;pass++){
+ let top=null;
+ for(const donor of donors)for(let start=0;start<10;start++){
+  for(let len=1;len<=Math.min(6,10-start);len++){
+   const sequence=globalBest.rotations.map((turn,index)=>
+    index>=start&&index<start+len?donor.rotations[index]:turn);
+   crossoverAttempts++;
+   const trial=evalPlan(sequence);
+   if(!trial)continue;
+   crossoverLegal++;
+   if(trial.total>globalBest.total+.01)top=max(top,trial);
+  }
+ }
+ if(!top)break;
+ const improved=localClimb(top,30);
+ globalBest=max(globalBest,improved);
+ donors.push(improved);
+ crossoverImprovements++;
+ console.log("CROSSOVER "+JSON.stringify({pass:pass+1,total:globalBest.total}));
 }
 const result={
  settings:{character:ctx.build.character,turns:10,pa:12,resistances:0,criticals:true},
@@ -260,7 +308,7 @@ const result={
   noRekop:verify(withoutRekop.best),
   auto:verify(baseline)
  },
- counts:{...stats,mutationCount,mutationLegal,restarts:Math.min(9,distinctSeeds.length)},
+ counts:{...stats,mutationCount,mutationLegal,restarts:selectedSeeds.length,crossoverAttempts,crossoverLegal,crossoverImprovements},
  bestRotations:globalBest.rotations.map(N)
 };
 assert.ok(result.scenarios.manualAll.total>=result.scenarios.auto.total);
