@@ -77,13 +77,26 @@ export function planSacrierAuditedDps(entry,strategy,autoPlan=null){
  if(horizon<=0)return null;
  // Equipping Pacte does not imply that every build must use this pattern:
  // the simulator rejects unavailable casts and unsafe HP histories.
- const variants=[
+ const needsPact=!hasPact(state);
+ // Fix receding-horizon procrastination: with a 100-round team battle,
+ // searching another 10 rounds at EVERY turn kept moving the first Pacte
+ // later (sometimes until T7), despite T2 being optimal in the audited
+ // sustained rotation. Pacte is scheduled no later than turn 2 and is
+ // refreshed promptly when expired. Revalidate every candidate through
+ // the real combat simulator and 50% HP guard.
+ const pactDue=needsPact&&state.turn>=2;
+ const variants=pactDue?[
+  candidateNames(state,true)
+ ]:[
   candidateNames(state,false),
   candidateNames(state,true)
  ];
  if(autoPlan?.actions?.length){
   const names=autoPlan.actions.map(a=>ctx.spells.find(s=>String(s.id)===String(a.id))?.name);
-  if(names.every(Boolean))variants.push(names);
+  // When a Pacte refresh is due, never let a greedy generic opening
+  // bypass it until the next rolling horizon.
+  if(names.every(Boolean)&&(!pactDue||names.includes("Pacte de Sang")))
+   variants.push(names);
  }
  let winner=null;
  for(const sequence of variants){
