@@ -31,7 +31,17 @@ export function normalizeBuild(b,index=0){
  const oldDefaults=!Array.isArray(b?.variants)
   ||(b.variants.length===DEFAULT_VARIANTS.length&&
    b.variants.every((name,i)=>name===DEFAULT_VARIANTS[i]));
- const selectedVariants=isReferenceSram&&oldDefaults?SRAM_SCREENSHOT_VARIANTS:b?.variants;
+ // The user's canonical Sacrieur reference build originally shipped with
+ // Mutilation. Switch ONLY its unchanged preset to Pacte de Sang (the user's
+ // preferred variant). Preserve all customized variant selections.
+ const legacyReferenceSacrier=isReferenceSacrier&&(
+  !Array.isArray(b?.variants)||
+  (b.variants.length===SACRIER_DEFAULT_VARIANTS.length&&
+   b.variants.every((name,i)=>name===SACRIER_DEFAULT_VARIANTS[i])));
+ const pactePreset=legacyReferenceSacrier?SACRIER_DEFAULT_VARIANTS.map((name,i)=>
+  SACRIER_VARIANTS[i].includes("Pacte de Sang")?"Pacte de Sang":name):null;
+ const selectedVariants=isReferenceSram&&oldDefaults?SRAM_SCREENSHOT_VARIANTS:
+  pactePreset||b?.variants;
  return {
  id:String(b?.id||"build-"+index),
  classId:cls.id,character:(isReferenceSram&&(!b?.character||b.character==="Mon Sram")?"Matryoshka":String(b?.character||"Mon "+cls.name)).slice(0,48),
