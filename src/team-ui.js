@@ -420,7 +420,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  });
  root.addEventListener("click",event=>{
   const equip=event.target.closest("button[data-team-equip-pact]");
-  if(equip){
+  if(equip?.dataset?.teamEquipPact){
    const build=getMembers().find(b=>b.id===equip.dataset.teamEquipPact);
    const group=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
    if(!build||build.classId!=="sacrieur"||group<0||
