@@ -6,6 +6,7 @@
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.31";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -541,7 +542,12 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     const plan=manualOverrides?{
     actions:(manualOverrides[entry.ctx.build.id]||[]).map(id=>({id})),
     settings:entry.ctx.settings,label:"Choix manuel"
-   }:planCurrentTurn(entry,remainingHp,entries.slice(index+1));
+   }:(()=>{
+    const fast=planCurrentTurn(entry,remainingHp,entries.slice(index+1));
+    const strategy=cleanTeamStrategy(options.teamStrategy||{mode:"fast"});
+    return strategy.mode==="long"?
+     planLongTeamTurn(entry,entries.slice(index+1),strategy,fast):fast;
+   })();
     let played=0;
     for(const action of plan.actions){
      if(remainingHp<=0)break;
