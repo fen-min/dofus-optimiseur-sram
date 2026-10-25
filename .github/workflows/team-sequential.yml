@@ -29,6 +29,8 @@ on:
       - "src/team-long-plan.js"
       - "src/sacrier-safety.js"
       - "src/sacrier-dps-rotation.js"
+      - "src/karuta-fifteen-plan.js"
+      - "test/karuta-fifteen-plan.test.mjs"
       - "test/sacrier-audited-optimizer.test.mjs"
       - "test/sacrier-safety.test.mjs"
       - "src/team-worker.js"
