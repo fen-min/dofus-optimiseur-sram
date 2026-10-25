@@ -1,0 +1,19 @@
+name: OMBRE - Audit manuel 3 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/manual-three-turns.mjs"
+      - ".github/workflows/manual-three-turns.yml"
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche des rotations manuelles sur 3 tours
+        run: node scripts/manual-three-turns.mjs
