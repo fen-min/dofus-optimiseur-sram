@@ -145,4 +145,61 @@ const report={
    personnage:a.character,sorts:a.actions.map(s=>s.name),damage:a.damage,spent:a.spent,pa:a.availablePA})))},
  scenarios:scenarios.map(x=>({mask:x.mask,total:x.damage}))
 };
+
+// Cross-check the automatic rotation through exactly the same MANUAL replay
+// and combine candidate actions independently for each actor on each round.
+// This tests legal mixed rotations that whole-character comparisons miss.
+const autoPlanById=Object.fromEntries(inOrder.map(ctx=>[
+ ctx.build.id,auto.turns.map(turn=>{
+  const actor=turn.actors.find(a=>a.id===ctx.build.id);
+  return actor.actions.map(action=>{
+   const spell=ctx.spells.find(sp=>sp.name===action.name);
+   assert.ok(spell,"Sort auto absent de la sélection : "+action.name);
+   return String(spell.id);
+  });
+ })
+]));
+const replayAuto=replay(autoPlanById);
+assert.ok(Math.abs(replayAuto.theoretical-auto.theoretical)<.2,
+ "La lecture manuelle doit reproduire les dégâts automatiques : "+replayAuto.theoretical+" vs "+auto.theoretical);
+const slots=[];
+for(let t=0;t<3;t++)for(const ctx of inOrder){
+ const id=ctx.build.id;
+ const variants=[plans[id].sans.rotations[t],plans[id].avec.rotations[t],autoPlanById[id][t]];
+ const distinct=[...new Map(variants.map(x=>[JSON.stringify(x),x])).values()];
+ slots.push({id,turn:t,variants:distinct});
+}
+let checked=0,valid=0,bestByRound=null;
+const selected=Object.fromEntries(inOrder.map(ctx=>[ctx.build.id,[[],[],[]]]));
+function compareRoundChoices(index){
+ if(index===slots.length){
+  checked++;
+  try{
+   const trial=replay(selected);
+   valid++;
+   if(!bestByRound||trial.theoretical>bestByRound.result.theoretical){
+    bestByRound={result:trial,
+     chosen:Object.fromEntries(Object.entries(selected).map(([id,v])=>[id,v.map(x=>x.slice())]))};
+   }
+  }catch{}
+  return;
+ }
+ const slot=slots[index];
+ for(const option of slot.variants){
+  selected[slot.id][slot.turn]=option;
+  compareRoundChoices(index+1);
+ }
+}
+compareRoundChoices(0);
+assert.ok(bestByRound,"Aucun mélange inter-tours disponible");
+report.combinaisonsParTour={
+ totalTeste:checked,valides:valid,total:bestByRound.result.theoretical,
+ rounds:bestByRound.result.turns.map(t=>round(t.theoretical)),
+ rotations:bestByRound.result.turns.map(t=>t.actors.map(a=>({
+  personnage:a.character,sorts:a.actions.map(sp=>sp.name),
+  damage:a.damage,spent:a.spent,pa:a.availablePA
+ })))
+};
+console.log("RECHERCHE_PAR_TOUR "+JSON.stringify(report.combinaisonsParTour));
+
 console.log("RESULTAT_FINAL "+JSON.stringify(report));
