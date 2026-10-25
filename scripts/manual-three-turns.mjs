@@ -202,4 +202,66 @@ report.combinaisonsParTour={
 };
 console.log("RECHERCHE_PAR_TOUR "+JSON.stringify(report.combinaisonsParTour));
 
+// Local improvement of the best legal MANUAL rotation: swaps, insertions,
+// deletions and substitutions, with full three-round replay after each move.
+let tuned={
+ plan:structuredClone(bestByRound.chosen),
+ result:bestByRound.result
+};
+let mutationTrials=0,mutationValid=0,improvements=0;
+const cache=new Map();
+const allSpells=Object.fromEntries(inOrder.map(ctx=>[
+ ctx.build.id,eligibleSpells(ctx,true).map(sp=>String(sp.id))
+]));
+function testMutation(id,turn,seq){
+ const plan={...tuned.plan,[id]:tuned.plan[id].map((x,t)=>t===turn?seq:x)};
+ const key=JSON.stringify(plan);
+ if(cache.has(key))return null;
+ cache.set(key,true);
+ mutationTrials++;
+ let result;
+ try{result=replay(plan);mutationValid++;}catch{return null;}
+ return result.theoretical>tuned.result.theoretical+.01?{plan,result}:null;
+}
+for(let pass=0;pass<6;pass++){
+ let winner=null;
+ // The previous winner stays fixed throughout this pass for a fair comparison.
+ for(const ctx of inOrder)for(let turn=0;turn<3;turn++){
+  const id=ctx.build.id,base=tuned.plan[id][turn];
+  const candidates=new Map();
+  const add=seq=>{const key=JSON.stringify(seq);if(key!==JSON.stringify(base))candidates.set(key,seq);};
+  for(let i=0;i<base.length;i++){
+   add(base.filter((_,j)=>j!==i));
+   for(let j=i+1;j<base.length;j++){
+    const seq=base.slice();[seq[i],seq[j]]=[seq[j],seq[i]];add(seq);
+   }
+   for(const spellId of allSpells[id]){
+    if(spellId===base[i])continue;
+    const seq=base.slice();seq[i]=spellId;add(seq);
+   }
+  }
+  for(let i=0;i<=base.length;i++)for(const spellId of allSpells[id]){
+   const seq=base.slice();seq.splice(i,0,spellId);add(seq);
+  }
+  for(const seq of candidates.values()){
+   const candidate=testMutation(id,turn,seq);
+   if(candidate&&(!winner||candidate.result.theoretical>winner.result.theoretical))winner=candidate;
+  }
+ }
+ if(!winner)break;
+ tuned=winner;improvements++;
+ console.log("AMELIORATION "+JSON.stringify({pass:pass+1,total:tuned.result.theoretical}));
+}
+report.affinageLocal={
+ mutationsTeste:mutationTrials,valides:mutationValid,ameliorations:improvements,
+ total:tuned.result.theoretical,
+ rounds:tuned.result.turns.map(t=>round(t.theoretical)),
+ rotations:tuned.result.turns.map(t=>t.actors.map(a=>({
+  personnage:a.character,sorts:a.actions.map(sp=>sp.name),
+  damage:a.damage,spent:a.spent,pa:a.availablePA
+ })))
+};
+console.log("AFFINAGE_LOCAL "+JSON.stringify(report.affinageLocal));
+
+
 console.log("RESULTAT_FINAL "+JSON.stringify(report));
