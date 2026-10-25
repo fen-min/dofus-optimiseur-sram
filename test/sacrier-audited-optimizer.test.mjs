@@ -1,0 +1,69 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {INITIAL_BUILDS,CLASSES} from "../src/classes.js";
+import {createTeamContext,optimizeTeamTurn,cleanTeamTarget} from "../src/team-core.js";
+import {playSequentialTeam} from "../src/team-sequential.js";
+import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
+import {planSacrierAuditedDps} from "../src/sacrier-dps-rotation.js";
+
+const base=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
+const pactSlot=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
+const variants=base.variants.slice();
+variants[pactSlot]="Pacte de Sang";
+const pact={...base,variants};
+const target=n=>cleanTeamTarget({turns:n,hp:1e12,criticals:true,
+ resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
+const strategy={mode:"long",horizon:10,effort:"quick",minHpPercent:50};
+
+function run(turns){
+ const t=target(turns),ctx=createTeamContext(pact,t);
+ let previous=null;
+ for(let i=0;i<turns;i++){
+  previous=optimizeTeamTurn([ctx],t,()=>{},previous,strategy);
+  assert.ok(sacrierHealthAboveFloor(previous.session.actors[0].state,50),
+   "Ne jamais descendre sous 50% des PV au tour "+(i+1));
+  assert.equal(previous.turns.length,i+1);
+  assert.ok(previous.turns[i].actors[0].spent<=12);
+ }
+ return previous;
+}
+test("Le mode long reprend le record manuel Sacrieur sur 3 tours",()=>{
+ const result=run(3);
+ const actions=result.turns.map(t=>t.actors[0].actions.map(a=>a.name));
+ console.log("SACRIER_AUDITED_AUTO_3 "+JSON.stringify({damage:result.theoretical,actions}));
+ assert.ok(result.theoretical>=7297.2,"Le DPS automatique 3 tours régresse: "+result.theoretical);
+ assert.equal(actions[0][0],"Pacte de Sang");
+});
+
+test("Le mode long reprend le record manuel Sacrieur sur 10 tours",()=>{
+ const result=run(10);
+ const actions=result.turns.map(t=>t.actors[0].actions.map(a=>a.name));
+ console.log("SACRIER_AUDITED_AUTO_10 "+JSON.stringify({damage:result.theoretical,actions}));
+ assert.ok(result.theoretical>=24429.3,"Le DPS automatique 10 tours régresse: "+result.theoretical);
+ assert.ok(actions[0].includes("Désolation"),"Il faut pouvoir retarder Pacte au T2");
+ assert.ok(actions[1].includes("Pacte de Sang"));
+ assert.ok(actions[4].includes("Pacte de Sang"));
+ assert.ok(actions[7].includes("Pacte de Sang"));
+});
+
+test("Le moteur manuel reproduit le plan choisi par l'automatique",()=>{
+ const turns=3,t=target(turns),ctx=createTeamContext(pact,t);
+ const auto=run(turns);
+ let manual=null;
+ for(let i=0;i<turns;i++){
+  const ids=auto.turns[i].actors[0].actions.map(a=>{
+   const spell=ctx.spells.find(s=>s.name===a.name);
+   assert.ok(spell,a.name);return spell.id;
+  });
+  manual=playSequentialTeam([ctx],t,()=>{},{previous:manual,oneRound:true,
+   manualOverrides:{[ctx.build.id]:ids}});
+ }
+ assert.ok(Math.abs(manual.theoretical-auto.theoretical)<.2);
+});
+
+test("La rotation de référence ne s'impose pas sans Pacte ou avec des PA différents",()=>{
+ const t=target(3),ctx=createTeamContext(base,t);
+ assert.equal(planSacrierAuditedDps({ctx,state:{},currentPA:12},strategy),null);
+ const other=createTeamContext(pact,t);
+ assert.equal(planSacrierAuditedDps({ctx:other,state:{},currentPA:14},strategy),null);
+});
