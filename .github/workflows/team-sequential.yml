@@ -28,6 +28,8 @@ on:
       - "test/team-long-plan.test.mjs"
       - "src/team-long-plan.js"
       - "src/sacrier-safety.js"
+      - "src/sacrier-dps-rotation.js"
+      - "test/sacrier-audited-optimizer.test.mjs"
       - "test/sacrier-safety.test.mjs"
       - "src/team-worker.js"
       - "src/team-ui.js"
