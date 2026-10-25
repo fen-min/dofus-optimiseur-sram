@@ -1,0 +1,19 @@
+name: OMBRE - Karuta DPS 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-ten-turns.mjs"
+      - ".github/workflows/karuta-ten-turns.yml"
+  workflow_dispatch:
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche Karuta sur 10 tours - cartes buffs et relances
+        run: node scripts/karuta-ten-turns.mjs
