@@ -6,14 +6,14 @@
 import {cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
 import {cleanSacrierMinHpPercent,sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
-export const DEFAULT_TEAM_STRATEGY=Object.freeze({mode:"long",horizon:10,effort:"balanced",minHpPercent:50});
+export const DEFAULT_TEAM_STRATEGY=Object.freeze({mode:"long",horizon:10,effort:"deep",minHpPercent:50});
 export function cleanTeamStrategy(raw={}){
  const obj=raw&&typeof raw==="object"?raw:{};
  const horizon=Number(obj.horizon);
  return {
   mode:obj.mode==="fast"?"fast":"long",
   horizon:Number.isInteger(horizon)?Math.max(3,Math.min(10,horizon)):10,
-  effort:["quick","balanced","deep"].includes(obj.effort)?obj.effort:"balanced",
+  effort:"deep",
   minHpPercent:cleanSacrierMinHpPercent(obj.minHpPercent)
  };
 }
