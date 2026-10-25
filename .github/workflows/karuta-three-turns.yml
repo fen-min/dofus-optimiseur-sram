@@ -1,0 +1,19 @@
+name: OMBRE - Recherche exhaustive Karuta
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-three-turns.mjs"
+      - ".github/workflows/karuta-three-turns.yml"
+  workflow_dispatch:
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche multicombinaisons Karuta seule
+        run: node scripts/karuta-three-turns.mjs
