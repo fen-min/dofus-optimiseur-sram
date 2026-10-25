@@ -228,3 +228,39 @@ test("Sram Manigance option follows its saved variant instead of silently castin
  assert.equal(sram.variants[i],"Manigance");
  assert.match(node("team-members").innerHTML,/Manigance équipé/);
 }));
+
+test("manual UI switches mode, chooses spells, supports undo and advances to next character",()=>withBrowser(({root,node})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const radio={value:"manual"};
+ root.listeners.change({target:{closest(selector){
+  return selector==='input[name="team-mode"]'?radio:null;
+ }}});
+ assert.equal(root.dataset.teamMode,"manual");
+ const initial=node("team-manual-board").innerHTML;
+ assert.match(initial,/Mon Sacrieur/);
+ assert.match(initial,/PA.*restants/);
+ assert.match(initial,/data-manual-cast="/);
+ assert.match(initial,/data-manual-next/);
+ assert.match(node("team-damage").innerHTML,/dégâts cumulés/);
+ const match=initial.match(/data-manual-cast="([^"]+)"/);
+ assert.ok(match);
+ const click=([flag,id])=>root.listeners.click({target:{closest(selector){
+  return {dataset:{manualCast:id||""},hasAttribute(name){
+   return name==="data-"+flag;
+  }};
+ }}});
+ click(["manual-cast",match[1]]);
+ assert.match(node("team-manual-board").innerHTML,/Actions choisies/);
+ click(["manual-undo"]);
+ assert.match(node("team-manual-board").innerHTML,/Aucune — tu peux passer le tour/);
+ click(["manual-next"]);
+ assert.match(node("team-manual-board").innerHTML,/Matryoshka/);
+ click(["manual-next"]);
+ assert.match(node("team-status").textContent,/Tour manuel enregistré/);
+ assert.match(node("team-manual-board").innerHTML,/Commencer le tour suivant/);
+ click(["manual-start"]);
+ assert.match(node("team-manual-board").innerHTML,/Tour 2/);
+ click(["manual-restart"]);
+ assert.match(node("team-manual-board").innerHTML,/Tour 1/);
+ assert.ok(node("team-damage").innerHTML);
+}));
