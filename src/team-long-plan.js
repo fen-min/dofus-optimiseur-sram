@@ -111,6 +111,67 @@ function prefixCandidates(entry,limit){
  return prefixes;
 }
 /**
+ * Efficient receding-horizon rollout. Unlike optimizeFromState, this bounded
+ * frontier does not retain 35 branches at every action, so 10-turn guidance
+ * remains usable with several teammates. Each projected spell is still cast
+ * by the real combat engine (PA, buffs, cards, cooldowns and dots).
+ */
+function projectionValue(s,lastTurn){
+ const left=Math.max(0,lastTurn-s.turn+1);
+ let bonus=0;
+ for(const buff of s.buffs||[]){
+  const turns=Math.min(left,buff.until-s.turn+1);
+  if(turns<=0)continue;
+  if(["Puissance","Eau","Air","Feu","Terre","Neutre"].includes(buff.stat))
+   bonus+=Math.max(0,buff.amount)*turns*.30;
+  if(buff.stat==="Dommages finaux")bonus+=Math.max(0,buff.amount)*turns*7;
+  if(buff.stat==="Critique")bonus+=Math.max(0,buff.amount)*turns*3;
+  if(buff.stat==="Dommages Critiques"||buff.stat==="Dommages")
+   bonus+=Math.max(0,buff.amount)*turns*3;
+ }
+ if(left&&s.ecaHand?.length){
+  const clubs=new Set(s.ecaHand.filter(c=>c.suit==="club").map(c=>c.rank));
+  bonus+=s.ecaHand.length*35+Math.max(0,clubs.size-2)*145;
+ }
+ return s.total+bonus;
+}
+function narrow(states,width,lastTurn){
+ const unique=new Map();
+ for(const s of states){
+  const key=JSON.stringify([s.turn,s.pa,s.used,s.ready,
+   s.buffs.map(b=>[b.key,b.amount,b.until]),
+   s.ecaHand,s.ecaTable,s.turquoiseProcs,s.dots,
+   s.enemyDebuff,s.sacrierHealth?.hp,s.mutilationStage,s.charges,s.position]);
+  const old=unique.get(key);
+  if(!old||s.total>old.total)unique.set(key,s);
+ }
+ return [...unique.values()].sort((a,b)=>
+  projectionValue(b,lastTurn)-projectionValue(a,lastTurn)).slice(0,width);
+}
+function futureRollout(seed,ctx,lastTurn,width){
+ let current=seed;
+ const spells=ctx.spells.filter(s=>isSelected(s,ctx)&&!s.status?.unsupported);
+ for(let turn=current.turn;turn<=lastTurn;turn++){
+  if(current.turn!==turn)break;
+  let frontier=[current],finished=[current];
+  const limit=Math.min(10,Math.ceil(current.pa/2)+2);
+  for(let depth=0;depth<limit;depth++){
+   const next=[];
+   for(const state of frontier)for(const spell of spells){
+    if(!eligible(spell,state,ctx.settings))continue;
+    next.push(castSpell(state,spell,ctx.settings));
+   }
+   if(!next.length)break;
+   frontier=narrow(next,width,lastTurn);
+   finished.push(...frontier);
+  }
+  const chosen=narrow(finished,1,lastTurn)[0]||current;
+  current=endTurn(chosen,ctx.settings);
+ }
+ return current.total;
+}
+
+/**
  * Compare real simulations of the actor's next H turns, plus an explicitly
  * approximate contribution for ally vulnerability and PA grants.
  * High search effort changes breadth, not the number of turns actually played.
@@ -147,7 +208,8 @@ export function planLongTeamTurn(entry,following=[],strategy=DEFAULT_TEAM_STRATE
   let forecast=0;
   try{
    const ended=endTurn(after,ctx.settings);
-   forecast=optimizeFromState(forecastSettings,ctx.spells,ended).total-state.total;
+   forecast=futureRollout(ended,ctx,forecastSettings.turns,
+    {quick:3,balanced:5,deep:9}[config.effort])-state.total;
   }catch{continue;}
   const allyValue=supportValue(state,after,actions,ctx,following,horizon);
   const value=forecast+allyValue;
