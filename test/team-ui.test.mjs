@@ -291,3 +291,44 @@ test("Choix manuel : modifier ses PA dans le compteur ne réinitialise pas le co
  assert.match(node("team-status").textContent,/entre 1 et 30/);
  assert.match(node("team-manual-board").innerHTML,/value="12"/);
 }));
+
+test("Interface manuelle : dégâts de ce tour mis à jour et Table Écaflip visible seulement pendant qu'elle existe",()=>withBrowser(({root,node})=>{
+ const eca=INITIAL_BUILDS.find(b=>b.classId==="ecaflip");
+ mountTeamModule({getBuilds:()=>[eca]});
+ root.listeners.change({target:{closest(selector){
+  return selector==='input[name="team-mode"]'?{value:"manual"}:null;
+ }}});
+ let html=node("team-manual-board").innerHTML;
+ assert.match(html,/data-manual-turn-damage/);
+ assert.match(html,/Dégâts de ce tour/);
+ assert.match(html,/≈ 0</);
+ assert.doesNotMatch(html,/data-manual-eca-table/);
+ root.listeners.change({target:{closest(selector){
+  return selector==='input[data-manual-turn-pa]'?{value:"26"}:null;
+ }}});
+ const cast=name=>{
+  const spell=CLASSES.ecaflip.spells.find(x=>x.name===name);
+  assert.ok(spell,name);
+  root.listeners.click({target:{closest(){
+   return {dataset:{manualCast:String(spell.id)},hasAttribute(flag){
+    return flag==="data-manual-cast";
+   }};
+  }}});
+  const value=node("team-status").textContent;
+  assert.doesNotMatch(value,/Choix manuel : (PA|Sort non disponible|Indisponible|Relance)/);
+  return node("team-manual-board").innerHTML;
+ };
+ html=cast("Yams");
+ assert.match(html,/data-manual-turn-damage/);
+ assert.doesNotMatch(html,/data-manual-eca-table/);
+ for(const name of ["Kraps","Griffe Joueuse","Infortune"])html=cast(name);
+ assert.doesNotMatch(html,/data-manual-eca-table/,"quatre cartes en main ne sont pas encore une Table");
+ html=cast("Baraka");
+ assert.match(html,/data-manual-eca-table/);
+ for(const rank of [2,3,4,5])assert.match(html,new RegExp('data-table-card="club:'+rank+'"'));
+ assert.match(html,/4 cartes jouées/);
+ html=cast("Tout ou Rien");
+ assert.doesNotMatch(html,/data-manual-eca-table/,"la Table a été consommée");
+ assert.match(html,/Dégâts de ce tour/);
+ assert.match(html,/data-manual-turn-damage/);
+}));
