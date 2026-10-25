@@ -10,12 +10,13 @@ const target=cleanTeamTarget({
 const lineup=INITIAL_BUILDS.map(build=>createTeamContext(build,target));
 const named=Object.fromEntries(INITIAL_BUILDS.map(b=>[b.classId,b.id]));
 const histories={ecaflip:[],sram:[],sacrieur:[]};
+const legacyUnrestricted={mode:"fast",horizon:10,effort:"balanced",minHpPercent:0};
 test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrier buff health",()=>{
  assert.equal(target.turns,100);
  assert.ok(lineup.every(c=>c.settings.turns===100));
  let previous=null;
  for(let i=1;i<=100;i++){
-  previous=optimizeTeamTurn(lineup,target,()=>{},previous);
+  previous=optimizeTeamTurn(lineup,target,()=>{},previous,legacyUnrestricted);
   assert.equal(previous.turns.length,i,"exactly ONE team round per call");
   assert.equal(previous.session.actors.length,3);
   for(const [classId,id] of Object.entries(named)){
@@ -88,7 +89,7 @@ test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrie
   assert.ok(t.suffering>=0&&t.suffering<=10);
  }
  assert.equal(previous.finished,true);
- assert.throws(()=>optimizeTeamTurn(lineup,target,()=>{},previous),
+ assert.throws(()=>optimizeTeamTurn(lineup,target,()=>{},previous,legacyUnrestricted),
   /terminé|recommence/i,"101st click must not calculate a new round");
  assert.ok(previous.theoretical>0);
 });
