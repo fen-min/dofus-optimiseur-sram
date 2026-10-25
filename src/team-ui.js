@@ -42,7 +42,12 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   ap:options?.ap
  }]));
  let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
+ // Old installations used 10 rounds as the maximum. Promote that legacy
+ // default once so existing users also benefit from the new 100-round mode.
  let strategy=cleanTeamStrategy(saved?.strategy);
+ if(saved?.strategy?.horizon===10){
+  strategy=cleanTeamStrategy({...strategy,horizon:100});
+ }
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
  const storeState=()=>saveStore(ids,target,memberOptions,strategy);
