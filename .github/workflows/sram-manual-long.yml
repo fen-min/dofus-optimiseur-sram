@@ -19,3 +19,8 @@ jobs:
         run: node scripts/sram-manual-extend.mjs
       - name: Verification 15 et 100 tours - Manigance sans renouvellement inutile
         run: SRAM_AVOID_REDUNDANT=1 node scripts/sram-manual-extend.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rotations-sram-100-tours-verifiees
+          path: results/sram-100-verified*.json
+          retention-days: 14
