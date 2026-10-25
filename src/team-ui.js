@@ -155,22 +155,28 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }catch(error){board.innerHTML='<p class="manual-guide">'+safe(error.message)+'</p>';}
  }
  function renderResult(){
-  const present=!!result;
-  const turn=result?.turns[activeTurn-1];
-  $("team-calculate").textContent=result?(result.finished?"✓ Combat terminé":"▶ Tour suivant ("+(result.turns.length+1)+")"):"▶ Calculer le tour 1";
-  $("team-calculate").disabled=!!worker||!!result?.finished;
-  $("team-restart").disabled=!result||!!worker;
+  let draftPreview=null;
+  if(mode==="manual"&&manualDraft){
+   try{draftPreview=previewManualDraft(manualContexts(),target,manualDraft).result;}
+   catch(error){status("Choix manuel : "+error.message);}
+  }
+  const displayed=draftPreview||result;
+  const present=!!displayed;
+  const turn=displayed?.turns[activeTurn-1];
+  $("team-calculate").textContent=displayed?(displayed.finished?"✓ Combat terminé":"▶ Tour suivant ("+(displayed.turns.length+1)+")"):"▶ Calculer le tour 1";
+  $("team-calculate").disabled=!!worker||!!displayed?.finished;
+  $("team-restart").disabled=!displayed||!!worker;
   $("team-turn-select").disabled=!present;
-  $("team-turn-select").innerHTML=present?result.turns.map(t=>
-   '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+result.turns.length+'</option>').join(""):
+  $("team-turn-select").innerHTML=present?displayed.turns.map(t=>
+   '<option value="'+t.number+'"'+(t.number===activeTurn?' selected':'')+'>Tour '+t.number+' / '+displayed.turns.length+'</option>').join(""):
    '<option value="">Calcule d\'abord une rotation</option>';
-  $("team-turn-buttons").innerHTML=present?result.turns.map(t=>
+  $("team-turn-buttons").innerHTML=present?displayed.turns.map(t=>
    '<button type="button" data-team-turn="'+t.number+'" class="'+(t.number===activeTurn?'is-current':'')+
    '" aria-pressed="'+(t.number===activeTurn)+'">Tour '+t.number+'</button>').join(""):"";
   const ordered=present?turn.actors:getMembers();
   $("team-order").innerHTML='<div class="team-order-heading"><strong>Ordre de jeu'+
    (present?' · Tour '+activeTurn:'')+'</strong><small>'+
-   (present?'Tour '+activeTurn+' sur '+result.turns.length+' calculé(s)':
+   (present?'Tour '+activeTurn+' sur '+displayed.turns.length+' calculé(s)':
     'Les personnages joueront dans cet ordre')+'</small></div>'+
    ordered.map((actor,index)=>'<div class="team-order-row'+
     (actor.defeated?' is-last':'')+'">'+
@@ -185,7 +191,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     '<span class="team-spell-chip'+(s.autoRefreshed?' is-buff-refreshed':'')+'"'+(s.autoRefreshed?' title="Buff expiré : relance automatique"':'')+'>'+
      (s.autoRefreshed?'↻ ':'')+safe(s.name)+' <small>'+safe(s.pa)+' PA</small></span>').join(""):
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
-   '<div class="team-rotation-meta">'+fmt(a.spent)+'/'+fmt(a.availablePA??result.members.find(m=>m.id===a.id)?.ap??0)+' PA utilisés'+
+   '<div class="team-rotation-meta">'+fmt(a.spent)+'/'+fmt(a.availablePA??displayed.members.find(m=>m.id===a.id)?.ap??0)+' PA utilisés'+
    (a.paBonus?' · bonus '+(a.paBonus>0?'+':'')+fmt(a.paBonus)+' PA':'')+' · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
    (Number.isFinite(a.criticalRate)?
@@ -196,16 +202,16 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
 
    (a.health?' · PV estimés '+fmt(a.health.hp)+'/'+fmt(a.health.maxHp)+
     ' · Souffrance '+safe(a.health.suffering):'')+
-   (activeTurn===1&&result.members.find(m=>m.id===a.id)?.chosenOpening?
-    ' · ouverture choisie : '+safe(result.members.find(m=>m.id===a.id).chosenOpening):'')+
+   (activeTurn===1&&displayed.members.find(m=>m.id===a.id)?.chosenOpening?
+    ' · ouverture choisie : '+safe(displayed.members.find(m=>m.id===a.id).chosenOpening):'')+
    '</div></div>').join(""):
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>';
-  updateDamageLeaderboard($("team-damage"),result,activeTurn,{safe,fmt});
+  updateDamageLeaderboard($("team-damage"),displayed,activeTurn,{safe,fmt});
   const info=$("team-assumptions");
-  info.textContent=present?result.warnings.filter(note=>!/PV de la cible|cible possède des PV/i.test(note)).join(" "):
+  info.textContent=present?displayed.warnings.filter(note=>!/PV de la cible|cible possède des PV/i.test(note)).join(" "):
    "Chaque personnage joue après le précédent, avec les PV de cible communs et les buffs et relances personnels. Les buffs de soutien entre alliés ne sont pas encore entièrement modélisés.";
  }
- function render(){renderMembers();renderTarget();renderResult();}
+ function render(){renderMembers();renderTarget();renderResult();renderManual();}
  function changeSlot(index,value){
   const roster=getMembers().map(b=>b.id);
   if(value&&!getBuilds().some(b=>b.id===value))return;
@@ -213,7 +219,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(index<0||index>=TEAM_LIMIT)return;
   if(value)roster[index]=value;
   else if(index<roster.length)roster.splice(index,1);
-  ids=roster.filter(Boolean);storeState();cancel();result=null;activeTurn=1;render();
+  ids=roster.filter(Boolean);storeState();cancel();manualDraft=null;result=null;activeTurn=1;render();
   status(ids.length?"Composition modifiée. Relance le calcul pour actualiser les recommandations.":"Ajoute au moins un personnage.");
  }
  function changeMemberOption(id,field,value){
@@ -228,7 +234,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
   if(field!=="ap")return;
   memberOptions={...memberOptions,[id]:{ap:value}};
-  storeState();cancel();result=null;activeTurn=1;renderMembers();renderResult();
+  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
  }
  function changeTarget(){
@@ -236,7 +242,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    hp:INTERNAL_TARGET_HP,turns:100,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
-  storeState();cancel();result=null;activeTurn=1;renderTarget();renderResult();
+  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();
   status("Cible modifiée. Lance le calcul pour actualiser les résultats.");
  }
  function calculate(){
@@ -279,6 +285,19 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
  }
  root.addEventListener("change",event=>{
+  const selector=event.target.closest('input[name="team-mode"]');
+  if(selector){
+   mode=selector.value==="manual"?"manual":"automatic";
+   cancel();manualDraft=null;result=null;activeTurn=1;
+   if(mode==="manual"&&getMembers().length){
+    try{manualDraft=newManualDraft(manualContexts(),target);}
+    catch(error){status("Choix manuel : "+error.message);}
+   }
+   renderResult();renderManual();
+   status(mode==="manual"?"Mode Choix manuel : sélectionne les sorts du personnage courant.":
+    "Mode Optimisation automatique : calcule le prochain tour.");
+   return;
+  }
   const buff=event.target.closest("select[data-team-buff]");
   if(buff){
    const build=getMembers().find(b=>b.id===buff.dataset.teamBuff);
@@ -286,7 +305,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    if(!build||!CLASSES[build.classId]?.pairs[group]?.includes(name)||
      typeof onChangeVariant!=="function"){renderMembers();return;}
    if(build.variants?.[group]!==name){
-    cancel();result=null;activeTurn=1;
+    cancel();manualDraft=null;result=null;activeTurn=1;
     if(!onChangeVariant(build.id,group,name)){render();return;}
     storeState();render();
     status(name+" équipé sur "+build.character+
@@ -300,9 +319,33 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(pa){changeMemberOption(pa.dataset.teamAp,"ap",pa.value);return;}
   if(event.target.closest("#team-settings"))changeTarget();
  });
+ root.addEventListener("click",event=>{
+  const button=event.target.closest("button[data-manual-start],button[data-manual-cast],button[data-manual-undo],button[data-manual-reset],button[data-manual-next]");
+  if(!button||mode!=="manual")return;
+  try{
+   const contexts=manualContexts();
+   if(button.hasAttribute("data-manual-start")){
+    manualDraft=newManualDraft(contexts,target,result);
+   }else if(button.hasAttribute("data-manual-cast")){
+    manualDraft=chooseManualSpell(contexts,target,manualDraft,button.dataset.manualCast);
+   }else if(button.hasAttribute("data-manual-undo")){
+    manualDraft=undoManualSpell(contexts,target,manualDraft);
+   }else if(button.hasAttribute("data-manual-reset")){
+    manualDraft=resetManualActor(contexts,target,manualDraft);
+   }else if(button.hasAttribute("data-manual-next")){
+    const completed=nextManualActor(contexts,target,manualDraft);
+    manualDraft=completed.draft;
+    if(completed.result)result=completed.result;
+   }
+   activeTurn=manualDraft?(result?.turns.length||0)+1:(result?.turns.length||1);
+   renderResult();renderManual();
+   status(manualDraft?"Choix manuel : sélectionne les sorts, ou passe au suivant.":
+    "Tour manuel enregistré. Clique sur Commencer le tour suivant pour continuer.");
+  }catch(error){status("Choix manuel : "+error.message);}
+ });
  $("team-calculate").addEventListener("click",calculate);
  $("team-restart").addEventListener("click",()=>{
-  cancel();result=null;activeTurn=1;renderResult();
+  cancel();manualDraft=null;result=null;activeTurn=1;renderResult();
   status("Combat réinitialisé. Clique pour calculer uniquement le tour 1.");
  });
  $("team-cancel").addEventListener("click",()=>{
@@ -328,7 +371,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    previousSignature=signature;
    const allowed=new Set(getBuilds().map(b=>b.id));
    ids=ids.filter(id=>allowed.has(id));
-   cancel();result=null;activeTurn=1;
+   cancel();manualDraft=null;result=null;activeTurn=1;
    storeState();
    render();
    status("Équipe actualisée depuis Personnages & builds. Les dégâts doivent être recalculés.");
@@ -337,7 +380,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  window.addEventListener("storage",event=>{
   if(event.key===TEAM_STORAGE_KEY){
    const other=readStore();
-   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:100});memberOptions=other.memberOptions||{};cancel();result=null;activeTurn=1;render();}
+   if(other){ids=other.ids||[];target=cleanTeamTarget({...other.target,hp:INTERNAL_TARGET_HP,turns:100});memberOptions=other.memberOptions||{};cancel();manualDraft=null;result=null;activeTurn=1;render();}
   }
  });
  window.addEventListener("pagehide",cancel);
