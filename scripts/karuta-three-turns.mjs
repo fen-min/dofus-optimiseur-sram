@@ -150,6 +150,12 @@ function runSearch(mode,allowed,configs){
   if(res){
    top.push(res);best=max(best,res);
   }
+  // Keep diverse fully legal 3-turn trajectories, not only the top scorer,
+  // so local mutations can start from distinct card/buff setups.
+  for(const candidate of seeds.slice(1,13)){
+   const variant=evalPlan(candidate.rotations);
+   if(variant)top.push(variant);
+  }
   console.log("BEAM "+JSON.stringify({mode,weight:conf.weight,width:conf.width,
    turnStates:conf.turnStates,total:res?.total,
    rotation:res?.rotations.map(N)}));
@@ -157,12 +163,12 @@ function runSearch(mode,allowed,configs){
  return {best,top};
 }
 const configs=[
- {weight:0,width:280,depth:9,keep:25,turnStates:28},
- {weight:.5,width:280,depth:9,keep:25,turnStates:28},
- {weight:1,width:280,depth:9,keep:25,turnStates:28},
- {weight:2,width:280,depth:9,keep:25,turnStates:28},
- {weight:5,width:280,depth:9,keep:25,turnStates:28},
- {weight:9,width:280,depth:9,keep:25,turnStates:28}
+ {weight:0,width:550,depth:10,keep:45,turnStates:60},
+ {weight:.25,width:550,depth:10,keep:45,turnStates:60},
+ {weight:.75,width:550,depth:10,keep:45,turnStates:60},
+ {weight:1.5,width:550,depth:10,keep:45,turnStates:60},
+ {weight:3,width:550,depth:10,keep:45,turnStates:60},
+ {weight:6,width:550,depth:10,keep:45,turnStates:60}
 ];
 const broad=runSearch("tous_sort",usable,configs);
 const noPrepSpells=usable.filter(s=>!(
@@ -241,7 +247,7 @@ function localClimb(seed,maxPasses=25){
 let globalBest=seeds.reduce(max,null);
 const distinctSeeds=[...new Map(seeds.map(x=>[JSON.stringify(x.rotations),x])).values()]
  .sort((a,b)=>b.total-a.total);
-for(const s of distinctSeeds.slice(0,5)){
+for(const s of distinctSeeds.slice(0,20)){
  const improved=localClimb(s,22);
  globalBest=max(globalBest,improved);
  console.log("RESTART "+JSON.stringify({seed:s.total,best:improved.total,global:globalBest.total}));
@@ -255,7 +261,7 @@ const result={
   noRekop:verify(withoutRekop.best),
   auto:verify(baseline)
  },
- counts:{...stats,mutationCount,mutationLegal,restarts:Math.min(5,distinctSeeds.length)},
+ counts:{...stats,mutationCount,mutationLegal,restarts:Math.min(20,distinctSeeds.length)},
  bestRotations:globalBest.rotations.map(N)
 };
 assert.ok(result.scenarios.manualAll.total>=result.scenarios.auto.total);
