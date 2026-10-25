@@ -223,7 +223,7 @@ function testMutation(id,turn,seq){
  try{result=replay(plan);mutationValid++;}catch{return null;}
  return result.theoretical>tuned.result.theoretical+.01?{plan,result}:null;
 }
-for(let pass=0;pass<6;pass++){
+for(let pass=0;pass<30;pass++){
  let winner=null;
  // The previous winner stays fixed throughout this pass for a fair comparison.
  for(const ctx of inOrder)for(let turn=0;turn<3;turn++){
