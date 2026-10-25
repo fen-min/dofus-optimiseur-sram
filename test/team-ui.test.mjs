@@ -368,3 +368,15 @@ test("La profondeur de recherche est toujours approfondie sans sélecteur",()=>{
  assert.doesNotMatch(html,/for="team-effort"/);
  assert.match(html,/id="team-horizon"/);
 });
+
+test("UI: horizon 100 tours par défaut et ancien réglage 10 migré",()=>withBrowser(({node,localStorage})=>{
+ const saved={ids:["sacri-air-pvm","sram-air-pvm"],
+  strategy:{mode:"long",horizon:10,effort:"balanced",minHpPercent:50}};
+ localStorage.setItem("ombre-team-dps-v1",JSON.stringify(saved));
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ assert.equal(node("team-horizon").value,"100");
+ const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+ assert.match(html,/<option value="100" selected>100 tours/);
+ assert.match(html,/<option value="15">15 tours/);
+ assert.doesNotMatch(html,/value="101"/);
+});
