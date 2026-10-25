@@ -238,3 +238,13 @@
 .team-hp-floor{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#e5efff}
 .team-hp-floor select{background:#20283d;color:#fff;border:1px solid #53617e;border-radius:7px;padding:6px 8px;min-width:112px}
 .manual-hp-warning{border:1px solid #d69362;color:#ffe2c4;background:#523522;border-radius:8px;padding:10px 12px;font-size:12px}
+
+/* Show unavailable Sacrier Pacte at the rotation itself, not only the roster. */
+.team-pact-warning{padding:12px 14px;margin:0 0 12px;border-radius:10px;
+ border:1px solid #dca35a;background:rgba(157,94,31,.16);color:#ffdfac;
+ font-size:12px;line-height:1.55}
+.team-pact-warning strong{color:#ffe8c4}
+.team-pact-warning button{padding:6px 10px;margin:5px 0 0 9px;
+ color:#1a1420;background:#dca35a;border:0;border-radius:7px;font-weight:750;
+ cursor:pointer}
+.team-pact-warning button:hover{background:#f3b865}
