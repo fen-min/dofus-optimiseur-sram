@@ -72,3 +72,17 @@ test("Karuta: 100 future rounds are accepted in multi-actor team", {timeout:1800
   karuta:result.turns[0].actors.find(a=>a.character==="Karuta")?.actions.map(a=>a.name)
  }));
 });
+
+test("Karuta: after the 15th round, forecast switches to dynamic long optimizer", {timeout:120000},()=>{
+ const t=target(100),ctx=createTeamContext(karuta,t);
+ let prev=null;
+ for(let i=0;i<16;i++)prev=optimizeTeamTurn([ctx],t,()=>{},prev,strategy);
+ assert.equal(prev.turns.length,16);
+ assert.ok(prev.theoretical>=66672.3,"Cumulative DPS should remain nondecreasing");
+ assert.ok(prev.turns[15].actors[0].spent<=12);
+ assert.equal(prev.session.teamStrategy.horizon,100);
+ console.log("KARUTA_DYNAMIC_AFTER_15 "+JSON.stringify({
+  first15:Math.round((prev.theoretical-prev.turns[15].theoretical)*10)/10,
+  turn16:prev.turns[15].actors[0].actions.map(a=>a.name),total:prev.theoretical
+ }));
+});
