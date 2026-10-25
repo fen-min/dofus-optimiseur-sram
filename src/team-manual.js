@@ -44,7 +44,7 @@ export function newManualDraft(contexts,target,previous=null){
  if(previous?.finished)throw Error("Le combat est terminé : recommence au tour 1.");
  const ids=contexts.map(x=>x?.build?.id);
  if(new Set(ids).size!==ids.length||ids.some(x=>!x))throw Error("Équipe invalide.");
- const draft={previous,actions:Object.fromEntries(ids.map(id=>[id,[]])),cursor:0};
+ const draft={previous,actions:Object.fromEntries(ids.map(id=>[id,[]])),paOverrides:{},cursor:0};
  previewManualDraft(contexts,target,draft); // validate stored turn and signature
  return draft;
 }
@@ -55,7 +55,8 @@ export function previewManualDraft(contexts,target,draft){
   throw Error("Personnage courant invalide.");
  const preview=playSequentialTeam(contexts,target,()=>{},{
   previous:draft.previous,oneRound:true,
-  manualOverrides:draft.actions,manualPreview:true,manualCursor:draft.cursor
+  manualOverrides:draft.actions,manualPaOverrides:draft.paOverrides||{},
+  manualPreview:true,manualCursor:draft.cursor
  });
  const current=ordered[draft.cursor],id=current.build.id;
  const state=preview.previewStates?.[id];
@@ -115,6 +116,30 @@ export function manualSpellChoices(contexts,target,draft){
   b.score-a.score||a.pa-b.pa||a.name.localeCompare(b.name,"fr"));
  return choices;
 }
+/**
+ * Adjust PA ONLY for the actor currently being played. 1-30 PA represents
+ * the total available at the start of their turn, including team bonuses.
+ * This does not overwrite build PA or any previous/next turn.
+ * If chosen spells no longer fit, the change is rejected rather than silently
+ * dropping spells.
+ */
+export function setManualTurnPA(contexts,target,draft,value){
+ const pa=Number(value);
+ if(!Number.isInteger(pa)||pa<1||pa>30)
+  throw Error("Choisis un nombre entier de PA entre 1 et 30.");
+ const {current,state,actor}=previewManualDraft(contexts,target,draft);
+ const before=Number(draft.paOverrides?.[current.build.id]??actor.availablePA);
+ if(pa===before)return draft;
+ const updated={...draft,paOverrides:{...(draft.paOverrides||{}),
+  [current.build.id]:pa}};
+ try{
+  previewManualDraft(contexts,target,updated);
+ }catch(error){
+  throw Error("Impossible de définir "+pa+" PA avec ces sorts déjà choisis. "+
+   "Annule le dernier sort ou augmente les PA. "+error.message);
+ }
+ return updated;
+}
 export function chooseManualSpell(contexts,target,draft,spellId){
  const options=manualSpellChoices(contexts,target,draft);
  const selected=options.find(x=>x.id===String(spellId));
@@ -140,7 +165,8 @@ export function nextManualActor(contexts,target,draft){
  }
  // A full team round is now committed, *exactly once*.
  const committed=playSequentialTeam(contexts,target,()=>{},{
-  previous:draft.previous,oneRound:true,manualOverrides:draft.actions
+  previous:draft.previous,oneRound:true,manualOverrides:draft.actions,
+  manualPaOverrides:draft.paOverrides||{}
  });
  return {draft:null,result:committed};
 }
