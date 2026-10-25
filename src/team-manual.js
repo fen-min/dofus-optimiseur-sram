@@ -20,7 +20,20 @@ const isSelected=(spell,ctx)=>spell.isWeapon===true||
  ctx.settings.variants?.[spell.variantGroup]===spell.name;
 const knownIcons=Object.freeze({
  // Official Dofus iconId, verified against the OpenDofusDB spell page.
- "Yams":"https://api.openddb.dev/static/spell/2x/sort_13413.png"
+ "Yams":"https://api.openddb.dev/static/spell/2x/sort_13413.png",
+ "Griffe Joueuse":"https://api.openddb.dev/static/spell/2x/sort_12313.png",
+ "Baraka":"https://api.openddb.dev/static/spell/2x/sort_13396.png",
+ "Tout ou Rien":"https://api.openddb.dev/static/spell/2x/sort_13459.png",
+ "Kraps":"https://api.openddb.dev/static/spell/2x/sort_12337.png",
+ "Rekop":"https://api.openddb.dev/static/spell/2x/sort_12316.png",
+ "Furie":"https://api.openddb.dev/static/spell/2x/sort_11949.png",
+ "Mutilation":"https://api.openddb.dev/static/spell/2x/sort_11934.png",
+ "Pacte de Sang":"https://api.openddb.dev/static/spell/2x/sort_11977.png",
+ "Assaut":"https://api.openddb.dev/static/spell/2x/sort_11939.png",
+ "Épidémie":"https://api.openddb.dev/static/spell/2x/sort_12017.png",
+ "Arnaque":"https://api.openddb.dev/static/spell/2x/sort_13801.png",
+ "Manigance":"https://api.openddb.dev/static/spell/2x/sort_12982.png",
+ "Fourvoiement":"https://api.openddb.dev/static/spell/2x/sort_11994.png"
 });
 export function manualSpellIcon(spell){
  return knownIcons[spell?.name]||null;
