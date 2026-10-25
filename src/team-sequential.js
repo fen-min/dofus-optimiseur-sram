@@ -572,7 +572,10 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
     if(previewStates)previewStates[entry.ctx.build.id]=structuredClone(entry.state);
     const beforeEnd=entry.state.total;
-    entry.state=endTurn(entry.state,plan.settings);
+    // A manual preview must never award a future actor's poison ticks
+    // before the user actually completes that actor's turn.
+    if(!(options.manualPreview&&index>=options.manualCursor))
+     entry.state=endTurn(entry.state,plan.settings);
     const delayed=remainingHp>0?round(Math.max(0,entry.state.total-beforeEnd)):0;
     actor.poison=delayed;
     actor.damage=round(actor.damage+delayed);
