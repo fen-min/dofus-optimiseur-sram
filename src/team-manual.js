@@ -64,6 +64,32 @@ export function previewManualDraft(contexts,target,draft){
  const actor=preview.turns.at(-1).actors.find(a=>a.id===id);
  return {result:preview,current,actor,state,order:ordered};
 }
+/** Current actor's selected actions only: never confuse an estimated
+ * future poison tick with confirmed damage already dealt in this turn. */
+export function manualCurrentTurnDamage(preview){
+ const actor=preview?.actor||{};
+ const direct=round(Math.max(0,Number(actor.direct)||0));
+ const delayed=round(Math.max(0,Number(actor.poison)||0));
+ const damage=round(direct+delayed);
+ const spentPA=Math.max(0,Number(actor.spent)||0);
+ return {damage,direct,delayed,spentPA,
+  damagePerPA:spentPA>0?round(damage/spentPA):0};
+}
+/** The actual Table, not the character's hand or still-active combo buffs.
+ * Once Tout ou Rien retrieves these cards, the Table becomes empty and
+ * disappears immediately from the UI. */
+export function manualActiveEcaflipTable(preview){
+ if(preview?.current?.settings?.classId!=="ecaflip")return [];
+ const state=preview.state;
+ return (state?.ecaTable||[]).filter(card=>
+  card&&["club","spade","heart","diamond"].includes(card.suit)&&
+  Number.isInteger(card.rank)&&card.rank>=2&&card.rank<=5&&
+  Number(card.expires)>=state.turn
+ ).map(card=>({
+  suit:card.suit,rank:card.rank,
+  remainingTurns:card.expires-state.turn+1
+ }));
+}
 export function manualSpellChoices(contexts,target,draft){
  const {current,state}=previewManualDraft(contexts,target,draft);
  const choices=current.spells.filter(spell=>isSelected(spell,current)).map(spell=>{
