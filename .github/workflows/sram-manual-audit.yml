@@ -1,0 +1,50 @@
+name: OMBRE - Sram DPS manuel 3 10 15 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sram-manual-audit.mjs"
+      - "scripts/sram-manual-extend.mjs"
+      - ".github/workflows/sram-manual-audit.yml"
+  workflow_dispatch:
+jobs:
+  sram-3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche manuelle approfondie - Sram 3 tours
+        run: node scripts/sram-manual-audit.mjs 3
+  sram-10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche manuelle approfondie - Sram 10 tours
+        run: node scripts/sram-manual-audit.mjs 10
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sram-ten-manual
+          path: results/sram-10-best.json
+          retention-days: 7
+  sram-15-and-100:
+    needs: sram-10
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: sram-ten-manual
+          path: results
+      - name: Verifier la rotation manuelle sur 15 et 100 tours
+        run: node scripts/sram-manual-extend.mjs
