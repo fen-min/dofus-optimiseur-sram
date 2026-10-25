@@ -59,3 +59,21 @@ test("Le choix manuel ne passe jamais par le planificateur longue durée",()=>{
  assert.equal(current.state.turn,1);
  assert.equal(current.result.turns.length,1);
 });
+
+test("Audit DPS équipe sur 3 tours avec anticipation 10 tours", {timeout:240000},()=>{
+ const contexts=INITIAL_BUILDS.map(build=>createTeamContext(build,target));
+ const results={};
+ for(const mode of ["fast","long"]){
+  let previous=null;
+  const start=Date.now();
+  for(let turn=1;turn<=3;turn++)previous=optimizeTeamTurn(
+   contexts,target,()=>{},previous,{mode,horizon:10,effort:"balanced"});
+  assert.equal(previous.turns.length,3);
+  results[mode]={damage:previous.theoretical,elapsedMs:Date.now()-start,
+   rounds:previous.turns.map(t=>t.theoretical),
+   actors:previous.members.map(m=>({name:m.character,damage:m.estimated}))};
+  assert.ok(previous.turns.every(t=>t.actors.every(a=>a.spent<=a.availablePA)));
+ }
+ console.log("AUDIT_DPS_EQUIPE "+JSON.stringify(results));
+ assert.ok(results.long.damage>0&&results.fast.damage>0);
+});
