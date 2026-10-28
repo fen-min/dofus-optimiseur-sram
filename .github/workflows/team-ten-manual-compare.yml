@@ -1,0 +1,23 @@
+name: OMBRE - Audit DPS equipe manuel 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/team-ten-manual-compare.mjs"
+      - ".github/workflows/team-ten-manual-compare.yml"
+  workflow_dispatch:
+jobs:
+  optimize-team:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rejouer le journal et tester les rotations d'equipe sur 10 tours
+        run: node scripts/team-ten-manual-compare.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-dps-equipe-10-tours
+          path: results/team-10-manual-compare.json
