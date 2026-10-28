@@ -12,7 +12,7 @@ import {saveMultiContext} from "./multi-build-link.js?v=2.1";
 import {openAssistPin,canPinAssist,pinAssistUnsupported} from "./assist-pin.js?v=1.6";
 import {groupActiveEffects,effectDuration,effectValue} from "./effect-view.js?v=1.1";
 import {SPELL_EFFECTS_AUDIT} from "./spell-effects-audit.js?v=3.20";
-import {WEAPONS,normalizedWeaponId} from "./weapons.js?v=3.22";
+import {WEAPONS,normalizedWeaponId} from "./weapons.js?v=3.57";
 
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
