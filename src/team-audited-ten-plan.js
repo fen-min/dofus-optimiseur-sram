@@ -54,6 +54,52 @@ export const TEAM_TEN_AUDITED=Object.freeze({
  ]
 });
 
+/** Deep manual team search, corrected cards/Manthache engine. */
+export const TEAM_TEN_ATTACK=Object.freeze({
+ sacrieur:[
+  ["Furie","Furie","Carnage","Assaut"],
+  ["Pacte de Sang","Carnage","Furie","Furie"],
+  ["Carnage","Furie","Furie","Assaut"],
+  ["Carnage","Furie","Furie","Assaut"],
+  ["Pacte de Sang","Furie","Furie","Assaut","Assaut"],
+  ["Carnage","Manthache","Furie"],
+  ["Carnage","Furie","Manthache"],
+  ["Pacte de Sang","Carnage","Furie","Furie"],
+  ["Carnage","Manthache","Furie"],
+  ["Furie","Furie","Assaut","Désolation"]
+ ],
+ ecaflip:[
+  ["Yams","Griffe Joueuse","Kraps","Sceptre du Roi Joueur"],
+  ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
+  ["Pile ou Face","Kraps","Sceptre du Roi Joueur","Infortune"],
+  ["Griffe Joueuse","Kraps","Infortune"],
+  ["Griffe Joueuse","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+  ["Pile ou Face","Kraps","Sceptre du Roi Joueur","Infortune"],
+  ["Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+  ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
+  ["Kraps","Pile ou Face","Sceptre du Roi Joueur","Infortune"],
+  ["Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Infortune"]
+ ],
+ sram:TEAM_TEN_AUDITED.sram
+});
+/** Same Karuta/Sram improvements with a Sacrier opening maintaining >=60%. */
+export const TEAM_TEN_SAFE60=Object.freeze({
+ sacrieur:[
+  ["Furie","Furie","Carnage","Assaut"],
+  ["Pacte de Sang","Furie","Manthache","Assaut"],
+  ["Carnage","Furie","Furie","Assaut"],
+  ["Carnage","Furie","Furie","Assaut"],
+  ["Pacte de Sang","Furie","Furie","Assaut","Assaut"],
+  ["Carnage","Furie","Manthache"],
+  ["Carnage","Furie","Manthache"],
+  ["Pacte de Sang","Carnage","Furie","Furie"],
+  ["Furie","Furie","Manthache"],
+  ["Furie","Furie","Manthache"]
+ ],
+ ecaflip:TEAM_TEN_ATTACK.ecaflip,
+ sram:TEAM_TEN_AUDITED.sram
+});
+
 /** Literal reconstruction of the user's current ten-round exported log. */
 export const TEAM_TEN_BASELINE=Object.freeze({
  sacrieur:[
@@ -89,7 +135,7 @@ const selected=(ctx,s)=>s.isWeapon===true||ctx.settings.variants?.[s.variantGrou
 function canBuildTeam(contexts,strategy,target){
  if(strategy.mode!=="long"||strategy.horizon<10||
   !Array.isArray(contexts)||contexts.length!==3||target.turns<10)return null;
- if(strategy.minHpPercent!==50)return null;
+ if(![50,60].includes(strategy.minHpPercent))return null;
  const map=new Map(contexts.map(ctx=>[ctx.settings.classId,ctx]));
  if(map.size!==3||classes.some(cls=>!map.has(cls)))return null;
  for(const ctx of map.values()){
@@ -98,10 +144,10 @@ function canBuildTeam(contexts,strategy,target){
  }
  return map;
 }
-function isSafeSacriRoute(ctx,minimum){
+function isSafeSacriRoute(ctx,minimum,sequence=TEAM_TEN_AUDITED){
  let state=initialState(ctx.settings);
  const equipped=new Map(ctx.spells.filter(s=>selected(ctx,s)).map(s=>[s.name,s]));
- for(const names of TEAM_TEN_AUDITED.sacrieur){
+ for(const names of sequence.sacrieur){
   for(const name of names){
    const sp=equipped.get(name);
    if(!sp||!eligible(sp,state,ctx.settings))return false;
@@ -149,21 +195,40 @@ function replayCandidate(contexts,target,sequence,runManual){
 export function chooseTeamTenOpening(contexts,target,strategy,runManual){
  const lineup=canBuildTeam(contexts,strategy,target);
  if(!lineup)return null;
- if(!isSafeSacriRoute(lineup.get("sacrieur"),strategy.minHpPercent))return null;
  const baseline=replayCandidate(contexts,target,TEAM_TEN_BASELINE,runManual);
- const audited=replayCandidate(contexts,target,TEAM_TEN_AUDITED,runManual);
- if(!baseline||!audited||audited.total<=baseline.total+.01)return null;
- return {id:"audited-team-ten-pacte-v1",enabled:true,
-  baseline:baseline.total,projected:audited.total,
-  projectedGain:round(audited.total-baseline.total),
+ const previous=replayCandidate(contexts,target,TEAM_TEN_AUDITED,runManual);
+ // Every candidate is replayed with actual saved builds and current rules.
+ // The final choice also checks HP floor after every cast and buff expiry.
+ const candidatePool=[
+  {variant:"previous",sequence:TEAM_TEN_AUDITED},
+  {variant:"safe60",sequence:TEAM_TEN_SAFE60},
+  ...(strategy.minHpPercent<=50?[{variant:"attack",sequence:TEAM_TEN_ATTACK}]:[])
+ ];
+ const valid=[];
+ for(const candidate of candidatePool){
+  if(!isSafeSacriRoute(lineup.get("sacrieur"),strategy.minHpPercent,candidate.sequence))
+   continue;
+  const simulated=replayCandidate(contexts,target,candidate.sequence,runManual);
+  if(simulated)valid.push({...candidate,total:simulated.total});
+ }
+ valid.sort((a,b)=>b.total-a.total);
+ const best=valid[0];
+ if(!baseline||!best||best.total<=baseline.total+.01)return null;
+ return {id:"audited-team-ten-pacte-v2",variant:best.variant,enabled:true,
+  baseline:baseline.total,previous:previous?.total??null,
+  projected:best.total,
+  projectedGain:round(best.total-baseline.total),
+  gainOverPrevious:previous?round(best.total-previous.total):null,
   minHpPercent:strategy.minHpPercent,rounds:10};
 }
 /** Read only one actor's CURRENT turn; all later turns remain uncommitted. */
 export function teamTenCurrentPlan(entry,teamPlan,strategy){
- if(!teamPlan?.enabled||teamPlan.id!=="audited-team-ten-pacte-v1"||
+ if(!teamPlan?.enabled||teamPlan.id!=="audited-team-ten-pacte-v2"||
    strategy.mode!=="long"||strategy.minHpPercent!==teamPlan.minHpPercent)return null;
  const cls=entry?.ctx?.settings?.classId,now=entry?.state?.turn;
- const names=TEAM_TEN_AUDITED[cls]?.[now-1];
+ const route=teamPlan.variant==="attack"?TEAM_TEN_ATTACK:
+  teamPlan.variant==="safe60"?TEAM_TEN_SAFE60:TEAM_TEN_AUDITED;
+ const names=route[cls]?.[now-1];
  if(!names||entry.currentPA!==12)return null;
  let state=entry.state;
  const actions=[];
@@ -180,6 +245,7 @@ export function teamTenCurrentPlan(entry,teamPlan,strategy){
    !sacrierHealthAboveFloor(endTurn(state,entry.ctx.settings),strategy.minHpPercent))
   return null;
  return {actions,settings:entry.ctx.settings,
-  label:"DPS équipe vérifié · Pacte T2/T5/T8 · +"+
-   teamPlan.projectedGain+" dégâts / 10 tours",auditedTeam:true};
+  label:"DPS équipe vérifié · Pacte T2/T5/T8 · "+
+   (teamPlan.variant==="safe60"?"PV ≥60 %":"PV ≥50 %")+
+   " · +"+teamPlan.projectedGain+" dégâts / 10 tours",auditedTeam:true};
 }
