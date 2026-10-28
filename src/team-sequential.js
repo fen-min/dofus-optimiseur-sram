@@ -373,7 +373,8 @@ function safeAutomaticActions(entry,plan,minHpPercent){
  };
  if(!safeEnd(kept)){
   const heals=entry.ctx.spells.filter(sp=>
-   (sp.isWeapon||entry.ctx.settings.variants?.[sp.variantGroup]===sp.name)&&sp.lifeSteal);
+   (sp.isWeapon||entry.ctx.settings.variants?.[sp.variantGroup]===sp.name)&&
+   (sp.lifeSteal||sp.weaponHits?.some(hit=>hit.lifeSteal)));
   let repaired=false;
   for(let attempt=0;attempt<3&&!repaired;attempt++){
    let winner=null,restored=-Infinity;
