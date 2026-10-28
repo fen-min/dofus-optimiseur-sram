@@ -5,7 +5,7 @@
  * match the audited trajectory. Fall back to the generic team optimizer on
  * any divergence (cards, ally AP, cooldowns, buffs, changed stats).
  */
-import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.26";
+import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.56";
 import {ECAFLIP_KARUTA_STATS} from "./character-stats.js?v=3.20";
 
 export const KARUTA_FIFTEEN_ROUNDS=Object.freeze([
