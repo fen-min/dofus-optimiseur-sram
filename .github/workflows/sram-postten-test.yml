@@ -1,0 +1,24 @@
+name: OMBRE - Sram alternatives après 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sram-postten-test.mjs"
+      - ".github/workflows/sram-postten-test.yml"
+  workflow_dispatch:
+jobs:
+  sram-postten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Comparer Injection Arsenic Fourvoiement Manigance a partir du tour 11
+        run: node scripts/sram-postten-test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recherches-sram-apres-10
+          path: results/sram-postten-15.json
