@@ -1,0 +1,24 @@
+name: OMBRE - Audit Karuta 100 tours (auto et manuel)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-hundred-audit.mjs"
+      - ".github/workflows/karuta-hundred-audit.yml"
+      - "src/engine.js"
+      - "src/ecaflip-cards.js"
+      - "src/team-sequential.js"
+      - "src/karuta-fifteen-plan.js"
+      - "src/team-long-plan.js"
+  workflow_dispatch:
+jobs:
+  karuta-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rejouer 100 tours Karuta solo et equipe en automatique et manuel
+        run: node scripts/karuta-hundred-audit.mjs
