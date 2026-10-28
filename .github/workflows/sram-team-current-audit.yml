@@ -1,0 +1,28 @@
+name: OMBRE - Verification Sram equipe 3 et 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sram-team-current-audit.mjs"
+      - ".github/workflows/sram-team-current-audit.yml"
+  workflow_dispatch:
+jobs:
+  sram-team-audit:
+    strategy:
+      matrix:
+        rounds: [3, 10]
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Essais manuels Sram, logs et comparaison de DPS
+        run: node scripts/sram-team-current-audit.mjs ${{ matrix.rounds }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultat-sram-${{ matrix.rounds }}-tours
+          path: results/sram-team-current-${{ matrix.rounds }}.json
+          retention-days: 14
