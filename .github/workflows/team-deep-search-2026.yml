@@ -1,0 +1,25 @@
+name: OMBRE - Recherche DPS equipe approfondie 2026
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/team-deep-search-2026.mjs"
+      - ".github/workflows/team-deep-search-2026.yml"
+  workflow_dispatch:
+jobs:
+  deep-manual-search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recherche DPS collectif 10 tours et verification des logs
+        run: node scripts/team-deep-search-2026.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recherche-dps-equipe
+          path: results/team-deep-10.json
+          retention-days: 14
