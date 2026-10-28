@@ -1,0 +1,19 @@
+name: OMBRE - Verification equipe 15 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/team-deep-fifteen-2026.mjs"
+      - ".github/workflows/team-deep-fifteen-2026.yml"
+  workflow_dispatch:
+jobs:
+  verify-fifteen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verifier 15 tours de chaque rotation et tous les logs
+        run: node scripts/team-deep-fifteen-2026.mjs
