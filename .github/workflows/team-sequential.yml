@@ -30,6 +30,8 @@ on:
       - "src/sacrier-safety.js"
       - "src/sacrier-dps-rotation.js"
       - "src/sram-audited-plan.js"
+      - "src/team-combat-log.js"
+      - "test/team-combat-log.test.mjs"
       - "test/sram-audited-plan.test.mjs"
       - "src/karuta-fifteen-plan.js"
       - "test/karuta-fifteen-plan.test.mjs"
