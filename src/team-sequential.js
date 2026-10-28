@@ -713,7 +713,10 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     remainingHp=round(Math.max(0,remainingHp-delayed));
     actor.remainingHp=remainingHp;
     actor.defeated=remainingHp<=0;
-    actor.health=entry.state.turns.at(-1)?.sacrierEndHealth||null;
+    // After Pacte expiration, display actual carried-forward HP rather
+    // than the pre-expiration snapshot from the end-turn summary.
+    actor.health=entry.state.sacrierHealth?
+     {...entry.state.sacrierHealth}:null;
     if(turn===1&&plan.label.startsWith("Ouverture"))members[index].chosenOpening=plan.label.slice(10);
     members[index].strategiesTested=entry.trials;
     members[index].estimated=round(members[index].estimated+actor.damage);
