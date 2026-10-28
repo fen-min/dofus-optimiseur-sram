@@ -48,10 +48,17 @@ async function check(label,contexts,strategy){
   previous=optimizeTeamTurn(contexts,target,()=>{},previous,strategy);
   inspectRound(previous,contexts,turn);
   const last=previous.turns.at(-1);
-  const actors=last.actors.map(a=>({id:a.id,character:a.character,
-   classId:contexts.find(c=>c.build.id===a.id).settings.classId,
-   damage:R(a.damage),pa:a.spent,spells:a.actions.map(s=>s.name),
-   spellIds:a.actions.map(s=>String(s.id))}));
+  const actors=last.actors.map(a=>{
+   const ctx=contexts.find(c=>c.build.id===a.id);
+   assert.ok(ctx,"unknown actor context");
+   const spellIds=a.actions.map(action=>{
+    const spell=ctx.spells.find(s=>s.name===action.name);
+    assert.ok(spell,"unmapped automatic spell "+action.name);
+    return String(spell.id);
+   });
+   return {id:a.id,character:a.character,classId:ctx.settings.classId,
+    damage:R(a.damage),pa:a.spent,spells:a.actions.map(s=>s.name),spellIds};
+  });
   for(const a of actors)totalsByCharacter[a.character]=
    R((totalsByCharacter[a.character]||0)+a.damage);
   autoRounds.push(actors);
