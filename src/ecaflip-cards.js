@@ -14,8 +14,8 @@ export const handKey=hand=>hand.map(c=>c.suit+":"+c.rank).sort().join("|");
 export function nextHand(hand,suit,rank){
  if(!suit||!RANKS.includes(rank))return hand.slice();
  if(hand.some(card=>card.suit===suit&&card.rank===rank))return hand.slice();
- // At four cards, cards are played before a new draw; the engine handles
- // the overflow using playHand() rather than silently losing a card.
+ // At four cards, the calling engine plays the full Hand before a draw.
+ // This helper only appends a legal card; it must never create a fifth.
  return hand.length<4?[...hand,{suit,rank}]:hand.slice();
 }
 export function cardHandDamageBonus(hand,suit){
