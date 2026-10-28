@@ -1,0 +1,24 @@
+name: OMBRE - Recherche equipe 60 pour cent PV
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/team-deep-safe60.mjs"
+      - ".github/workflows/team-deep-safe60.yml"
+  workflow_dispatch:
+jobs:
+  safer-rotation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: DPS equipe avec au moins 60 pour cent PV Sacrieur
+        run: node scripts/team-deep-safe60.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dps-equipe-safe60
+          path: results/team-deep-safe60.json
+          retention-days: 14
