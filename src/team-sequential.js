@@ -602,11 +602,12 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // Manual PA selection is the total available at the start of this
     // character's current turn (including any already granted team buffs).
     // It never mutates the saved build or later rounds.
-    const paOverride=manualOverrides?manualPaOverrides?.[entry.ctx.build.id]:null;
+    const paOverride=manualOverrides?manualPaOverrides?.[entry.ctx.build.id]:
+     options.turnPaOverrides?.[entry.ctx.build.id];
     entry.currentPA=paOverride===null||paOverride===undefined?
      appliedPa(entry,turn):Number(paOverride);
     if(!Number.isInteger(entry.currentPA)||entry.currentPA<1||entry.currentPA>30)
-     throw Error("PA manuels invalides : choisis entre 1 et 30.");
+     throw Error("PA du tour invalides : choisis un entier entre 1 et 30.");
     entry.state.pa=entry.currentPA;
     actor.availablePA=entry.currentPA;
     actor.paBonus=entry.currentPA-basePa(entry,turn);
