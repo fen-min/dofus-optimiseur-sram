@@ -1,4 +1,4 @@
-import {optimizeFromState} from "./engine.js?v=3.26";
+import {optimizeFromState} from "./engine.js?v=3.56";
 import {replayAssist} from "./assist-core.js?v=3.2";
 
 // A fresh worker is used per request; the UI can cancel obsolete suggestions.
