@@ -43,6 +43,9 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   ap:options?.ap
  }]));
  let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
+ // Ephemeral, absolute PA totals for the NEXT round only. Never save these
+ // into the build or the combat configuration signature.
+ let pendingTurnPa={};
  // Old installations used 10 rounds as the maximum. Promote that legacy
  // default once so existing users also benefit from the new 100-round mode.
  let strategy=cleanTeamStrategy(saved?.strategy);
@@ -53,6 +56,17 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  const getMembers=()=>teamMembers(getBuilds(),ids);
  const storeState=()=>saveStore(ids,target,memberOptions,strategy);
  const memberSettings=b=>cleanTeamMemberOptions(b,memberOptions[b.id]);
+ const nextTurnNumber=()=> (result?.turns.length||0)+1;
+ const proposedTurnPA=build=>{
+  const base=memberSettings(build).ap;
+  const round=nextTurnNumber();
+  const actor=result?.session?.actors?.find(a=>a.id===build.id);
+  // Buffs received from allies in earlier rounds remain active. These PA
+  // are already included in the displayed TOTAL and must not be added twice.
+  const activeBonus=(actor?.teamBuffs||[]).filter(b=>Number(b.until)>=round)
+   .reduce((total,b)=>total+(Number(b.value)||0),0);
+  return Math.max(1,Math.min(30,base+activeBonus));
+ };
  const status=text=>{$("team-status").textContent=text;};
  function cancel(){
   job++;
@@ -91,8 +105,17 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
     '<option value="'+safe(other.id)+'"'+(b?.id===other.id?' selected':'')+
     (taken.has(other.id)&&b?.id!==other.id?' disabled':'')+'>'+
     safe(other.character+" — "+other.name)+'</option>')].join("");
-   const extra=b?'<label class="team-slot-pa" aria-label="PA du personnage">PA '+
-    '<input type="number" data-team-ap="'+safe(b.id)+'" min="6" max="20" step="1" value="'+settings.ap+'" aria-label="PA de '+safe(b.character)+'"></label>':'';
+   const extra=b?'<label class="team-slot-pa" aria-label="PA de base du personnage">PA de base '+
+    '<input type="number" data-team-ap="'+safe(b.id)+'" min="6" max="20" step="1" value="'+settings.ap+'"'+
+    (result||worker||mode==="manual"?' disabled':'')+
+    ' aria-label="PA de base de '+safe(b.character)+' (avant le combat)"></label>'+
+    (mode==="automatic"&&!result?.finished?'<label class="team-slot-pa team-slot-turn-pa" for="team-round-pa-'+safe(b.id)+'">'+
+     'Tour '+nextTurnNumber()+' · PA disponibles '+
+     '<input id="team-round-pa-'+safe(b.id)+'" type="number" data-team-turn-ap="'+safe(b.id)+'" min="1" max="30" step="1"'+
+     ' value="'+(pendingTurnPa[b.id]??proposedTurnPA(b))+'"'+(worker?' disabled':'')+
+     ' aria-label="PA totaux de '+safe(b.character)+' pour le tour '+nextTurnNumber()+' (buffs inclus)"></label>':
+     (mode==="manual"?'<small>PA ajustables dans le choix manuel pour chaque tour.</small>':''))+
+    '':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
     '<span class="team-slot-icon" aria-hidden="true">'+(cls?safe(cls.glyph):'＋')+'</span>'+
@@ -295,12 +318,15 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(index<0||index>=TEAM_LIMIT)return;
   if(value)roster[index]=value;
   else if(index<roster.length)roster.splice(index,1);
-  ids=roster.filter(Boolean);storeState();cancel();manualDraft=null;result=null;activeTurn=1;render();
+  ids=roster.filter(Boolean);pendingTurnPa={};storeState();cancel();manualDraft=null;result=null;activeTurn=1;render();
   status(ids.length?"Composition modifiée. Relance le calcul pour actualiser les recommandations.":"Ajoute au moins un personnage.");
  }
  function changeMemberOption(id,field,value){
   const build=getMembers().find(b=>b.id===id);
   if(!build)return;
+  if(result||worker||mode==="manual"){
+   renderMembers();status("Les PA de base ne changent qu'avant le combat. Utilise « PA disponibles » pour le prochain tour, sans recommencer.");return;
+  }
   if(field==="ap"){
    const pa=Number(value);
    if(!Number.isInteger(pa)||pa<6||pa>20){
@@ -310,15 +336,31 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   }
   if(field!=="ap")return;
   memberOptions={...memberOptions,[id]:{ap:value}};
+  pendingTurnPa={...pendingTurnPa};delete pendingTurnPa[id];
   storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();renderManual();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
+ }
+ function changeRoundPA(id,value){
+  const member=getMembers().find(b=>b.id===id);
+  if(!member)return;
+  if(mode!=="automatic"||result?.finished||worker){
+   renderMembers();status("Modifie les PA du prochain tour avant de lancer le calcul.");return;
+  }
+  const pa=Number(value);
+  if(!Number.isInteger(pa)||pa<1||pa>30){
+   renderMembers();status("Choisis un nombre entier de PA entre 1 et 30 pour ce tour.");return;
+  }
+  pendingTurnPa={...pendingTurnPa,[id]:pa};
+  renderMembers();
+  status(member.character+" : "+pa+" PA disponibles au tour "+nextTurnNumber()+
+   " (buffs inclus). Les "+(result?.turns.length||0)+" tour(s) déjà calculés sont conservés.");
  }
  function changeTarget(){
   target=cleanTeamTarget({
    hp:INTERNAL_TARGET_HP,turns:100,criticals:$("team-critical").checked,
    resistances:Object.fromEntries(RESIST_ELEMENTS.map(name=>[name,$("team-res-"+name).value]))
   });
-  storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();renderManual();
+  storeState();cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();renderManual();
   status("Cible modifiée. Lance le calcul pour actualiser les résultats.");
  }
  function calculate(){
@@ -345,7 +387,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     if(data.type==="complete"||data.type==="error"){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
-     result=data.result;activeTurn=result.turns.length;renderResult();
+     result=data.result;activeTurn=result.turns.length;pendingTurnPa={};
+     renderMembers();renderResult();
      status("Tour "+activeTurn+" calculé. "+(result.finished?"Combat terminé.":"Clique sur « Tour suivant » pour calculer uniquement le tour "+(activeTurn+1)+"."));
     }
    };
@@ -354,7 +397,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
     status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
-   worker.postMessage({contexts,target,previous,strategy});
+   worker.postMessage({contexts,target,previous,strategy,turnPaOverrides:{...pendingTurnPa}});
   }catch(error){
    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
    status("Impossible de lancer le calcul : "+error.message);
@@ -384,7 +427,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     ...(horizonChoice?{horizon:Number(horizonChoice.value)}:{}),
     ...(minHpChoice?{minHpPercent:Number(minHpChoice.value)}:{})
    });
-   storeState();cancel();result=null;manualDraft=null;activeTurn=1;
+   storeState();cancel();pendingTurnPa={};result=null;manualDraft=null;activeTurn=1;
    renderTarget();renderResult();renderManual();
    status(strategy.mode==="long"?
     "DPS équipe longue durée : "+strategy.horizon+" tours anticipés, recherche approfondie, Sacrieur ≥ "+strategy.minHpPercent+" % PV.":
@@ -394,7 +437,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const selector=event.target.closest('input[name="team-mode"]');
   if(selector){
    mode=selector.value==="manual"?"manual":"automatic";
-   cancel();manualDraft=null;result=null;activeTurn=1;
+   cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;
    if(mode==="manual"&&getMembers().length){
     try{manualDraft=newManualDraft(manualContexts(),target);}
     catch(error){status("Choix manuel : "+error.message);}
@@ -411,7 +454,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    if(!build||!CLASSES[build.classId]?.pairs[group]?.includes(name)||
      typeof onChangeVariant!=="function"){renderMembers();return;}
    if(build.variants?.[group]!==name){
-    cancel();manualDraft=null;result=null;activeTurn=1;
+    cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;
     if(!onChangeVariant(build.id,group,name)){render();return;}
     storeState();render();
     status(name+" équipé sur "+build.character+
@@ -423,6 +466,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(slot){changeSlot(Number(slot.dataset.teamSlot),slot.value);return;}
   const pa=event.target.closest("input[data-team-ap]");
   if(pa){changeMemberOption(pa.dataset.teamAp,"ap",pa.value);return;}
+  const roundPa=event.target.closest("input[data-team-turn-ap]");
+  if(roundPa){changeRoundPA(roundPa.dataset.teamTurnAp,roundPa.value);return;}
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
@@ -460,7 +505,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    if(!onChangeVariant(build.id,group,"Pacte de Sang")){
     status("Impossible de sélectionner Pacte de Sang sur ce build.");return;
    }
-   cancel();manualDraft=null;result=null;activeTurn=1;
+   cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;
    storeState();render();
    status("Pacte de Sang équipé sur "+build.character+
     ". Le combat repart au tour 1 pour recalculer correctement les bonus de PV.");
@@ -486,14 +531,14 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     if(completed.result)result=completed.result;
    }
    activeTurn=manualDraft?(result?.turns.length||0)+1:(result?.turns.length||1);
-   renderResult();renderManual();
+   renderMembers();renderResult();renderManual();
    status(manualDraft?"Choix manuel : sélectionne les sorts, ou passe au suivant.":
     "Tour manuel enregistré. Clique sur Commencer le tour suivant pour continuer.");
   }catch(error){status("Choix manuel : "+error.message);}
  });
  $("team-calculate").addEventListener("click",calculate);
  $("team-restart").addEventListener("click",()=>{
-  cancel();manualDraft=null;result=null;activeTurn=1;renderResult();
+  cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();
   status("Combat réinitialisé. Clique pour calculer uniquement le tour 1.");
  });
  $("team-cancel").addEventListener("click",()=>{
