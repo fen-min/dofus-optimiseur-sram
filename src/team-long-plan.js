@@ -3,7 +3,7 @@
  * Forecasts are private to the current decision: only the chosen CURRENT
  * actor turn is committed by playSequentialTeam. Manual mode never calls this.
  */
-import {cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.26";
+import {cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.56";
 import {cleanSacrierMinHpPercent,sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 export const DEFAULT_TEAM_STRATEGY=Object.freeze({mode:"long",horizon:100,effort:"deep",minHpPercent:50});
