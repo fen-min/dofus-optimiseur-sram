@@ -87,7 +87,7 @@ function directRow(spell,c,s){
  * Compute an equipped weapon's normal and critical damage per hit.
  * Passive item characteristics are already included in the active build.
  */
-function equippedWeaponDamage(spell,s,c){
+function equippedWeaponBreakdown(spell,s,c){
  const buffs=buffsNow(s);
  const probability=effectiveCriticalRate(spell,s,c);
  const vulnerability=s.enemyDebuff.expires>=s.turn?s.enemyDebuff.multiplier:1;
@@ -108,10 +108,15 @@ function equippedWeaponDamage(spell,s,c){
   const res=c.resistances[hit.element]||0;
   return Math.max(0,((basis.min+basis.max)/2+extra+critBonus-fixedRes)*(1-res/100));
  };
- const average=critical=>spell.weaponHits.reduce((n,hit)=>n+line(hit,critical),0);
- return Math.max(0,((1-probability)*average(false)+probability*average(true))*
-  vulnerability*(1+(finalBonus+activeTurquoiseBonus(s))/100)*(1+suffering/100)*berserk);
+ const multiplier=vulnerability*(1+(finalBonus+activeTurquoiseBonus(s))/100)*(1+suffering/100)*berserk;
+ const weightedHit=hit=>((1-probability)*line(hit,false)+probability*line(hit,true))*multiplier;
+ return {
+  total:Math.max(0,spell.weaponHits.reduce((sum,hit)=>sum+weightedHit(hit),0)),
+  stolen:Math.max(0,spell.weaponHits.filter(hit=>hit.lifeSteal)
+   .reduce((sum,hit)=>sum+weightedHit(hit),0))
+ };
 }
+function equippedWeaponDamage(spell,s,c){return equippedWeaponBreakdown(spell,s,c).total;}
 function bestEcaflipElement(stats){
  const elements={Eau:"chance",Terre:"strength",Feu:"intelligence",Air:"agility"};
  return Object.keys(elements).sort((a,b)=>(stats?.[elements[b]]||0)-(stats?.[elements[a]]||0))[0];
@@ -189,8 +194,15 @@ function applyEcaflipAction(s,spell){
  }
  if(spell.drawCard){
   const [suit,rank]=spell.drawCard;
-  if(s.ecaHand.length<4)s.ecaHand=nextHand(s.ecaHand,suit,rank);
-  else notes?.push("Main à 4 cartes : nouvelle carte non modélisée (pas de consommation fictive)");
+  // DOFUS 3.7: when a fifth card would be drawn, play the existing
+  // four-card hand first (including the combo / 3-turn buffs), then draw.
+  // This occurs AFTER the elemental spell's own damage has been calculated.
+  if(s.ecaHand.length>=4){
+   playEcaCards(s,s.ecaHand,
+    "Main pleine : 4 cartes jouées automatiquement avant la nouvelle pioche");
+   s.ecaHand=[];
+  }
+  s.ecaHand=nextHand(s.ecaHand,suit,rank);
  }
 }
 
@@ -282,10 +294,24 @@ export function castSpell(origin,spell,input={}){
   if(c.triggerTraps){trapActivation(s,c);action.notes.push("Déclenchement supposé");}
  }else if(status.poison){dot(s,spell,c);action.notes.push("Poison différé");}
  else if(!spell.nonDirect&&(spell.min>0||spell.ecaflipRekop)){
-  const dealt=damage(spell,s,c);
+  const weapon=spell.isWeapon?equippedWeaponBreakdown(spell,s,c):null;
+  const dealt=weapon?weapon.total:damage(spell,s,c);
   addDamage(s,dealt);
-  if(spell.isWeapon&&spell.weaponHits?.some(hit=>hit.lifeSteal))
-   action.notes.push("Vol de vie Air : soin non simulé (dégâts inclus)");
+  if(weapon?.stolen>0){
+   const stolenDamage=round(weapon.stolen);
+   const estimatedHeal=Math.floor(stolenDamage/2);
+   if(s.sacrierHealth){
+    const oldHp=s.sacrierHealth.hp;
+    s.sacrierHealth=restoreHealth(s.sacrierHealth,estimatedHeal);
+    if(s.berserkActive&&s.sacrierHealth.suffering<=5)s.berserkActive=false;
+    action.notes.push("Vol de vie "+spell.element+" : ligne "+stolenDamage+
+     " dégâts, soin effectif estimé "+(s.sacrierHealth.hp-oldHp)+" PV, "+
+     s.sacrierHealth.hp+"/"+s.sacrierHealth.maxHp+" PV");
+   }else{
+    action.notes.push("Vol de vie "+spell.element+" : ligne "+stolenDamage+
+     " dégâts, jusqu’à "+estimatedHeal+" PV rendus (PV de "+c.classId+" non suivis)");
+   }
+  }
   if(spell.lifeSteal&&s.sacrierHealth){
    // Real-game benchmark (Désolation): 811 damage -> +405 PV,
    // 819 -> +409 PV even with Berserk active and "soins reçus ×30%".
