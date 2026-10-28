@@ -162,7 +162,7 @@ export function chooseTeamTenOpening(contexts,target,strategy,runManual){
 export function teamTenCurrentPlan(entry,teamPlan,strategy){
  if(!teamPlan?.enabled||teamPlan.id!=="audited-team-ten-pacte-v1"||
    strategy.mode!=="long"||strategy.minHpPercent!==teamPlan.minHpPercent)return null;
- const cls=entry.ctx.settings.classId,now=entry.state.turn;
+ const cls=entry?.ctx?.settings?.classId,now=entry?.state?.turn;
  const names=TEAM_TEN_AUDITED[cls]?.[now-1];
  if(!names||entry.currentPA!==12)return null;
  let state=entry.state;
