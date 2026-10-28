@@ -1,13 +1,68 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {INITIAL_BUILDS} from "../src/classes.js";
+import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,optimizeTeamTurn,cleanTeamTarget} from "../src/team-core.js";
 import {cleanTeamStrategy} from "../src/team-long-plan.js";
 import {newManualDraft,previewManualDraft,chooseManualSpell} from "../src/team-manual.js";
+import {playSequentialTeam} from "../src/team-sequential.js";
+import {TEAM_TEN_ATTACK} from "../src/team-audited-ten-plan.js";
 
 const target=cleanTeamTarget({turns:10,hp:1_000_000_000_000,criticals:true});
 const sac=INITIAL_BUILDS.find(b=>b.classId==="sacrieur");
 const eca=INITIAL_BUILDS.find(b=>b.classId==="ecaflip");
+
+function sramAfterTen(turns){
+ const target=cleanTeamTarget({turns,hp:1e12,criticals:true});
+ const build=normalizeBuild(INITIAL_BUILDS.find(b=>b.classId==="sram"));
+ build.distance=1;
+ const ctx=createTeamContext(build,target);
+ const byName=new Map(ctx.spells.map(s=>[s.name,s.id]));
+ let previous=null;
+ for(const names of TEAM_TEN_ATTACK.sram){
+  previous=playSequentialTeam([ctx],target,()=>{},{previous,oneRound:true,
+   manualOverrides:{[ctx.build.id]:names.map(name=>byName.get(name))}});
+ }
+ return {ctx,target,previous};
+}
+
+test("Sram renouvelle les poisons après T10 et T15 sans modifier les tours déjà joués",()=>{
+ const {ctx,target,previous:prefix}=sramAfterTen(20);
+ const snapshot=structuredClone(prefix);
+ let previous=prefix;
+ for(let turn=11;turn<=16;turn++){
+  previous=optimizeTeamTurn([ctx],target,()=>{},previous,{mode:"long",horizon:100});
+  assert.equal(previous.turns.length,turn);
+  const actor=previous.turns.at(-1).actors[0];
+  const names=actor.actions.map(a=>a.name);
+  if(turn===11||turn===16)
+   assert.deepEqual(names,["Injection Toxique","Arsenic","Épidémie"]);
+  else assert.ok(!names.includes("Injection Toxique"),"Respecter la relance du poison");
+  assert.ok(actor.spent<=actor.availablePA);
+  assert.equal(actor.log.casts.length,actor.actions.length);
+  assert.ok(Math.abs(actor.damage-actor.direct-actor.poison)<.15);
+  if(turn===15)assert.equal(previous.theoretical,51578.1);
+ }
+ assert.deepEqual(prefix,snapshot,"L'anticipation ne modifie pas la session précédente");
+ // Replay each automatic decision through the manual engine, with the same
+ // PA, cooldowns and poison state. No forecast damage belongs in the result.
+ let manual=prefix;
+ for(const turn of previous.turns.slice(10)){
+  manual=playSequentialTeam([ctx],target,()=>{},{previous:manual,oneRound:true,
+   manualOverrides:{[ctx.build.id]:turn.actors[0].actions.map(a=>
+    ctx.spells.find(spell=>spell.name===a.name).id)}});
+ }
+ assert.equal(manual.theoretical,previous.theoretical);
+});
+
+test("Sram ne sacrifie pas le dernier tour pour des poisons futurs",()=>{
+ const {ctx,target,previous}=sramAfterTen(11);
+ const result=optimizeTeamTurn([ctx],target,()=>{},previous,{mode:"long",horizon:100});
+ const actor=result.turns.at(-1).actors[0];
+ assert.ok(!actor.actions.some(a=>a.name==="Injection Toxique"));
+ const fast=optimizeTeamTurn([ctx],target,()=>{},previous,{mode:"fast",horizon:100});
+ assert.equal(actor.damage,fast.turns.at(-1).actors[0].damage);
+ assert.equal(result.finished,true);
+});
 
 test("DPS équipe longue durée est le mode par défaut et borne les paramètres",()=>{
  assert.deepEqual(cleanTeamStrategy(),{mode:"long",horizon:100,effort:"deep",minHpPercent:50});

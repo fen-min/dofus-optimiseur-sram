@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "src/team-long-plan.js"
       - "scripts/sram-team-long-regression.mjs"
       - ".github/workflows/sram-team-long-regression.yml"
   workflow_dispatch:

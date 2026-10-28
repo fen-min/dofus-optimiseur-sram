@@ -1,4 +1,4 @@
-import {optimizeTeamTurn} from "./team-core.js?v=3.63";
+import {optimizeTeamTurn} from "./team-core.js?v=3.64";
 
 self.onmessage=event=>{
  try{

@@ -93,6 +93,9 @@ for(const variant of proposals){
 const valid=reports.filter(x=>x.valid).sort((a,b)=>b.team-a.team);
 assert.ok(valid.length,"no post-T10 valid proposals");
 const baseline=reports[0],best=valid[0];
+assert.ok(baseline.valid,"automatic continuation must remain legal");
+assert.equal(baseline.sram,51578.1,"automatic Sram must retain the verified poison gain");
+assert.equal(best.team,baseline.team,"a tested continuation still beats the automatic choice");
 const report={baseline,best,gainTeam:R(best.team-baseline.team),
  gainSram:R(best.sram-baseline.sram),
  choicesTested:reports.length,valid:valid.length,results:reports};

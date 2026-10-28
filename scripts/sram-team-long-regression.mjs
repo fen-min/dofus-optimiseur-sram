@@ -76,7 +76,17 @@ for(let i=1;i<=n;i++){
 }
 assert.equal(rows.length,n);
 assert.equal(R(previous.turns.slice(0,10).reduce((s,t)=>s+t.actors.find(a=>a.character==="Matryoshka").damage,0)),34267.5);
-if(n>=15)assert.ok(Math.abs(R(previous.turns.slice(0,15).reduce((s,t)=>s+t.theoretical,0))-162281.6)<.3);
+if(n>=15){
+ assert.ok(Math.abs(R(previous.turns.slice(0,15).reduce((s,t)=>s+t.theoretical,0))-163658.7)<.3);
+ assert.deepEqual(rows[10].rotation,["Injection Toxique","Arsenic","Épidémie"]);
+ assert.equal(rows[14].cumulative,51578.1);
+}
+if(n===100){
+ const renewals=rows.filter(row=>row.turn>10&&row.rotation.includes("Injection Toxique"));
+ assert.ok(renewals.length>=17,"Sram stopped renewing poisons in long combat");
+ assert.ok(renewals.every((row,index)=>index===0||row.turn-renewals[index-1].turn>=5),
+  "Injection Toxique cooldown was not respected");
+}
 const result={
  settings:{rounds:n,criticals:true,horizon:100,minimumSacrierHP:50,
  builds:"GitHub normalized builds, Sram/Sacri melee"},

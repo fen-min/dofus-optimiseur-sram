@@ -95,6 +95,19 @@ function prefixCandidates(entry,limit){
  }).sort((a,b)=>b.score-a.score);
  // Keep space for a low-cost direct spell even if there are many buffs.
  const prefixes=prioritized.slice(0,limit).map(({spell})=>[spell]);
+ // Immediate-damage completion can discard a poison setup before its later
+ // ticks are scored. Keep these Sram combinations as explicit candidates;
+ // the same legal replay and horizon comparison decide whether to use them.
+ if(ctx.settings.classId==="sram"){
+  for(const names of [
+   ["Injection Toxique","Arsenic","Épidémie"],
+   ["Arnaque","Injection Toxique","Arsenic"]
+  ]){
+   const seq=names.map(name=>selected.find(spell=>spell.name===name));
+   if(seq.every(Boolean)&&seq.reduce((sum,spell)=>sum+spell.pa,0)<=state.pa)
+    prefixes.push(seq);
+  }
+ }
  if(ctx.settings.classId==="ecaflip"){
   const yams=selected.find(x=>x.name==="Yams");
   if(yams&&state.pa>=2*yams.pa)prefixes.push([yams,yams]);

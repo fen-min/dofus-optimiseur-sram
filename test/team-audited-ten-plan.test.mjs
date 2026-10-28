@@ -89,8 +89,11 @@ test("After T10 keep dynamic decisions and 50% Sacrier floor through T15",{timeo
    "PV sous la limite au tour "+(i+1));
  }
  assert.equal(previous.turns.length,15);
- assert.ok(Math.abs(previous.theoretical-162281.6)<.2,
-  "The 15-round team log extension must match the measured current-engine benchmark");
+ assert.ok(Math.abs(previous.theoretical-163658.7)<.2,
+  "The 15-round team extension must include the verified poison renewal gain");
+ assert.equal(previous.members.find(member=>member.character==="Matryoshka").estimated,51578.1);
+ assert.deepEqual(previous.turns[10].actors.find(actor=>actor.character==="Matryoshka")
+  .actions.map(action=>action.name),["Injection Toxique","Arsenic","Épidémie"]);
  assert.ok(previous.theoretical>previous.session.teamTenPlan.projected);
  console.log("TEAM_FIFTEEN_CONTINUATION "+JSON.stringify({
   total:previous.theoretical,extra:Math.round((previous.theoretical-previous.session.teamTenPlan.projected)*10)/10,
