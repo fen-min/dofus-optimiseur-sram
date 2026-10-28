@@ -12,6 +12,7 @@ import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.40";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.42";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
+import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.50";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -579,6 +580,14 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
  const stopAt=options.oneRound?Math.min(target.turns,turns.length+1):target.turns;
  const manualOverrides=options.manualOverrides||null;
  const manualPaOverrides=options.manualPaOverrides||null;
+ // Compare the user's observed 10-turn line with the verified team candidate
+ // using the CURRENT saved builds and the actual manual engine. Commit only
+ // if the candidate is fully legal, safer than 50% Sacrier HP and does more
+ // damage. Never reevaluate it on later clicks, which preserve this decision.
+ let teamTenPlan=previous?
+  (previous.session.teamTenPlan||null):
+  (!manualOverrides?chooseTeamTenOpening(contexts,target,
+   cleanTeamStrategy(options.teamStrategy||{mode:"fast"}),playSequentialTeam):null);
  const previewStates=options.manualPreview?{}:null;
  for(let turn=turns.length+1;turn<=stopAt;turn++){
   if(remainingHp<=0)break;
@@ -605,6 +614,13 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     settings:entry.ctx.settings,label:"Choix manuel"
    }:(()=>{
     const strategy=cleanTeamStrategy(options.teamStrategy||{mode:"fast"});
+    if(teamTenPlan?.enabled&&turn<=10){
+     const teamCandidate=teamTenCurrentPlan(entry,teamTenPlan,strategy);
+     if(teamCandidate)return teamCandidate;
+     // Do not blindly continue a preset after a build, AP or state change.
+     teamTenPlan={...teamTenPlan,enabled:false,reason:
+      "Rotation d’équipe abandonnée : un sort, une relance, les PA ou les PV ont changé."};
+    }
     // The best manual Sram routes are validated against the actual cards,
     // buffs, poison and cooldown timeline before every recommendation.
     // Skip unnecessary beam searches when the validated route still applies.
@@ -723,12 +739,17 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
   finished:remainingHp<=0||turns.length>=target.turns,
   session:{
-   remainingHp,shared,configSignature,
+   remainingHp,shared,configSignature,teamTenPlan,
    actors:entries.map(entry=>({
     id:entry.ctx.build.id,state:entry.state,trials:entry.trials,teamBuffs:entry.teamBuffs
    }))
   },
   warnings:[
+   ...(teamTenPlan?.id?[
+    teamTenPlan.enabled?
+     "Rotation d’équipe validée sur les 10 premiers tours par comparaison avec la précédente rotation manuelle des mêmes builds ; ensuite retour aux choix dynamiques.":
+     (teamTenPlan.reason||"Rotation testée non retenue ou interrompue.")
+   ]:[]),
    "Tours joués dans l’ordre d’initiative, puis passage au tour suivant. Chaque personnage recalcule ses sorts lorsque vient son tour.",
    "PV de la cible communs : la simulation s’arrête à sa défaite. Buffs, relances, PV et effets personnels restent mémorisés d’un tour à l’autre.",
    "Les vulnérabilités modélisées de la cible sont transmises aux personnages suivants.",
