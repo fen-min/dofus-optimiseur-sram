@@ -61,6 +61,12 @@ assert.ok(byClass.sacrieur.settings.variants.includes("Pacte de Sang"));
 const ids=Object.fromEntries(ORDER.map(k=>[k,byClass[k].build.id]));
 const plan=parts=>Object.fromEntries(ORDER.map(k=>[k,parts[k].map(seq=>seq.slice())]));
 const baseline=plan(submitted);
+const requiredPact=process.env.TEAM_PACTE_REQUIRED!=="0";
+const requiredPactTurns=[2,5,8];
+function keepsPact(rotations){
+ return !requiredPact||requiredPactTurns.every(t=>
+  rotations.sacrieur[t-1].includes("Pacte de Sang"));
+}
 const variants={
  sacrieur:[
   ["Carnage","Furie","Manthache"],
@@ -134,6 +140,7 @@ function replay(rotations,skipSafety=false){
  const key=signature(rotations);
  if(cache.has(key))return cache.get(key);
  evaluated++;
+ if(!keepsPact(rotations)){cache.set(key,null);return null;}
  if(!skipSafety&&!safetySacri(rotations.sacrieur)){hpRejected++;cache.set(key,null);return null;}
  let previous=null;
  try{
@@ -265,6 +272,7 @@ const finalReplay=replay(best);
 assert.ok(Math.abs(finalReplay.total-bestResult.total)<.1);
 const report={
  settings:{criticalHits:true,resistances:0,turns:10,teamHorizon:100,minSacrierHpPercent:50,
+  requiredPactTurns:requiredPact?requiredPactTurns:[],
   source:"User combat log exported Oct 28 2026",
   matchesUserExactBuilds,comparisonReference:"replayed model profile, NOT the original user file when builds differ",
   weaponLifeSteal:"Manthache healing NOT modeled for Sram/Sacrier",
@@ -276,5 +284,5 @@ const report={
  references:scored
 };
 mkdirSync("results",{recursive:true});
-writeFileSync("results/team-10-manual-compare.json",JSON.stringify(report,null,2));
+writeFileSync("results/team-10-manual-compare-"+(requiredPact?"pact-t2-t5-t8":"unrestricted")+".json",JSON.stringify(report,null,2));
 console.log("TEAM_TEN_MANUAL_FINAL "+JSON.stringify(report));
