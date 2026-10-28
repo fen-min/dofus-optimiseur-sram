@@ -248,3 +248,41 @@
  color:#1a1420;background:#dca35a;border:0;border-radius:7px;font-weight:750;
  cursor:pointer}
 .team-pact-warning button:hover{background:#f3b865}
+
+/* Compact per-turn diagnostic console, in the free space of Mode de jeu. */
+.team-mode-picker .team-quick-log{
+ flex:1 1 345px;min-width:240px;max-width:690px;margin-left:auto;
+ border:1px solid rgba(108,128,170,.65);border-radius:9px;
+ background:rgba(13,18,34,.68);padding:7px 10px;
+ color:#d5e4fb;font-size:11px;line-height:1.4;overflow:hidden
+}
+.team-log-empty{color:#a9bad7;font-size:11px;padding:12px 2px}
+.team-log-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.team-log-top strong{color:#f8cf83;font-size:11px}
+.team-log-top span{color:#b5c3e2;font-size:10px;margin-right:auto}
+.team-log-top em{color:#ffbf98;font-style:normal}
+.team-log-top button{border:1px solid #6886ae;background:#28334d;
+ color:#edf4ff;border-radius:6px;padding:4px 7px;font-size:10px;font-weight:700;
+ cursor:pointer;white-space:nowrap}
+.team-log-top button:hover,.team-log-top button:focus-visible{border-color:#e6b368;background:#3a445d}
+.team-log-brief{display:grid;gap:2px;margin-top:5px;max-height:82px;overflow:auto}
+.team-log-brief-line{display:grid;grid-template-columns:minmax(58px,auto) minmax(80px,1fr) auto;
+ gap:7px;align-items:center;min-width:0;font-size:10px}
+.team-log-brief-line b{color:#e3eaff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team-log-brief-line span{color:#aec0dd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-log-brief-line strong{color:#bde6bd;font-size:10px;font-variant-numeric:tabular-nums}
+.team-log-details{margin-top:4px;border-top:1px solid rgba(108,128,170,.35);padding-top:3px}
+.team-log-details summary{font-size:10px;color:#f0cc89;cursor:pointer;user-select:none}
+.team-log-detail-content{max-height:360px;overflow:auto;padding-top:7px}
+.team-log-actor{margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid rgba(108,128,170,.26)}
+.team-log-actor-head{display:flex;justify-content:space-between;gap:8px;color:#fff}
+.team-log-actor-head span{font-size:10px;color:#bdc9df}
+.team-log-actor ol{padding-left:20px;margin:5px 0}
+.team-log-actor li{margin:4px 0;color:#dce8fc}
+.team-log-actor li span{color:#b5c4da}
+.team-log-actor li small{display:block;color:#a8c8ba;margin:3px 0;overflow-wrap:anywhere}
+.team-log-actor li .team-log-warning{color:#ffbe8c;font-weight:700}
+.team-log-plan,.team-log-end{color:#aebed8;font-size:10px;line-height:1.5;margin:4px 0;overflow-wrap:anywhere}
+@media(max-width:840px){
+ .team-mode-picker .team-quick-log{margin-left:0;max-width:none;flex-basis:100%}
+}
