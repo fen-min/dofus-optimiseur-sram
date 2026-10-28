@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=3.11">
-  <link rel="stylesheet" href="./team.css?v=3.45">
+  <link rel="stylesheet" href="./team.css?v=3.46">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -38,7 +38,7 @@
         <section id="tab-team" class="tab-panel hidden" aria-label="Optimisation de DPS en équipe">
           <div class="panel-eyebrow">NOUVEAU MODULE / ÉQUIPE JUSQU'À 8 PERSONNAGES</div>
           <h2>Optimiseur DPS en équipe</h2>
-          <p class="muted">Choisis les personnages et clique pour calculer seulement le tour 1. « Tour suivant » calculera ensuite un seul nouveau tour, en conservant les buffs, PA, PV et relances des tours précédents.</p>
+          <p class="muted">Choisis tes personnages, puis règle les PA de chacun pour le prochain tour si nécessaire (buffs inclus). « Tour suivant » calcule un seul nouveau tour sans effacer les précédents, leurs buffs, PV et relances.</p>
           <div class="team-shell">
             <section class="team-panel team-rotation-panel" aria-label="Suggestions de sorts">
               <div class="team-panel-top"><h2>⚔ Sorts recommandés</h2><span class="team-label">ROTATIONS</span></div>
@@ -99,7 +99,7 @@
             </section>
             <section class="team-panel team-roster-panel" aria-label="Personnages classés par initiative">
               <div class="team-panel-top"><h2>♜ L'équipe</h2><span id="team-count" class="team-count">0 / 8 personnages</span></div>
-              <p class="microcopy">Triés par initiative. Choisis un build et ajuste ses PA : les buffs et leurs relances sont gérés automatiquement.</p>
+              <p class="microcopy">PA de base avant le combat. En automatique, règle « Tour N · PA disponibles » pour chaque personnage avant « Calculer / Tour suivant » : ce total inclut les buffs et n'efface aucun tour passé. En manuel, règle les PA dans la fiche de chaque personnage.</p>
               <div id="team-order" class="team-order" aria-live="polite"></div>
               <div id="team-members" class="team-members"></div>
             </section>
@@ -322,6 +322,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.64"></script>
+  <script type="module" src="./src/app.js?v=3.65"></script>
 </body>
 </html>
