@@ -247,5 +247,6 @@ export function teamTenCurrentPlan(entry,teamPlan,strategy){
  return {actions,settings:entry.ctx.settings,
   label:"DPS équipe vérifié · Pacte T2/T5/T8 · "+
    (teamPlan.variant==="safe60"?"PV ≥60 %":"PV ≥50 %")+
-   " · +"+teamPlan.projectedGain+" dégâts / 10 tours",auditedTeam:true};
+   " · +"+(teamPlan.gainOverPrevious??teamPlan.projectedGain)+
+   " dégâts / 10 tours vs rotation précédente",auditedTeam:true};
 }
