@@ -18,7 +18,14 @@ import {SRAM_AUDITED_100} from "../src/sram-audited-plan.js";
 const R=n=>Math.round((Number(n)||0)*10)/10;
 const target=cleanTeamTarget({turns:100,hp:1_000_000_000_000,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
-const builds=INITIAL_BUILDS.map(b=>normalizeBuild(b));
+// The exported journal casts Carnage and Manthache in melee. Both are
+// 1-range actions: the saved UI builds must be at melee distance, unlike
+// some shipped reference defaults (Sacri 2, Sram 3).
+const builds=INITIAL_BUILDS.map(b=>{
+ const normalized=normalizeBuild(b);
+ return ["sacrieur","sram"].includes(b.classId)?
+  {...normalized,distance:1}:normalized;
+});
 const contexts=builds.map(b=>createTeamContext(b,target));
 const byClass=Object.fromEntries(contexts.map(c=>[c.settings.classId,c]));
 const ORDER=["sacrieur","ecaflip","sram"];
