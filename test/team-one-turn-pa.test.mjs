@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
-import {createTeamContext,optimizeTeam} from "../src/team-core.js";
+import {createTeamContext,optimizeTeam,optimizeTeamTurn} from "../src/team-core.js";
 import {planCurrentTurn} from "../src/team-sequential.js";
 import {initialState,endTurn} from "../src/engine.js";
 
@@ -69,4 +69,17 @@ test("les relances de sorts restent mémorisées malgré les changements de PA",
  assert.ok(result.turns[0].actors[0].actions.length>0);
  assert.equal(result.turns[1].actors[0].actions.length,0);
  assert.ok(result.turns[2].actors[0].actions.length>0);
+});
+
+test("PA choisis = total disponible, les bonus +PA ne sont pas ajoutés une seconde fois",()=>{
+ const contexts=[paBuffer("support",3000),striker("damage",2000)];
+ const policy={mode:"fast",horizon:3,minHpPercent:50};
+ const first=optimizeTeamTurn(contexts,target,()=>{},null,policy,{damage:9});
+ assert.equal(first.turns[0].actors.find(a=>a.id==="damage").availablePA,9);
+ const second=optimizeTeamTurn(contexts,target,()=>{},first,policy);
+ assert.equal(second.turns[1].actors.find(a=>a.id==="damage").availablePA,8,
+  "without an override the +2 PA buff from the prior turn still applies");
+ const third=optimizeTeamTurn(contexts,target,()=>{},second,policy,{damage:11});
+ assert.equal(third.turns[2].actors.find(a=>a.id==="damage").availablePA,11);
+ assert.equal(third.turns[0].actors.find(a=>a.id==="damage").availablePA,9);
 });
