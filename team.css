@@ -76,7 +76,7 @@
 @media(max-width:790px){.team-shell{grid-template-columns:1fr;grid-template-areas:"roster" "rotation" "damage"}.team-roster-panel{padding:14px}.team-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.team-slot{margin:0}}
 @media(max-width:540px){.team-members{grid-template-columns:1fr}.team-settings-row{grid-template-columns:repeat(2,minmax(0,1fr))}.team-resistances{grid-template-columns:repeat(3,minmax(0,1fr))}.team-rotation-heading{flex-wrap:wrap}.team-panel{padding:13px}}
 
-/* Compact roster: one build picker and one PA input per character. */
+/* Compact roster: build PA plus an independent per-round PA selector. */
 .team-slot{min-height:70px;padding:8px 9px;gap:8px}
 .team-slot-body{gap:4px}
 .team-slot-body>label{font-size:12px}
@@ -286,3 +286,8 @@
 @media(max-width:840px){
  .team-mode-picker .team-quick-log{margin-left:0;max-width:none;flex-basis:100%}
 }
+
+/* Current round PA may change after buffs without restarting the combat. */
+.team-slot-body .team-slot-turn-pa{width:100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;gap:7px;border-radius:7px;border:1px solid #9f8263;background:#342c32;padding:6px 8px;color:#fff!important}
+.team-slot-turn-pa input{margin-left:auto;border-color:#cfac6c!important;font-weight:800}
+.team-slot-pa input:disabled{opacity:.62;cursor:not-allowed}
