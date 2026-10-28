@@ -1,0 +1,28 @@
+name: OMBRE - Verification Sram equipe 15 et 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sram-team-long-regression.mjs"
+      - ".github/workflows/sram-team-long-regression.yml"
+  workflow_dispatch:
+jobs:
+  sram-long-audit:
+    strategy:
+      matrix:
+        rounds: [15, 100]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verifier Sram, poisons, PV et PA sur combat long
+        run: node scripts/sram-team-long-regression.mjs ${{ matrix.rounds }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sram-rapport-long-${{ matrix.rounds }}
+          path: results/sram-team-long-${{ matrix.rounds }}.json
+          retention-days: 14
