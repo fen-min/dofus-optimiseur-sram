@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,optimizeTeamTurn,cleanTeamTarget} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
-import {chooseTeamTenOpening,teamTenCurrentPlan,TEAM_TEN_AUDITED} from "../src/team-audited-ten-plan.js";
+import {chooseTeamTenOpening,teamTenCurrentPlan,TEAM_TEN_AUDITED,TEAM_TEN_ATTACK,TEAM_TEN_SAFE60} from "../src/team-audited-ten-plan.js";
 import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
 
 const target=cleanTeamTarget({turns:100,hp:1e12,criticals:true,
@@ -22,7 +22,11 @@ test("Long mode selects validated 10-round team DPS when it wins on current buil
  const ctx=makeContexts();
  const plan=chooseTeamTenOpening(ctx,target,strategy,playSequentialTeam);
  assert.ok(plan, "Verified team opening should be selected");
- assert.equal(plan.id,"audited-team-ten-pacte-v1");
+ assert.equal(plan.id,"audited-team-ten-pacte-v2");
+ assert.equal(plan.variant,"attack");
+ assert.equal(plan.projected,110046.6);
+ assert.equal(plan.previous,106566.5);
+ assert.equal(plan.gainOverPrevious,3480.1);
  assert.ok(plan.baseline>0);
  assert.ok(plan.projected>plan.baseline,
   "Team reference must improve the recomputed baseline");
@@ -39,7 +43,7 @@ test("Automatic 10-round team replay matches manual audited damage and Pacte ref
   assert.equal(t.actors.length,3);
   for(const actor of t.actors){
    const cls=contexts.find(c=>c.build.id===actor.id).settings.classId;
-   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_TEN_AUDITED[cls][i],
+   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_TEN_ATTACK[cls][i],
     "Team DPS route did not win at T"+(i+1)+" for "+cls);
    assert.ok(actor.spent<=actor.availablePA+.01);
    if(cls==="sacrieur"){
@@ -55,6 +59,7 @@ test("Automatic 10-round team replay matches manual audited damage and Pacte ref
   }
   assert.ok(previous.session.teamTenPlan.enabled);
  }
+ assert.equal(R(previous.theoretical),110046.6);
  assert.equal(R(previous.theoretical),previous.session.teamTenPlan.projected);
  assert.ok(previous.session.teamTenPlan.projectedGain>0);
  assert.equal(R(previous.session.teamTenPlan.projected-
@@ -84,6 +89,8 @@ test("After T10 keep dynamic decisions and 50% Sacrier floor through T15",{timeo
    "PV sous la limite au tour "+(i+1));
  }
  assert.equal(previous.turns.length,15);
+ assert.ok(Math.abs(previous.theoretical-162281.6)<.2,
+  "The 15-round team log extension must match the measured current-engine benchmark");
  assert.ok(previous.theoretical>previous.session.teamTenPlan.projected);
  console.log("TEAM_FIFTEEN_CONTINUATION "+JSON.stringify({
   total:previous.theoretical,extra:Math.round((previous.theoretical-previous.session.teamTenPlan.projected)*10)/10,
@@ -107,6 +114,31 @@ test("Replaying with different current build or HP/strategy settings preserves d
  const p=chooseTeamTenOpening(changed,target,strategy,playSequentialTeam);
  const entry={ctx:changed[0],state:null,currentPA:14};
  assert.equal(teamTenCurrentPlan(entry,p,strategy),null);
+});
+
+
+test("The 60% HP option chooses safer high-DPS automatic route", {timeout:200000},()=>{
+ const ctx=makeContexts(),safe={...strategy,minHpPercent:60};
+ const chosen=chooseTeamTenOpening(ctx,target,safe,playSequentialTeam);
+ assert.ok(chosen);
+ assert.equal(chosen.variant,"safe60");
+ assert.equal(chosen.projected,108968);
+ assert.equal(chosen.previous,106566.5);
+ let prev=null;
+ for(let i=0;i<10;i++){
+  prev=optimizeTeamTurn(ctx,target,()=>{},prev,safe);
+  for(const actor of prev.turns[i].actors){
+   const cls=ctx.find(c=>c.build.id===actor.id).settings.classId;
+   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_TEN_SAFE60[cls][i]);
+   if(cls==="sacrieur")assert.ok(actor.health.hp>=actor.health.maxHp*.60,
+    "Sacrieur under 60% on T"+(i+1));
+  }
+ }
+ assert.equal(R(prev.theoretical),108968);
+ console.log("TEAM_SAFE60_AUTO "+JSON.stringify({
+  total:prev.theoretical,vsPrevious:chosen.gainOverPrevious,
+  minimumHp:60,route:chosen.variant
+ }));
 });
 
 test("Manual mode remains independent of team-optimized actions",()=>{
