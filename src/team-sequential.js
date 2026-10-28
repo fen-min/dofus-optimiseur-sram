@@ -12,7 +12,7 @@ import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.40";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.42";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
-import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.50";
+import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.51";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
