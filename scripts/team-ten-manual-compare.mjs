@@ -104,6 +104,7 @@ for(const cls of ORDER){
  seenChoices[cls]=[...map.values()];
 }
 let evaluated=0,legal=0,hpRejected=0;
+let diagnosticErrors=0;
 const signature=rot=>JSON.stringify(ORDER.map(cls=>rot[cls]));
 const cache=new Map();
 function safetySacri(rounds){
@@ -112,13 +113,13 @@ function safetySacri(rounds){
  for(let turn=0;turn<10;turn++){
   for(const name of rounds[turn]){
    const sp=byName.sacrieur.get(name);
-   if(!sp||!eligible(sp,state,ctx.settings))return false;
+   if(!sp||!eligible(sp,state,ctx.settings)){if(diagnosticErrors++<5)console.log("TEAM_SACRI_INVALID "+JSON.stringify({turn:turn+1,name,pa:state.pa,selected:ctx.settings.variants.includes(name)}));return false;}
    const next=castSpell(state,sp,ctx.settings);
-   if(!sacrierCastAboveFloor(state,sp,next,50))return false;
+   if(!sacrierCastAboveFloor(state,sp,next,50)){if(diagnosticErrors++<5)console.log("TEAM_SACRI_LOW_HP "+JSON.stringify({turn:turn+1,name,hpBefore:state.sacrierHealth,hpAfter:next.sacrierHealth}));return false;}
    state=next;
   }
   state=endTurn(state,ctx.settings);
-  if(!sacrierHealthAboveFloor(state,50))return false;
+  if(!sacrierHealthAboveFloor(state,50)){if(diagnosticErrors++<5)console.log("TEAM_SACRI_END_LOW_HP "+JSON.stringify({turn:turn+1,hp:state.sacrierHealth}));return false;}
  }
  return true;
 }
@@ -151,7 +152,7 @@ function replay(rotations,skipSafety=false){
   };
   cache.set(key,report);
   return report;
- }catch(e){cache.set(key,null);return null;}
+ }catch(e){if(diagnosticErrors++<5)console.log("TEAM_MANUAL_REPLAY_INVALID "+JSON.stringify({error:e.message}));cache.set(key,null);return null;}
 }
 const copy=rot=>plan(rot);
 function proposal(base,cls,start,seqs){
