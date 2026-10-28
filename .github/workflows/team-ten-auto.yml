@@ -1,0 +1,20 @@
+name: OMBRE - Validation DPS equipe 10 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-audited-ten-plan.js"
+      - "test/team-audited-ten-plan.test.mjs"
+      - ".github/workflows/team-ten-auto.yml"
+  workflow_dispatch:
+jobs:
+  replay-and-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verifier les gains, Pacte et repli dynamique
+        run: node --test test/team-audited-ten-plan.test.mjs
