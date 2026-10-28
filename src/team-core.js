@@ -325,7 +325,7 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
  * Interactive team mode: run EXACTLY one complete team round on demand.
  * Previous actor states are restored; no later rounds are executed.
  */
-export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null,strategy={mode:"fast"}){
+export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null,strategy={mode:"fast"},turnPaOverrides={}){
  if(!Array.isArray(contexts)||contexts.length<1||contexts.length>TEAM_LIMIT)
   throw Error("Sélectionne entre 1 et 8 builds.");
  const ids=new Set();
@@ -345,7 +345,9 @@ export function optimizeTeamTurn(contexts,target,onProgress=()=>{},previous=null
   if(previous.session?.teamStrategy&&JSON.stringify(previous.session.teamStrategy)!==JSON.stringify(policy))
    throw Error("La stratégie d'optimisation a changé : recommence au tour 1.");
  }
- const result=playSequentialTeam(contexts,config,onProgress,{previous,oneRound:true,teamStrategy:policy});
+ const result=playSequentialTeam(contexts,config,onProgress,{
+  previous,oneRound:true,teamStrategy:policy,turnPaOverrides
+ });
  result.session.teamStrategy=policy;
  return result;
 }
