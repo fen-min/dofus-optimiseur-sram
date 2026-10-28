@@ -11,7 +11,7 @@
  * - Pacte refresh: Pacte, Furie x2, Assaut x2
  * Long horizon may postpone the first Pacte to T2.
  */
-import {eligible,castSpell,endTurn} from "./engine.js?v=3.26";
+import {eligible,castSpell,endTurn} from "./engine.js?v=3.56";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 export const SACRIER_AUDITED_LINES=Object.freeze({
