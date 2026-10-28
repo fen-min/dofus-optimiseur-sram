@@ -1,0 +1,25 @@
+name: OMBRE - Tests rapides PA par tour
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-ui.js"
+      - "src/team-sequential.js"
+      - "src/team-core.js"
+      - "src/team-worker.js"
+      - "test/team-stepwise.test.mjs"
+      - "test/team-one-turn-pa.test.mjs"
+      - "test/team-ui.test.mjs"
+      - ".github/workflows/team-round-pa.yml"
+  workflow_dispatch:
+jobs:
+  per-round-ap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: PA du prochain tour - interface, calcul, buffs et continuité
+        run: node --test test/team-ui.test.mjs test/team-stepwise.test.mjs test/team-one-turn-pa.test.mjs
