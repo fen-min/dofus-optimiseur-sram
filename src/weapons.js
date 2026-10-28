@@ -72,6 +72,6 @@ export function equippedWeaponSpell(build){
   weaponHits:hits,weaponCriticalBonus:item.criticalBonus,
   damageSource:valid?"active-build-weapon":"weapon-stats-missing",
   status:{},weaponType:item.type,weaponDirection:item.direction,
-  utility:item.description+" La zone et les soins réels ne sont pas simulés."
+  utility:item.description+" Zone non simulée ; soins du vol de vie estimés sur la ligne dédiée, suivi des PV seulement pour le Sacrieur."
  };
 }
