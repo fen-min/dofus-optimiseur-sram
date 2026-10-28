@@ -1,0 +1,20 @@
+name: OMBRE - Réparation cartes et vol de vie
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/engine.js"
+      - "test/engine-card-overflow-lifesteal.test.mjs"
+      - ".github/workflows/engine-card-lifesteal.yml"
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test cartes Écaflip et vol de vie Manthache
+        run: node --test test/engine-card-overflow-lifesteal.test.mjs
