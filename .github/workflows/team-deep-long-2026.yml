@@ -1,0 +1,25 @@
+name: OMBRE - Continuation DPS equipe 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/team-deep-long-2026.mjs"
+      - ".github/workflows/team-deep-long-2026.yml"
+  workflow_dispatch:
+jobs:
+  long-fight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Comparer les rotations equipe sur 15 et 100 tours et verifier chaque log
+        run: node scripts/team-deep-long-2026.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combat-equipe-100-tours-compare
+          path: results/team-deep-long-2026.json
+          retention-days: 14
