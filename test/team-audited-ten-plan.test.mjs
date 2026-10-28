@@ -41,8 +41,16 @@ test("Automatic 10-round team replay matches manual audited damage and Pacte ref
    assert.deepEqual(actor.actions.map(a=>a.name),TEAM_TEN_AUDITED[cls][i],
     "Team DPS route did not win at T"+(i+1)+" for "+cls);
    assert.ok(actor.spent<=actor.availablePA+.01);
-   if(cls==="sacrieur")assert.ok(
-    actor.health.hp>=actor.health.maxHp*.5,"Unsafe Sacrier T"+(i+1));
+   if(cls==="sacrieur"){
+    const actual=previous.session.actors.find(x=>x.id===actor.id).state.sacrierHealth;
+    assert.deepEqual(actor.health,actual,
+     "Les PV affichés doivent inclure l'expiration de Pacte T"+(i+1));
+    assert.ok(actor.health.hp>=actor.health.maxHp*.5,
+     "Unsafe Sacrier T"+(i+1));
+    if([4,7,10].includes(i+1))
+     assert.equal(actor.health.maxHp,4952,
+      "La Vitalité de Pacte est expirée et doit être enlevée T"+(i+1));
+   }
   }
   assert.ok(previous.session.teamTenPlan.enabled);
  }
@@ -55,14 +63,31 @@ test("Automatic 10-round team replay matches manual audited damage and Pacte ref
  }));
 });
 
-test("After T10 choose fresh dynamic rotation, not a forced ten-turn loop",{timeout:90000},()=>{
+test("After T10 keep dynamic decisions and 50% Sacrier floor through T15",{timeout:200000},()=>{
  const ctx=makeContexts();
  let previous=null;
- for(let i=0;i<11;i++)previous=optimizeTeamTurn(ctx,target,()=>{},previous,strategy);
- assert.equal(previous.turns.length,11);
- assert.ok(previous.turns[10].actors.every(a=>a.spent<=a.availablePA+.01));
- assert.ok(previous.turns[10].actors.every(a=>!a.log.plan.includes("DPS équipe vérifié")));
+ for(let i=0;i<15;i++){
+  previous=optimizeTeamTurn(ctx,target,()=>{},previous,strategy);
+  if(i<10)continue;
+  const turn=previous.turns[i];
+  assert.equal(turn.actors.length,3);
+  assert.ok(turn.actors.every(a=>a.spent<=a.availablePA+.01));
+  assert.ok(turn.actors.every(a=>!a.log.plan.includes("DPS équipe vérifié")));
+  const sacri=turn.actors.find(a=>a.character==="Mon Sacrieur");
+  const actual=previous.session.actors.find(a=>a.id===sacri.id).state.sacrierHealth;
+  assert.deepEqual(sacri.health,actual,"HP après expiration T"+(i+1));
+  assert.ok(sacri.health.hp>=sacri.health.maxHp*.5,
+   "PV sous la limite au tour "+(i+1));
+ }
+ assert.equal(previous.turns.length,15);
  assert.ok(previous.theoretical>107212.1);
+ console.log("TEAM_FIFTEEN_CONTINUATION "+JSON.stringify({
+  total:previous.theoretical,extra:Math.round((previous.theoretical-107212.1)*10)/10,
+  nextTurns:previous.turns.slice(10).map(t=>({
+   turn:t.number,total:t.theoretical,
+   sacriHealth:t.actors.find(a=>a.character==="Mon Sacrieur").health
+  }))
+ }));
 });
 
 test("Replaying with different current build or HP/strategy settings preserves dynamic fallback",()=>{
