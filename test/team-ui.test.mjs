@@ -149,12 +149,17 @@ test("each button click calculates one new round and restart clears progress",()
   assert.equal(requests[0].previous,null);
   assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,1);
   assert.match(node("team-calculate").textContent,/Tour suivant \(2\)/);
+  assert.match(node("team-quick-log").innerHTML,/Journal · Tour 1/);
+  assert.match(node("team-quick-log").innerHTML,/Mon Sacrieur/);
+  assert.match(node("team-quick-log").innerHTML,/Copier les logs/);
   node("team-calculate").listeners.click();
   assert.equal(requests.length,2);
   assert.equal(requests[1].previous.turns.length,1);
   assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,2);
   assert.match(node("team-turn-buttons").innerHTML,/data-team-turn="2" class="is-current"/);
+  assert.match(node("team-quick-log").innerHTML,/Journal · Tour 2/);
   node("team-restart").listeners.click();
+  assert.match(node("team-quick-log").innerHTML,/Calcule un tour/);
   assert.equal(node("team-calculate").textContent,"▶ Calculer le tour 1");
   assert.equal(node("team-turn-select").disabled,true);
   assert.equal(node("team-cancel").disabled,true);
