@@ -16,8 +16,8 @@ jobs:
         with:
           node-version: "22"
       - name: Rejouer le journal et tester les rotations d'equipe sur 10 tours
-        run: node scripts/team-ten-manual-compare.mjs
+        run: TEAM_PACTE_REQUIRED=1 node scripts/team-ten-manual-compare.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: audit-dps-equipe-10-tours
-          path: results/team-10-manual-compare.json
+          path: results/team-10-manual-compare-pact-t2-t5-t8.json
