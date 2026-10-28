@@ -6,13 +6,13 @@
 import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.56";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
-import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.41";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.56";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
-import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
-import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.40";
-import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.42";
+import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
+import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.56";
+import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
-import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.51";
+import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.56";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
