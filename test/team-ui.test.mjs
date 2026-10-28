@@ -385,3 +385,67 @@ test("UI: horizon 100 tours par défaut et ancien réglage 10 migré",()=>withBr
  assert.match(html,/<option value="15">15 tours/);
  assert.doesNotMatch(html,/value="101"/);
 }));
+
+test("choisir les PA de chaque personnage au tour suivant ne relance jamais le tour 1",()=>withBrowser(({root,node})=>{
+ const oldWorker=globalThis.Worker,oldURL=globalThis.URL;
+ const requests=[];
+ class FakeWorker{
+  postMessage(input){
+   requests.push(input);
+   const number=(input.previous?.turns.length||0)+1;
+   const turns=[...(input.previous?.turns||[]),{
+    number,theoretical:40,remainingHp:100000-number*40,
+    roundStartHp:100000-(number-1)*40,
+    actors:[{id:"sacri-air-pvm",character:"Mon Sacrieur",initiative:2272,
+     actions:[],spent:0,availablePA:input.turnPaOverrides?.["sacri-air-pvm"]||12,
+     direct:20,poison:0,damage:20,remainingHp:100000-number*40},
+    {id:"sram-air-pvm",character:"Matryoshka",initiative:2000,
+     actions:[],spent:0,availablePA:input.turnPaOverrides?.["sram-air-pvm"]||12,
+     direct:20,poison:0,damage:20,remainingHp:100000-number*40}]
+   }];
+   this.onmessage({data:{type:"complete",result:{
+    target:input.target,theoretical:number*40,direct:number*40,
+    poison:0,effective:number*40,averagePerTurn:40,overkill:0,
+    members:[{id:"sacri-air-pvm",character:"Mon Sacrieur",estimated:number*20,ap:12},
+     {id:"sram-air-pvm",character:"Matryoshka",estimated:number*20,ap:12}],
+    turns,session:{actors:[],teamStrategy:input.strategy},
+    finished:false,warnings:[]
+   }}});
+  }
+  terminate(){}
+ }
+ globalThis.Worker=FakeWorker;
+ if(!globalThis.URL)globalThis.URL=class {constructor(path){this.href=path;}};
+ const edit=(id,value)=>root.listeners.change({target:{closest(selector){
+  return selector==="input[data-team-turn-ap]"?{dataset:{teamTurnAp:id},value}:null;
+ }}});
+ try{
+  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+  assert.match(node("team-members").innerHTML,/Tour 1 · PA disponibles/);
+  edit("sacri-air-pvm","18");
+  edit("sram-air-pvm","9");
+  assert.match(node("team-status").textContent,/0 tour\(s\) déjà calculés sont conservés/);
+  node("team-calculate").listeners.click();
+  assert.deepEqual(requests[0].turnPaOverrides,{
+   "sacri-air-pvm":18,"sram-air-pvm":9
+  });
+  assert.equal(requests[0].previous,null);
+  assert.match(node("team-members").innerHTML,/Tour 2 · PA disponibles/);
+  // Override is one-round only; the next round starts with the build AP.
+  assert.match(node("team-members").innerHTML,
+   /data-team-turn-ap="sacri-air-pvm"[^>]*value="12"/);
+  edit("sacri-air-pvm","20");
+  assert.match(node("team-calculate").textContent,/Tour suivant \(2\)/);
+  assert.equal(node("team-turn-select").disabled,false);
+  node("team-calculate").listeners.click();
+  assert.deepEqual(requests[1].turnPaOverrides,{"sacri-air-pvm":20});
+  assert.equal(requests[1].previous.turns.length,1);
+  assert.match(node("team-members").innerHTML,/Tour 3 · PA disponibles/);
+  assert.equal((node("team-turn-select").innerHTML.match(/<option value=/g)||[]).length,2);
+  edit("sram-air-pvm","31");
+  assert.match(node("team-status").textContent,/entre 1 et 30/);
+  node("team-calculate").listeners.click();
+  assert.deepEqual(requests[2].turnPaOverrides,{});
+  assert.equal(requests[2].previous.turns.length,2);
+ }finally{globalThis.Worker=oldWorker;globalThis.URL=oldURL;}
+}));
