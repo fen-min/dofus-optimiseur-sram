@@ -427,7 +427,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  });
  root.addEventListener("click",event=>{
   const copyButton=event.target.closest("button[data-team-copy-log]");
-  if(copyButton){
+  if(copyButton?.dataset?.teamCopyLog!==undefined){
    const source=mode==="manual"&&manualDraft?
     (()=>{try{return previewManualDraft(manualContexts(),target,manualDraft).result;}catch{return result;}})():
     result;
