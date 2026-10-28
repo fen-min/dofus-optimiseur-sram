@@ -11,6 +11,7 @@ import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js
 import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.38";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.40";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.42";
+import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -638,6 +639,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     }
     return {...proposed,actions:cleaned};
    })();
+    actor.log={plan:plan.label||"Rotation dynamique",casts:[],end:null};
     let played=0;
     for(const action of plan.actions){
      if(remainingHp<=0)break;
@@ -648,8 +650,9 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
         " n'est plus disponible avec les PA et effets de ce tour. Annule un sort ou augmente les PA.");
       continue;
      }
-     const before=entry.state.total;
-     entry.state=castSpell(entry.state,spell,plan.settings);
+     const beforeState=entry.state;
+     const before=beforeState.total;
+     entry.state=castSpell(beforeState,spell,plan.settings);
      grantPaBuff(entry,spell,entries,turn);
      const delta=round(Math.max(0,entry.state.total-before));
      actor.direct=round(actor.direct+delta);
@@ -659,6 +662,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
      const executed=entry.state.actions.at(-1);
      actor.actions.push({name:executed.name,pa:executed.pa,
       autoRefreshed:executed.notes?.includes("Relance automatique : buff expiré")||false});
+     actor.log.casts.push(combatCastLog(beforeState,entry.state,spell,executed,delta));
      played+=executed.pa;
     }
     // L'Écaflip peut récupérer des PA lors de ses lancers : « utilisés »
@@ -680,12 +684,14 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // Les poisons en attente évoluent après le tour de leur lanceur.
     // Si la cible est morte, aucun nouveau tick ne lui est compté.
     if(previewStates)previewStates[entry.ctx.build.id]=structuredClone(entry.state);
+    const beforeEndState=entry.state;
     const beforeEnd=entry.state.total;
     // A manual preview must never award a future actor's poison ticks
     // before the user actually completes that actor's turn.
     if(!(options.manualPreview&&index>=options.manualCursor))
      entry.state=endTurn(entry.state,plan.settings);
     const delayed=remainingHp>0?round(Math.max(0,entry.state.total-beforeEnd)):0;
+    actor.log.end=combatEndLog(beforeEndState,entry.state);
     actor.poison=delayed;
     actor.damage=round(actor.damage+delayed);
     remainingHp=round(Math.max(0,remainingHp-delayed));
