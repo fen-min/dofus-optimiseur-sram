@@ -52,3 +52,38 @@ test("combat stops once target is defeated, no extra turn calculated",()=>{
  assert.equal(result.finished,true);
  assert.throws(()=>optimizeTeamTurn([ctx],{...target,hp:100},()=>{},result),/terminé/);
 });
+
+test("PA automatiques modifiables par personnage au prochain tour sans effacer les tours précédents",()=>{
+ const contexts=[context(builds[1],"Assaut"),context(builds[0],"Arnaque")];
+ const [sacri,sram]=contexts;
+ const strategy={mode:"fast",horizon:3,minHpPercent:50};
+ const first=optimizeTeamTurn(contexts,target,()=>{},null,strategy,{
+  [sacri.build.id]:17,[sram.build.id]:8
+ });
+ assert.deepEqual(first.turns[0].actors.map(a=>a.availablePA),[17,8]);
+ const snapshot=structuredClone(first);
+ const second=optimizeTeamTurn(contexts,target,()=>{},first,strategy,{
+  [sacri.build.id]:6,[sram.build.id]:23
+ });
+ assert.equal(second.turns.length,2);
+ assert.deepEqual(second.turns[0],first.turns[0]);
+ assert.deepEqual(first,snapshot,"changing next-turn PA cannot mutate history");
+ assert.deepEqual(second.turns[1].actors.map(a=>a.availablePA),[6,23]);
+ assert.ok(second.turns[1].actors.every(a=>a.spent<=a.availablePA));
+ const third=optimizeTeamTurn(contexts,target,()=>{},second,strategy);
+ assert.equal(third.turns.length,3);
+ assert.deepEqual(third.turns[2].actors.map(a=>a.availablePA),
+  contexts.map(c=>c.settings.ap),"a one-round PA override must not persist");
+ assert.deepEqual(third.turns.slice(0,2),second.turns.slice(0,2));
+});
+test("PA absolus invalides rejetés sans modifier la session existante",()=>{
+ const ctx=context(builds[1],"Assaut");
+ const strategy={mode:"fast",horizon:3,minHpPercent:50};
+ const first=optimizeTeamTurn([ctx],target,()=>{},null,strategy);
+ for(const value of [0,31,12.5,"abc"]){
+  assert.throws(()=>optimizeTeamTurn([ctx],target,()=>{},first,strategy,{
+   [ctx.build.id]:value
+  }),/PA du tour invalides/);
+  assert.equal(first.turns.length,1);
+ }
+});
