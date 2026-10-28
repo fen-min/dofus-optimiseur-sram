@@ -1,5 +1,8 @@
 /**
- * Audited 15-round Karuta manual rotation (66 672.3 solo, 12 PA, crits on).
+ * Audited 15-round Karuta manual rotation (12 PA, crits on).
+ * Re-verified on 2026-10-28 after full-hand draw fix: 67 004.4 solo
+ * theoretical damage, target at 0% resistance. Historical result only:
+ * future engine changes must remeasure it rather than trusting this number.
  * This is a reusable reference trajectory, not a fabricated damage bonus.
  * Only apply while the build, equipped variants AND modeled ongoing state
  * match the audited trajectory. Fall back to the generic team optimizer on
