@@ -85,6 +85,7 @@ function evalCandidate(p){
  attempts++;
  if(!legalSram(p)){rejection.eligibility++;saved.set(k,null);return null;}
  let previous=null;
+ const snapshots=[];
  try{
   for(let i=0;i<T;i++){
    const manualOverrides={};
@@ -99,11 +100,11 @@ function evalCandidate(p){
     const cls=contexts.find(c=>c.build.id===a.id).settings.classId;
     assert.equal(a.actions.length,p[cls][i].length,"some actions skipped");
    }
-   validateRound(previous,i);
+   snapshots.push(validateRound(previous,i));
   }
  }catch(e){rejection.logged++;saved.set(k,null);return null;}
  valid++;
- const turns=previous.turns.map((_,i)=>validateRound(previous,i));
+ const turns=snapshots;
  const result={
   total:R(previous.theoretical),
   sram:R(previous.members.find(m=>m.character==="Matryoshka").estimated),
