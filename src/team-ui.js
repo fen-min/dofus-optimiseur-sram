@@ -9,6 +9,7 @@ import {
 } from "./team-core.js?v=3.41";
 import {cleanTeamStrategy} from "./team-long-plan.js?v=3.41";
 import {sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
+import {renderCombatLog,combatReportText} from "./team-combat-log.js?v=3.44";
 
 const safe=s=>String(s??"").replace(/[&<>"']/g,ch=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -221,6 +222,10 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const displayed=draftPreview||result;
   const present=!!displayed;
   const turn=displayed?.turns[activeTurn-1];
+  const logArea=$("team-quick-log");
+  const wasOpen=!!logArea.querySelector?.("details.team-log-details")?.open;
+  logArea.innerHTML=renderCombatLog(displayed,activeTurn);
+  if(wasOpen){const details=logArea.querySelector?.("details.team-log-details");if(details)details.open=true;}
   $("team-calculate").textContent=displayed?(displayed.finished?"✓ Combat terminé":"▶ Tour suivant ("+(displayed.turns.length+1)+")"):"▶ Calculer le tour 1";
   $("team-calculate").disabled=!!worker||!!displayed?.finished;
   $("team-restart").disabled=!displayed||!!worker;
@@ -421,6 +426,30 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
+  const copyButton=event.target.closest("button[data-team-copy-log]");
+  if(copyButton){
+   const source=mode==="manual"&&manualDraft?
+    (()=>{try{return previewManualDraft(manualContexts(),target,manualDraft).result;}catch{return result;}})():
+    result;
+   const report=combatReportText(source);
+   if(!source?.turns?.length){status("Aucun journal à copier : calcule un tour.");return;}
+   if(typeof globalThis.navigator?.clipboard?.writeText==="function"){
+    Promise.resolve(globalThis.navigator.clipboard.writeText(report)).then(()=>
+     status("Journal copié : "+source.turns.length+" tour(s), toutes les actions et effets."))
+     .catch(()=>status("Copie impossible. Vérifie les autorisations du presse-papiers du navigateur."));
+   }else{
+    try{
+     const textarea=document.createElement("textarea");
+     textarea.value=report;textarea.setAttribute("readonly","");
+     textarea.style.position="fixed";textarea.style.opacity="0";
+     document.body.appendChild(textarea);textarea.select();
+     const copied=document.execCommand("copy");
+     textarea.remove();
+     status(copied?"Journal complet copié.":"Copie non autorisée par le navigateur.");
+    }catch{status("Copie non disponible dans ce navigateur.");}
+   }
+   return;
+  }
   const equip=event.target.closest("button[data-team-equip-pact]");
   if(equip?.dataset?.teamEquipPact){
    const build=getMembers().find(b=>b.id===equip.dataset.teamEquipPact);
