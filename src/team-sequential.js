@@ -559,9 +559,12 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
    const record=saved.get(entry.ctx.build.id);
    if(!record||record.state?.turn!==previous.turns.length+1)
     throw Error("État précédent incompatible : recommence au tour 1.");
-   entry.state=record.state;
+   // Never mutate the previous saved round while calculating the next.
+   // In particular, assigning new PA to entry.state must not write back
+   // into previous.session.actors or corrupt an already committed turn.
+   entry.state=structuredClone(record.state);
    entry.trials=record.trials||0;
-   entry.teamBuffs=record.teamBuffs||[];
+   entry.teamBuffs=structuredClone(record.teamBuffs||[]);
   }
  }
  const members=previous?structuredClone(previous.members):entries.map(({ctx})=>({
@@ -576,7 +579,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
  let theoretical=previous?previous.theoretical:0;
  let directTotal=previous?previous.direct:0;
  let poisonTotal=previous?previous.poison:0;
- let shared=previous?previous.session.shared:emptyDebuff();
+ let shared=previous?structuredClone(previous.session.shared):emptyDebuff();
  let effective=previous?previous.effective:0;
  const stopAt=options.oneRound?Math.min(target.turns,turns.length+1):target.turns;
  const manualOverrides=options.manualOverrides||null;
