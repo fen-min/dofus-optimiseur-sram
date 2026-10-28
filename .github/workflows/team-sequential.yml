@@ -42,6 +42,7 @@ on:
       - "src/team-manual.js"
       - "test/team-dps-board.test.mjs"
       - "test/team-sram-buffs.test.mjs"
+      - "test/team-audited-ten-plan.test.mjs"
       - "test/team-pacte-manigance-regression.test.mjs"
       - "test/team-100-rounds-regression.test.mjs"
       - "index.html"
