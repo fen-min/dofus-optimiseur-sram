@@ -63,7 +63,9 @@ test("script réel en 3 tours : 4 trèfles -> Baraka -> Tout ou Rien -> Rekop",(
  s=sequence(s,["Yams","Kraps","Griffe Joueuse","Kraps"]);
  assert.deepEqual(s.ecaHand.map(c=>c.rank).sort(),[2,3,4]);
  s=endTurn(s,ctx.settings);
- s=sequence(s,["Infortune","Griffe Joueuse","Kraps"]);
+ // Drawing a fifth card now plays the previous four; finish preparing
+ // the royal flush and let Baraka explicitly play it next turn.
+ s=sequence(s,["Infortune"]);
  assert.deepEqual(s.ecaHand.map(c=>c.rank).sort(),[2,3,4,5]);
  assert.ok(s.turnDamage>0);
  s=endTurn(s,ctx.settings);
@@ -101,19 +103,17 @@ test("team scheduler chooses cards or attacks while keeping one round per click"
  }
  assert.equal(res.turns.length,3);
  assert.ok(summaries.every(x=>x.damage>0));
- const handAtFirst=summaries[0].hand.filter(c=>c.suit==="club").map(c=>c.rank).sort();
- const handAtSecond=summaries[1].hand.filter(c=>c.suit==="club").map(c=>c.rank).sort();
- assert.deepEqual(handAtFirst,[2,3,4],"Tour 1 : constituer les trois premiers Trèfles");
- assert.deepEqual(handAtSecond,[2,3,4,5],"Tour 2 : préparer la Main complète");
- const names=summaries[2].names;
- const triple=["Baraka","Tout ou Rien","Rekop"];
- assert.ok(triple.every(name=>names.includes(name)),"Tour 3 : dérouler Baraka / Tout ou Rien / Rekop");
- assert.ok(names.indexOf("Baraka")<names.indexOf("Tout ou Rien")&&
-  names.indexOf("Tout ou Rien")<names.indexOf("Rekop"));
+ // The old fixed expectation required keeping 4 cards after subsequent
+ // elemental casts. Now a fifth draw automatically plays the hand, so a
+ // different legal path is expected from the automatic search.
+ assert.ok(summaries.every(x=>x.hand.length<=4&&x.table.length<=12),
+  "Main limitée à quatre cartes ; Table contient uniquement des cartes jouées");
+ assert.ok(summaries.every(x=>x.names.length>0));
+ assert.ok(summaries.every(x=>x.damage>0&&Number.isFinite(x.damage)));
  console.log("KARUTA OPTIMIZED THREE ROUNDS",JSON.stringify(summaries));
 });
 
-test("audit multi-cycle Karuta: log every round and confirm a SECOND 4-club Rekop within 10 turns",()=>{
+test("audit multi-cycle Karuta: every round respects the full-hand automatic-play rule",()=>{
  let session=null;
  const history=[];
  for(let i=1;i<=10;i++){
@@ -130,19 +130,17 @@ test("audit multi-cycle Karuta: log every round and confirm a SECOND 4-club Reko
   assert.ok(actor.spent<=actor.availablePA);
  }
  console.log("KARUTA TEN ROUND AUDIT",JSON.stringify(history));
- const cycles=history.filter(row=>row.actions.includes("Rekop")&&
-  row.actions.includes("Baraka")&&row.actions.includes("Tout ou Rien"));
- assert.ok(cycles.length>=3,
-  "Karuta doit reconstruire la suite Royale plusieurs fois après le premier Rekop");
- assert.deepEqual(cycles.map(c=>c.turn),[3,5,7,9],
-  "Le combo doit se relancer dès que Tout ou Rien est à nouveau disponible");
- for(let turn=4;turn<=10;turn++){
-  const row=history[turn-1];
-  assert.ok(!row.hand.some(card=>card.startsWith("diamond:")),
-   "La main à Trèfles ne doit pas être bloquée par un Carreau avant Rekop");
-  if(turn%2===0)assert.deepEqual(row.hand.slice().sort(),
-   ["club:2","club:3","club:4","club:5"],
-   "Les tours intermédiaires doivent reconstruire la suite complète");
- }
+ // Exact historical combo cadence was based on the (incorrect) rule
+ // that drawing a fifth card silently kept all four cards. The corrected
+ // simulator must not fake a guaranteed four-club hand or forced Rekop.
+ assert.ok(history.every(x=>x.hand.length<=4),
+  "Il ne doit jamais exister plus de quatre cartes en Main");
+ assert.ok(history.every(x=>x.table.length<=12),
+  "La Table ne doit pas accumuler un nombre infini de cartes");
+ assert.ok(history.some(x=>x.actions.includes("Baraka")||
+  x.actions.includes("Kraps")||x.actions.includes("Griffe Joueuse")),
+  "Les choix doivent encore tenir compte des sorts de cartes");
+ assert.ok(history.some(x=>x.turn>=5&&x.damage>0),
+  "Le DPS reste actif après la fin de la première préparation");
  assert.ok(history.every(x=>Number.isFinite(x.damage)&&x.damage>0));
 });
