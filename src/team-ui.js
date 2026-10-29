@@ -1,4 +1,4 @@
-import {CLASSES} from "./classes.js?v=3.24";
+import {CLASSES} from "./classes.js?v=3.66";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
  undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
