@@ -39,8 +39,12 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  let target=cleanTeamTarget({...defaultTeamTarget(),...saved?.target,hp:INTERNAL_TARGET_HP,turns:100});
  const storedOptions=saved?.memberOptions&&typeof saved.memberOptions==="object"&&!Array.isArray(saved.memberOptions)
   ?saved.memberOptions:{};
+ // Old team settings can override the canonical 12-PA Sacrieur with 13.
+ // Repair only the reference Sacrieur's stale base-PA value on load.
+ const repairSacriBasePA=getBuilds().some(b=>b.id==="sacri-air-pvm"&&
+  b.classId==="sacrieur")&&Number(storedOptions["sacri-air-pvm"]?.ap)===13;
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
-  ap:options?.ap
+  ap:repairSacriBasePA&&id==="sacri-air-pvm"?12:options?.ap
  }]));
  let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
  // Ephemeral, absolute PA totals for the NEXT round only. Never save these
@@ -578,6 +582,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  });
  window.addEventListener("pagehide",cancel);
  previousSignature=JSON.stringify(getBuilds());
+ if(repairSacriBasePA)storeState(); // Persist correction without a combat reset.
  render();
  status("Choisis jusqu’à 8 builds ; l’ordre s’ajuste selon l’initiative enregistrée.");
  return {refresh};
