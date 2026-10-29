@@ -80,3 +80,14 @@ test("Les variantes Sacrieur personnalisées et les autres builds ne sont jamais
  explicit.variants[i]="Pacte de Sang";
  assert.equal(normalizeBuild(explicit).variants[i],"Pacte de Sang");
 });
+
+test("Sacrieur de référence : ancien 13 PA normalisé à 12, sans toucher aux autres PA",()=>{
+ const sacri=structuredClone(INITIAL_BUILDS.find(b=>b.id==="sacri-air-pvm"));
+ assert.equal(sacri.ap,12);
+ assert.equal(normalizeBuild({...sacri,ap:13}).ap,12);
+ assert.equal(normalizeBuild({...sacri,ap:12}).ap,12);
+ assert.equal(normalizeBuild({...sacri,ap:14}).ap,14);
+ assert.equal(normalizeBuild({...sacri,id:"sacri-custom",ap:13}).ap,13);
+ assert.equal(normalizeBuild({...INITIAL_BUILDS[0],ap:13}).ap,13);
+ assert.equal(normalizeBuild({...INITIAL_BUILDS[2],ap:13}).ap,13);
+});
