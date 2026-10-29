@@ -52,7 +52,11 @@ export function normalizeBuild(b,index=0){
  variants:cls.pairs.map((p,i)=>p.includes(selectedVariants?.[i])?selectedVariants[i]:cls.defaultVariants[i]),
  weapon:b?.weapon===undefined?(isReferenceEcaflip?"sceptre-roi-joueur":(isReferenceSram||isReferenceSacrier)?"manthache":null):normalizedWeaponId(b.weapon),
  dofusTurquoise:b?.dofusTurquoise===undefined?isReferenceEcaflip:b.dofusTurquoise===true,
- ap:Math.max(6,Math.min(20,+b?.ap||12)),turns:Math.max(1,Math.min(10,+b?.turns||10)),
+ // Legacy saved Sacrieur presets may have accidentally retained 13 base PA.
+ // Correct ONLY the canonical reference build's old value; other builds
+ // and deliberately chosen per-turn PA remain independent.
+ ap:isReferenceSacrier&&Number(b?.ap)===13?12:
+  Math.max(6,Math.min(20,+b?.ap||12)),turns:Math.max(1,Math.min(10,+b?.turns||10)),
  distance:Number.isFinite(+b?.distance)?Math.max(0,Math.min(30,+b.distance)):(cls.id==="sacrieur"?2:3),
  // Migration automatique de l'ancien build Sacrieur par défaut.
  // Ne pas attribuer les stats de cette capture aux nouveaux builds arbitraires.
