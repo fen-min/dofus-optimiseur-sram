@@ -464,4 +464,4 @@ test("un ancien réglage Sacrieur 13 PA est corrigé à 12 sans modifier les aut
  const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
  assert.equal(stored.memberOptions["sacri-air-pvm"].ap,12);
  assert.equal(stored.memberOptions["sram-air-pvm"].ap,16);
-});
+}));
