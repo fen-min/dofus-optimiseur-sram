@@ -1,7 +1,7 @@
 import {DEFAULT_SETTINGS} from "./spells.js";
 import {sanitizeCharacterStats} from "./character-stats.js?v=1.8";
 import {prepareBuildSpells} from "./build-damage.js?v=3.24";
-import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.35";
+import {CLASSES,INITIAL_BUILDS,normalizeBuild} from "./classes.js?v=3.66";
 import {renderBuildCards} from "./build-cards.js?v=2.4";
 import {mountTeamModule} from "./team-ui.js?v=3.65";
 import {optimize} from "./engine.js?v=3.56";
@@ -31,9 +31,10 @@ function loadBuilds(){
   const migrated=stored.slice(0,60).map(normalizeBuild);
   // Persist the one-time migration of the unchanged reference Sacrier
   // preset to Pacte de Sang; do not reset customized spell variants.
-  if(stored.some((oldBuild,i)=>oldBuild?.id==="sacri-air-pvm"&&
-   oldBuild.variants?.includes("Mutilation")&&
-   migrated[i]?.variants?.includes("Pacte de Sang"))){
+  if(stored.some((oldBuild,i)=>oldBuild?.id==="sacri-air-pvm"&&(
+   (oldBuild.variants?.includes("Mutilation")&&
+    migrated[i]?.variants?.includes("Pacte de Sang"))||
+   (Number(oldBuild.ap)===13&&migrated[i]?.ap===12)))){
    store(STORE,migrated);
   }
   if(!migrated.some(b=>b.id==="ecaflip-karuta-eau")&&migrated.length<60)
