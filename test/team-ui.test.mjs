@@ -449,3 +449,19 @@ test("choisir les PA de chaque personnage au tour suivant ne relance jamais le t
   assert.equal(requests[2].previous.turns.length,2);
  }finally{globalThis.Worker=oldWorker;globalThis.URL=oldURL;}
 }));
+
+test("un ancien réglage Sacrieur 13 PA est corrigé à 12 sans modifier les autres personnages",()=>withBrowser(({node,localStorage})=>{
+ localStorage.setItem("ombre-team-dps-v1",JSON.stringify({
+  ids:["sacri-air-pvm","sram-air-pvm"],
+  memberOptions:{"sacri-air-pvm":{ap:13},"sram-air-pvm":{ap:16}},
+  strategy:{mode:"long",horizon:100,minHpPercent:50}
+ }));
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const html=node("team-members").innerHTML;
+ assert.match(html,/data-team-ap="sacri-air-pvm"[^>]*value="12"/);
+ assert.match(html,/data-team-turn-ap="sacri-air-pvm"[^>]*value="12"/);
+ assert.match(html,/data-team-ap="sram-air-pvm"[^>]*value="16"/);
+ const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(stored.memberOptions["sacri-air-pvm"].ap,12);
+ assert.equal(stored.memberOptions["sram-air-pvm"].ap,16);
+});
