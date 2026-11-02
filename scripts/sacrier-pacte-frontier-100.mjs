@@ -86,7 +86,7 @@ function beam(ctx,floor){
   current=distinct(generated,12);
   if(!current.length)return null;
  }
- return current.sort((a,b)=>b.state.total-a.state.total).slice(0,18);
+ return current.sort((a,b)=>b.state.total-a.state.total).slice(0,10);
 }
 function automatic(ctx,floor){
  const strategy={mode:"long",horizon:10,minHpPercent:floor};
@@ -163,7 +163,7 @@ for(const {pct,floor} of points){
   console.log("PACTE_FRONTIER_15 "+JSON.stringify(row));
  }
  const finalist=qualified.filter(x=>x.row.fifteen.valid)
-  .sort((a,b)=>b.row.fifteen.total-a.row.fifteen.total).slice(0,5);
+  .sort((a,b)=>b.row.fifteen.total-a.row.fifteen.total).slice(0,2);
  // Compare top 15-round paths over the full 100-turn fight.
  const finals=[];
  for(const {row,path} of finalist){
