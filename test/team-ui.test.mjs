@@ -492,3 +492,22 @@ test("UI: nouvelle session utilise 100 tours par défaut",()=>withBrowser(({node
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
  assert.equal(node("team-horizon").value,"100");
 }));
+
+test("Sacrieur 30% PV: seuil 20 disponible et Mutilation reconnue pour DPS long",()=>withBrowser(({root,node,localStorage})=>{
+ const b=structuredClone(INITIAL_BUILDS);
+ const sacri=b.find(x=>x.id==="sacri-air-pvm");
+ const i=CLASSES.sacrieur.pairs.findIndex(p=>p.includes("Mutilation"));
+ sacri.variants[i]="Mutilation";
+ localStorage.setItem("ombre-team-dps-v1",JSON.stringify({
+  ids:["sacri-air-pvm"],
+  memberOptions:{"sacri-air-pvm":{ap:12,startHpPercent:30}},
+  strategy:{mode:"long",horizon:10,minHpPercent:20}
+ }));
+ mountTeamModule({getBuilds:()=>b});
+ const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+ assert.match(html,/<option value="20">20 %<\/option>/);
+ assert.match(node("team-members").innerHTML,/Mutilation équipé/);
+ assert.doesNotMatch(node("team-rotations").innerHTML,/Pacte de Sang non équipé/);
+ assert.equal(node("team-min-hp").value,"20");
+ assert.equal(node("team-horizon").value,"10");
+}));
