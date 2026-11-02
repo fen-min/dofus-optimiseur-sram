@@ -61,6 +61,10 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  const getMembers=()=>teamMembers(getBuilds(),ids);
  const storeState=()=>saveStore(ids,target,memberOptions,strategy);
  const memberSettings=b=>cleanTeamMemberOptions(b,memberOptions[b.id]);
+ const sacrierHpMutilationReference=b=>b?.id==="sacri-air-pvm"&&
+  b.classId==="sacrieur"&&memberSettings(b).ap===12&&
+  [60,70,80].includes(memberSettings(b).startHpPercent??100)&&
+  strategy.minHpPercent===50&&strategy.mode==="long"&&strategy.horizon===10;
  const nextTurnNumber=()=> (result?.turns.length||0)+1;
  const proposedTurnPA=build=>{
   const base=memberSettings(build).ap;
@@ -81,7 +85,8 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  }
  function buffSelector(build,cls){
   if(!cls||!["sram","sacrieur"].includes(build.classId))return "";
-  const preferred=build.classId==="sram"?"Manigance":"Pacte de Sang";
+  const preferred=build.classId==="sram"?"Manigance":
+   sacrierHpMutilationReference(build)?"Mutilation":"Pacte de Sang";
   const group=cls.pairs.findIndex(pair=>pair.includes(preferred));
   if(group<0)return "";
   const variants=cls.pairs[group];
@@ -289,7 +294,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const pactWarnings=getMembers().filter(b=>b.classId==="sacrieur").map(b=>{
    const group=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes("Pacte de Sang"));
    const active=b.variants?.[group]??CLASSES.sacrieur.defaultVariants[group];
-   if(active==="Pacte de Sang")return "";
+   if(active==="Pacte de Sang"||
+      (active==="Mutilation"&&sacrierHpMutilationReference(b)))return "";
    return '<div class="team-pact-warning" role="alert">'+
     '<strong>⚠ '+safe(b.character)+' : Pacte de Sang non équipé.</strong> '+
     'Le sort actif est '+safe(active)+'. OMBRE ne peut pas utiliser Pacte dans la rotation. '+
