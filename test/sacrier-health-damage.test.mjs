@@ -252,3 +252,18 @@ test("Pacte temporary Vitalité applies on partially wounded HP and restores bas
  assert.equal(removed.suffering,state.suffering);
  assert.equal(state.maxHp,4952);
 });
+
+test("Sacrieur team starting HP selector uses actual health and suffering without modifying base 12 AP",()=>{
+ for(const percent of [30,40,60,70,80,100]){
+  const ctx=createTeamContext(sacrier,{turns:10,hp:1e12,criticals:true},
+   {ap:12,startHpPercent:percent});
+  assert.equal(ctx.settings.sacrierStartingHpPercent,percent);
+  assert.equal(ctx.settings.ap,12);
+  const state=initialState(ctx.settings);
+  assert.ok(Math.abs(100*state.sacrierHealth.hp/state.sacrierHealth.maxHp-percent)<.02);
+  assert.equal(state.sacrierHealth.suffering,
+   sufferingLevel(state.sacrierHealth.hp,state.sacrierHealth.maxHp));
+ }
+ const ordinary=createTeamContext(sacrier,{turns:10,hp:1e12});
+ assert.equal(ordinary.settings.sacrierStartingHpPercent,100);
+});
