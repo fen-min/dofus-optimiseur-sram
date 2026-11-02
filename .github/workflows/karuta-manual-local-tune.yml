@@ -1,0 +1,23 @@
+name: OMBRE - Karuta recherche manuelle tous sorts sur 15 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-manual-local-tune.mjs"
+      - ".github/workflows/karuta-manual-local-tune.yml"
+  workflow_dispatch:
+jobs:
+  tune:
+    name: "${{ matrix.mode }} - 15 tours"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ALL, NOSTAT]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/karuta-manual-local-tune.mjs ${{ matrix.mode }}
