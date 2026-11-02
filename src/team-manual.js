@@ -142,7 +142,9 @@ export function manualSpellChoices(contexts,target,draft){
     ((spell.status?.vulnerability||0)>1?220:0)+
     (spell.status?.buff?.duration>0?40:0));
    return {id:String(spell.id),name:spell.name,pa:spell.pa,
-    enabled:true,reason:score>=damage+50?"Buff, cartes ou effet utile":"Attaque disponible",
+    enabled:true,reason:spell.name==="Griffe Invocatrice"?
+     "Chaton non simulé ; +90 Puissance estimée sur 4 tours":
+     score>=damage+50?"Buff, cartes ou effet utile":"Attaque disponible",
     damage,delayed,utility,score,icon:manualSpellIcon(spell),
     isWeapon:!!spell.isWeapon};
   }catch{
