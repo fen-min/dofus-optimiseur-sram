@@ -50,7 +50,8 @@ function context(pct){
 }
 function run(pct,setup){
  const c=context(pct),floor=HP[pct].floor,policy={mode:"long",horizon:10,minHpPercent:floor};
- const records={},spells=[],first=[],minHp=100;
+ const records={},first=[];
+ let minHp=100;
  let previous=null,valid=true,reason="",at=0;
  for(let t=1;t<=100;t++){
   try{
