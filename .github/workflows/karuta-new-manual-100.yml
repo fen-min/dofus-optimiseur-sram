@@ -1,0 +1,23 @@
+name: OMBRE - Karuta meilleur plan manuel 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-new-manual-100.mjs"
+      - ".github/workflows/karuta-new-manual-100.yml"
+  workflow_dispatch:
+jobs:
+  verify:
+    name: "${{ matrix.mode }} - 100 tours"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [NEW, OLD]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/karuta-new-manual-100.mjs ${{ matrix.mode }}
