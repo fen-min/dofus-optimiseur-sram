@@ -112,6 +112,10 @@ export function manualSpellChoices(contexts,target,draft){
    else if((state.used[spell.id]||0)>=spell.maxPerTurn)reason="Lancers épuisés";
    else if(state.turn<(state.ready[spell.id]||1))
     reason="Relance : tour "+(state.ready[spell.id]||1);
+   else if(spell.name==="Griffe Invocatrice"&&
+     state.invocations.filter(x=>x.kind==="Chaton Enragé").length>=
+      current.settings.ecaflipMaxSummons)
+     reason="Emplacements d’invocation pleins ("+current.settings.ecaflipMaxSummons+")";
    else if(spell.pa>state.pa)reason="PA insuffisants";
    else if(!isSelected(spell,current))reason="Variante non équipée";
    else reason="Portée ou conditions";
@@ -140,10 +144,11 @@ export function manualSpellChoices(contexts,target,draft){
     Math.max(0,(next.ecaHand||[]).length-(state.ecaHand||[]).length)*85:0;
    const score=round(damage+delayed*.7+utility+cardValue+
     ((spell.status?.vulnerability||0)>1?220:0)+
-    (spell.status?.buff?.duration>0?40:0));
+    ((spell.status?.buff?.duration>0||spell.status?.buff?.untilRemoved)?40:0));
    return {id:String(spell.id),name:spell.name,pa:spell.pa,
     enabled:true,reason:spell.name==="Griffe Invocatrice"?
-     "Chaton non simulé ; +90 Puissance estimée sur 4 tours":
+     "Chaton vivant : +90 Puissance chacun, cumul max 3 (+270) ; "+ 
+      "6 invocations possibles ; bonus jusqu’à leur mort (ennemis/IA non simulés)":
      score>=damage+50?"Buff, cartes ou effet utile":"Attaque disponible",
     damage,delayed,utility,score,icon:manualSpellIcon(spell),
     isWeapon:!!spell.isWeapon};
