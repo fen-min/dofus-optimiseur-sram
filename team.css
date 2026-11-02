@@ -296,3 +296,10 @@
 .team-slot-body .team-slot-health{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:6px;padding:6px 8px;background:#202938;border:1px solid #577088;border-radius:8px;color:#d9efff!important;font-size:11px!important;font-weight:700!important}
 .team-slot-health select{width:auto!important;min-width:90px;max-width:115px;margin-left:auto;background:#142332!important;border-color:#54708b!important;color:#fff}
 .team-slot-health select:disabled{opacity:.6;cursor:not-allowed}
+
+/* Manual inventory: active skills first; alternate variants visible but never clickable. */
+.manual-spell-inventory{color:#b7d3f0;font-size:12px;font-weight:600;margin:11px 0 7px;line-height:1.45}
+.manual-spell-inventory strong{color:#e5f5ff}
+.manual-spell.is-variant-alternative{opacity:.58;background:#202436;border-style:dashed;border-color:#67718d}
+.manual-spell.is-variant-alternative .manual-name small{display:block;font-size:10px;color:#f1c997;font-weight:650;margin-top:4px}
+.manual-spell.is-variant-alternative .manual-extra{color:#c0c9d9}
