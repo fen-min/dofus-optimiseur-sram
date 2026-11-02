@@ -465,3 +465,25 @@ test("un ancien réglage Sacrieur 13 PA est corrigé à 12 sans modifier les aut
  assert.equal(stored.memberOptions["sacri-air-pvm"].ap,12);
  assert.equal(stored.memberOptions["sram-air-pvm"].ap,16);
 }));
+
+test("PV de départ Sacrieur réglables à 30-80% sans altérer ses PA ni les autres builds",()=>withBrowser(({root,node,localStorage})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ const initial=node("team-members").innerHTML;
+ assert.match(initial,/data-team-start-hp="sacri-air-pvm"/);
+ assert.match(initial,/value="100" selected>100 %/);
+ const change=(selector,field,value)=>root.listeners.change({target:{closest(q){
+  return q===selector?{dataset:{[field]:"sacri-air-pvm"},value}:null;
+ }}});
+ change("select[data-team-start-hp]","teamStartHp","30");
+ const stored=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(stored.memberOptions["sacri-air-pvm"].startHpPercent,30);
+ assert.equal(node("team-members").innerHTML.includes('value="30" selected>30 %'),true);
+ // A start HP below the safety floor is rejected before a first turn.
+ node("team-calculate").listeners.click();
+ assert.match(node("team-status").textContent,/sous le seuil de sécurité de 50/);
+ change("input[data-team-ap]","teamAp","14");
+ const updated=JSON.parse(localStorage.getItem("ombre-team-dps-v1"));
+ assert.equal(updated.memberOptions["sacri-air-pvm"].ap,14);
+ assert.equal(updated.memberOptions["sacri-air-pvm"].startHpPercent,30);
+ assert.equal(INITIAL_BUILDS.find(b=>b.id==="sacri-air-pvm").ap,12);
+}));
