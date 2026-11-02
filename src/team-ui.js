@@ -51,12 +51,9 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  // Ephemeral, absolute PA totals for the NEXT round only. Never save these
  // into the build or the combat configuration signature.
  let pendingTurnPa={};
- // Old installations used 10 rounds as the maximum. Promote that legacy
- // default once so existing users also benefit from the new 100-round mode.
+ // 100 is the default for new sessions, but an explicitly chosen 10-turn
+ // horizon must remain 10 after a reload (including HP-audited strategies).
  let strategy=cleanTeamStrategy(saved?.strategy);
- if(saved?.strategy?.horizon===10){
-  strategy=cleanTeamStrategy({...strategy,horizon:100});
- }
  let previousSignature="";
  const getMembers=()=>teamMembers(getBuilds(),ids);
  const storeState=()=>saveStore(ids,target,memberOptions,strategy);
