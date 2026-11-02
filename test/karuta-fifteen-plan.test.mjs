@@ -23,7 +23,8 @@ test("Karuta: 15-round reference stays legal and is remeasured with corrected fu
    manualOverrides:{[ctx.build.id]:ids}});
  }
  assert.equal(prior.turns.length,15);
- assert.ok(prior.theoretical>=60000,"Rotation 15 tours dégradée: "+prior.theoretical);
+ assert.ok(Math.abs(prior.theoretical-68290)<.2,
+  "Rotation manuelle Karuta 15 tours dégradée: "+prior.theoretical+" contre 68290");
  assert.ok(prior.turns.every(t=>t.actors[0].spent<=12));
 });
 
@@ -37,8 +38,8 @@ test("Karuta: long optimizer replays validated record for 15 rounds with 100 rou
   assert.equal(previous.turns.length,turn);
   assert.ok(previous.turns.at(-1).actors[0].spent<=12);
  }
- assert.ok(previous.theoretical>=60000,
-  "Karuta 15 tours ne doit pas perdre sa rotation : "+previous.theoretical);
+ assert.ok(Math.abs(previous.theoretical-68290)<.2,
+  "Karuta 15 tours automatique doit reproduire 68290 : "+previous.theoretical);
  console.log("KARUTA_AUDITED_15_IN_100 "+JSON.stringify({
   total:previous.theoretical,turns:previous.turns.map(t=>({
    number:t.number,damage:t.actors[0].damage,spells:t.actors[0].actions.map(a=>a.name)
