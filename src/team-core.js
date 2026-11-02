@@ -62,7 +62,9 @@ export function cleanTeamMemberOptions(build,raw={}){
  const startHpPercent=build?.classId==="sacrieur"&&
   Number.isInteger(initialHp)&&initialHp>=1&&initialHp<=100?
   initialHp:100;
- return {ap,startHpPercent};
+ return {ap,...(build?.classId==="sacrieur"&&
+  options.startHpPercent!==undefined&&options.startHpPercent!==null?
+  {startHpPercent}:{})};
 }
 export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
@@ -81,7 +83,7 @@ export function createTeamContext(build,target,memberOptions={}){
   criticals:input.criticals,beamWidth:8,refreshTimedBuffs:false,
   sacrierHealthSimulation:cls.id==="sacrieur"&&Number(build.stats?.hitPoints)>0,
   sacrierMaxHp:cls.id==="sacrieur"?Number(build.stats?.hitPoints)||0:0,
-  sacrierStartingHpPercent:cls.id==="sacrieur"?options.startHpPercent:100,
+  sacrierStartingHpPercent:cls.id==="sacrieur"?(options.startHpPercent??100):100,
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false
  });
