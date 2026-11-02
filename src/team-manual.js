@@ -92,7 +92,18 @@ export function manualActiveEcaflipTable(preview){
 }
 export function manualSpellChoices(contexts,target,draft){
  const {current,state}=previewManualDraft(contexts,target,draft);
- const choices=current.spells.filter(spell=>isSelected(spell,current)).map(spell=>{
+ // Keep the FULL 44-spell class catalogue visible in manual mode.
+ // Only the equipped member of each pair can ever be cast. Inactive
+ // variants are visible for diagnosis, but are strictly non-clickable.
+ const choices=current.spells.map(spell=>{
+  if(!isSelected(spell,current)){
+   const equipped=current.settings.variants?.[spell.variantGroup]||"";
+   return {id:String(spell.id),name:spell.name,pa:spell.pa,
+    enabled:false,equipped:false,variantOf:equipped,
+    reason:"Variante non équipée : "+equipped+" est sélectionné",
+    damage:0,delayed:0,utility:0,score:0,
+    icon:manualSpellIcon(spell),isWeapon:!!spell.isWeapon};
+  }
   const allowed=eligible(spell,state,current.settings);
   if(!allowed){
    let reason="Indisponible";
@@ -138,8 +149,9 @@ export function manualSpellChoices(contexts,target,draft){
     enabled:false,reason:"Calcul non disponible",damage:0,delayed:0,
     utility:0,score:0,icon:manualSpellIcon(spell),isWeapon:!!spell.isWeapon};
   }
- }).sort((a,b)=>Number(b.enabled)-Number(a.enabled)||
-  b.score-a.score||a.pa-b.pa||a.name.localeCompare(b.name,"fr"));
+ }).sort((a,b)=>Number(b.equipped!==false)-Number(a.equipped!==false)||
+  Number(b.enabled)-Number(a.enabled)||b.score-a.score||
+  a.pa-b.pa||a.name.localeCompare(b.name,"fr"));
  return choices;
 }
 /**
