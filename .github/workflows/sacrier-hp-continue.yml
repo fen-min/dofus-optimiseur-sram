@@ -1,0 +1,19 @@
+name: OMBRE - Sacrieur candidats 15 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-hp-continue.mjs"
+      - ".github/workflows/sacrier-hp-continue.yml"
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rejouer ouvertures Sacrieur puis auto sur 15 tours
+        run: node scripts/sacrier-hp-continue.mjs
