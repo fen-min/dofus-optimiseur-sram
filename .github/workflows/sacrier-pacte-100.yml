@@ -1,0 +1,19 @@
+name: OMBRE - Pacte de Sang 100 tours tous PV
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-pacte-100-tournament.mjs"
+      - ".github/workflows/sacrier-pacte-100.yml"
+  workflow_dispatch:
+jobs:
+  pacte-100:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Comparer Pacte de Sang à 30, 40, 60, 70 et 80 pourcent sur 100 tours
+        run: node scripts/sacrier-pacte-100-tournament.mjs
