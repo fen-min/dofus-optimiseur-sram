@@ -201,6 +201,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      ecaTable.map(card=>renderEcaCard(card,card.remainingTurns)).join(''):'Aucune carte jouée')+
     '</div></section></div>':'';
    const choices=manualSpellChoices(contexts,target,manualDraft);
+   const equippedCount=choices.filter(c=>!c.isWeapon&&c.equipped!==false).length;
+   const alternateCount=choices.filter(c=>c.equipped===false).length;
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
    const actions=(manualDraft.actions[current.build.id]||[]).map(id=>
@@ -215,20 +217,27 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      'value="'+actor.availablePA+'" aria-label="Choisir les PA de départ pour '+safe(current.build.character)+'">'+
      '<span class="manual-pa-remaining"><strong>'+fmt(state.pa)+' PA</strong> restants</span>'+
      '</div></div>'+
-    '<p class="manual-guide">Clique sur un sort. Les recommandations se recalculent après chaque action.</p>'+
+    '<p class="manual-guide">Clique sur un sort équipé. Les 44 sorts sont affichés : les variantes opposées restent visibles, mais leur lancement est bloqué. Pour changer de variante, utilise Sorts & variantes avant de recommencer le combat.</p>'+
     hpWarning+
     '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
     '</div>'+
     tableHtml+
+    '<div class="manual-spell-inventory"><strong>'+equippedCount+' sorts équipés</strong> · '+
+    alternateCount+' variantes non équipées'+
+    (choices.some(c=>c.isWeapon)?' · arme équipée':'')+'</div>'+
     '<div class="manual-spells" role="group" aria-label="Sorts manuels">'+choices.map((c,index)=>{
      const image=c.icon?'<img src="'+safe(c.icon)+'" alt="" loading="lazy">':'';
      return '<button type="button" class="manual-spell'+(c.enabled?'':' is-unavailable')+
+      (c.equipped===false?' is-variant-alternative':'')+
       '" data-manual-cast="'+safe(c.id)+'"'+(c.enabled?'':' disabled')+
       ' title="'+safe(c.reason)+'"><span class="manual-icon">'+image+
       '<span class="manual-icon-fallback">'+(c.isWeapon?'⚔':'✦')+'</span></span>'+
-      '<span class="manual-name">'+safe(c.name)+(index===0&&c.enabled?' <em>Conseillé</em>':'')+'</span>'+
+      '<span class="manual-name">'+safe(c.name)+(index===0&&c.enabled?' <em>Conseillé</em>':'')+
+      (c.equipped===false?' <small>Variante non équipée</small>':'')+'</span>'+
       '<span class="manual-cost">'+fmt(c.pa)+' PA</span>'+
-      '<strong class="manual-damage">'+(c.enabled?'≈ '+fmt(c.damage)+' dégâts':'Indisponible')+'</strong>'+
+      '<strong class="manual-damage">'+(c.enabled?
+       (c.damage>0?'≈ '+fmt(c.damage)+' dégâts':'Effet utilitaire'):
+       (c.equipped===false?'Non équipée':'Indisponible'))+'</strong>'+
       '<span class="manual-extra">'+(c.enabled?
        (c.delayed?'+'+fmt(c.delayed)+' différés · ':'')+
        '≈ '+fmt(c.damage/Math.max(1,c.pa))+' dégâts/PA · '+safe(c.reason):
