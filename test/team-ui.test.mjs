@@ -374,12 +374,12 @@ test("La profondeur de recherche est toujours approfondie sans sélecteur",()=>{
  assert.match(html,/id="team-horizon"/);
 });
 
-test("UI: horizon 100 tours par défaut et ancien réglage 10 migré",()=>withBrowser(({node,localStorage})=>{
+test("UI: horizon 100 par défaut, mais un réglage 10 volontaire doit survivre au rechargement",()=>withBrowser(({node,localStorage})=>{
  const saved={ids:["sacri-air-pvm","sram-air-pvm"],
   strategy:{mode:"long",horizon:10,effort:"balanced",minHpPercent:50}};
  localStorage.setItem("ombre-team-dps-v1",JSON.stringify(saved));
  mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
- assert.equal(node("team-horizon").value,"100");
+ assert.equal(node("team-horizon").value,"10");
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
  assert.match(html,/<option value="100" selected>100 tours/);
  assert.match(html,/<option value="15">15 tours/);
@@ -486,4 +486,9 @@ test("PV de départ Sacrieur réglables à 30-80% sans altérer ses PA ni les au
  assert.equal(updated.memberOptions["sacri-air-pvm"].ap,14);
  assert.equal(updated.memberOptions["sacri-air-pvm"].startHpPercent,30);
  assert.equal(INITIAL_BUILDS.find(b=>b.id==="sacri-air-pvm").ap,12);
+}));
+
+test("UI: nouvelle session utilise 100 tours par défaut",()=>withBrowser(({node})=>{
+ mountTeamModule({getBuilds:()=>INITIAL_BUILDS});
+ assert.equal(node("team-horizon").value,"100");
 }));
