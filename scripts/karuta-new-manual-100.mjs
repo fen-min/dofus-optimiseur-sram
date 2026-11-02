@@ -29,9 +29,27 @@ const changed=[
  ["Kraps","Kraps","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
  ["Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Infortune"]
 ];
+const OLD_REFERENCE_15=Object.freeze([
+ ["Yams","Griffe Joueuse","Kraps","Sceptre du Roi Joueur"],
+ ["Yams","Infortune","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur"],
+ ["Baraka","Tout ou Rien","Rekop","Yams"],
+ ["Griffe Joueuse","Kraps","Infortune"],
+ ["Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Baraka","Kraps","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
+ ["Yams","Kraps","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Infortune"],
+ ["Griffe Joueuse","Baraka","Infortune"],
+ ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
+ ["Yams","Pile ou Face","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Kraps","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Infortune"]
+]);
 const mode=process.argv[2]||"NEW";
 assert.ok(["NEW","OLD"].includes(mode));
-const prelude=mode==="NEW"?changed:KARUTA_FIFTEEN_ROUNDS;
+const prelude=mode==="NEW"?KARUTA_FIFTEEN_ROUNDS:OLD_REFERENCE_15;
+assert.deepEqual(changed,KARUTA_FIFTEEN_ROUNDS,"New reference plan must match independently tested manual route");
 const R=n=>Math.round((Number(n)||0)*10)/10;
 const ids=names=>names.map(name=>{
  const sp=ctx.spells.find(s=>s.name===name);
