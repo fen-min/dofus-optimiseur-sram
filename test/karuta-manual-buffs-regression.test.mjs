@@ -7,6 +7,8 @@ import {playSequentialTeam} from "../src/team-sequential.js";
 import {KARUTA_FIFTEEN_ROUNDS} from "../src/karuta-fifteen-plan.js";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
+const cumulative=(result,n)=>round(result.turns.slice(0,n).reduce((sum,turn)=>
+ sum+Number(turn.theoretical||0),0));
 const target=cleanTeamTarget({turns:15,hp:1e12,criticals:true,
  resistances:{Air:0,Eau:0,Feu:0,Terre:0,Neutre:0}});
 const build=normalizeBuild(INITIAL_BUILDS.find(x=>x.id==="ecaflip-karuta-eau"));
@@ -62,9 +64,9 @@ test("Karuta best-tested no-stat-buff manual path repeats legally and preserves 
    "Spell "+n+" would add active stat buff");
  }
  const result=play(Array.from({length:15},()=>noStat));
- assert.equal(round(result.turns[0].theoretical),3861.1);
- assert.equal(round(result.turns[2].theoretical),11944.9);
- assert.equal(round(result.turns[9].theoretical),40660.3);
+ assert.equal(cumulative(result,1),3861.1);
+ assert.equal(cumulative(result,3),11944.9);
+ assert.equal(cumulative(result,10),40660.3);
  assert.equal(round(result.theoretical),61171.3);
 });
 
@@ -73,8 +75,8 @@ test("Karuta new 15-turn buffed manual champion improves reference by 1,285.6 da
  assert.ok(!KARUTA_FIFTEEN_ROUNDS.flat().includes("Griffe Invocatrice"),
   "The highest-tested champion does not spend AP on kitten summon");
  const result=play(KARUTA_FIFTEEN_ROUNDS);
- assert.equal(round(result.turns[2].theoretical),12567.8);
- assert.equal(round(result.turns[9].theoretical),44800.8);
+ assert.equal(cumulative(result,3),12567.8);
+ assert.equal(cumulative(result,10),44800.8);
  assert.equal(round(result.theoretical),68290);
  assert.equal(round(result.theoretical-67004.4),1285.6);
 });
