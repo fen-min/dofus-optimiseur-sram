@@ -98,7 +98,8 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
     '" data-team-buff="'+safe(build.id)+'" data-team-group="'+group+
     '" aria-label="Choisir le buff de '+safe(build.character)+'">'+options+
     '</select></label><small class="team-buff-info">'+
-    (chosen===preferred?'✓ '+safe(preferred)+' équipé':
+    (chosen===preferred||build.classId==="sacrieur"&&chosen==="Pacte de Sang"?
+      '✓ '+safe(chosen)+' équipé':
       '⚠ '+safe(preferred)+' indisponible : '+safe(chosen)+' sélectionné')+
     '</small>';
  }
