@@ -58,7 +58,11 @@ export function cleanTeamMemberOptions(build,raw={}){
   ?selectedPA:Number.isInteger(basePA)&&basePA>=6&&basePA<=20?basePA:12;
  // Old manually forced buff choices are no longer used in team calculations.
  // Only a team-specific AP override survives; the build determines variants.
- return {ap};
+ const initialHp=Number(options.startHpPercent);
+ const startHpPercent=build?.classId==="sacrieur"&&
+  Number.isInteger(initialHp)&&initialHp>=1&&initialHp<=100?
+  initialHp:100;
+ return {ap,startHpPercent};
 }
 export function createTeamContext(build,target,memberOptions={}){
  const cls=CLASSES[build?.classId];
@@ -77,7 +81,7 @@ export function createTeamContext(build,target,memberOptions={}){
   criticals:input.criticals,beamWidth:8,refreshTimedBuffs:false,
   sacrierHealthSimulation:cls.id==="sacrieur"&&Number(build.stats?.hitPoints)>0,
   sacrierMaxHp:cls.id==="sacrieur"?Number(build.stats?.hitPoints)||0:0,
-  sacrierStartingHpPercent:100,
+  sacrierStartingHpPercent:cls.id==="sacrieur"?options.startHpPercent:100,
   inLine:true,lineOfSight:true,triggerTraps:false,triggerOnPush:false,
   comploteurContact:false
  });
