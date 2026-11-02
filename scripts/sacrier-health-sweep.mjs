@@ -45,14 +45,17 @@ function verifyRound(previous,ctx,t,floor){
  assert.ok(actor.spent<=actor.availablePA+0.01);
  assert.equal(actor.availablePA,12);
  const state=previous.session.actors[0].state;
- assert.ok(sacrierHealthAboveFloor(state,floor),
-  "HP floor violation T"+t+" ("+floor+"%), got "+R(state.sacrierHealth.hp/state.sacrierHealth.maxHp*100)+"%");
+ const safe=sacrierHealthAboveFloor(state,floor);
+ if(!safe)console.log("SACRI_HP_UNSAFE "+JSON.stringify({
+  turn:t,floor,currentPercent:R(state.sacrierHealth.hp/state.sacrierHealth.maxHp*100),
+  spells:actor.actions.map(x=>x.name)
+ }));
  assert.ok(actor.health?.maxHp>0);
  return {
   damage:actor.damage,
   hp:R(actor.health.hp/actor.health.maxHp*100),
   spells:actor.actions.map(x=>x.name),
-  pa:actor.spent
+  pa:actor.spent,safe
  };
 }
 function run({pct,floor,kind},variant,mode){
@@ -64,8 +67,12 @@ function run({pct,floor,kind},variant,mode){
   const summary=verifyRound(previous,ctx,n,floor);
   lowest=Math.min(lowest,summary.hp);
   record.push(summary);
+  // A path below the selected PV floor is unsafe even if it inflicts
+  // more damage. Do not let that path win the DPS ranking.
+  if(!summary.safe)break;
  }
- return {pct,floor,kind,variant,mode,total:R(previous.theoretical),
+ const valid=record.length===10&&record.every(x=>x.safe);
+ return {pct,floor,kind,variant,mode,valid,turnsPlayed:record.length,total:R(previous.theoretical),
   three:R(record.slice(0,3).reduce((n,x)=>n+x.damage,0)),
   lowestHp:lowest,opening:record[0].spells,turn2:record[1].spells,
   pactTurns:record.flatMap((r,i)=>r.spells.includes("Pacte de Sang")?[i+1]:[]),
@@ -82,7 +89,8 @@ for(const setup of setups){
     console.log("SACRI_HP_CASE "+JSON.stringify({
      pct:row.pct,floor:row.floor,kind:row.kind,variant:row.variant,
      mode:row.mode,total:row.total,three:row.three,
-     lowestHp:row.lowestHp,opening:row.opening,pactTurns:row.pactTurns,
+     lowestHp:row.lowestHp,valid:row.valid,turnsPlayed:row.turnsPlayed,
+     opening:row.opening,pactTurns:row.pactTurns,
      berserkTurns:row.berserkTurns
     }));
    }catch(e){
@@ -94,15 +102,15 @@ for(const setup of setups){
 }
 for(const setup of setups){
  const group=all.filter(x=>x.pct===setup.pct&&x.floor===setup.floor);
- const ordered=group.slice().sort((a,b)=>b.total-a.total);
+ const ordered=group.slice().sort((a,b)=>Number(b.valid)-Number(a.valid)||b.total-a.total);
  console.log("SACRI_HP_COMPARE "+JSON.stringify({
   ...setup,ranking:ordered.map(({variant,mode,total,three,lowestHp,opening})=>
-   ({variant,mode,total,three,lowestHp,opening}))
+   ({variant,mode,total,three,lowestHp,opening,valid,turnsPlayed}))
  }));
 }
 console.log("SACRI_HP_SWEEP_FINAL "+JSON.stringify({
  count:all.length,elapsedSec:R((Date.now()-start)/1000),
  bestBySetup:setups.map(s=>all.filter(x=>x.pct===s.pct&&x.floor===s.floor)
-  .sort((a,b)=>b.total-a.total)[0]),
+  .filter(x=>x.valid).sort((a,b)=>b.total-a.total)[0]||null),
  note:"At each starting HP percent, compare four legal deterministic 10-turn plans with 12 AP and explicitly named HP safety floor. Not a proof of global optimum."
 }));
