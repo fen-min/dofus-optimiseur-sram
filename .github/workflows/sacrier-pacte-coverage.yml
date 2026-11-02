@@ -1,0 +1,21 @@
+name: OMBRE - Pacte variants and AP continuity
+on:
+  push:
+    branches: [main]
+    paths:
+      - "test/sacrier-pacte-hp-coverage.test.mjs"
+      - ".github/workflows/sacrier-pacte-coverage.yml"
+      - "src/sacrier-hp-rotation.js"
+      - "src/sacrier-dps-rotation.js"
+  workflow_dispatch:
+jobs:
+  pacte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pacte à 30 40 60 70 80 PV et PA par tour
+        run: node --test test/sacrier-pacte-hp-coverage.test.mjs test/sacrier-hp-rotation.test.mjs
