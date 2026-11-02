@@ -33,7 +33,7 @@ for(const plan of SACRIER_HP_100_CHAMPIONS){
  });
 }
 test("HP champion is not forced with changed AP, crits, damage stats, variant or fight state",()=>{
- const plan=SACRIER_HP_100_CHAMPIONS.find(x=>x.starting===70);
+ const plan=SACRIER_HP_100_CHAMPIONS.find(x=>x.starting===70&&x.variant==="Mutilation");
  const ctx=context(plan);
  const policy={mode:"long",horizon:10,minHpPercent:plan.floor};
  const entry={ctx,state:initialState(ctx.settings),currentPA:12};
