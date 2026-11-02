@@ -1,0 +1,23 @@
+name: OMBRE - Chatons Karuta bonus 90 puissance persistants
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/engine.js"
+      - "src/ecaflip-spells.js"
+      - "src/team-sequential.js"
+      - "src/team-manual.js"
+      - "test/karuta-kitten-power.test.mjs"
+      - ".github/workflows/karuta-kitten-power.yml"
+  workflow_dispatch:
+jobs:
+  kittens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tester six chatons persistants, maximum trois cumuls, morts et variantes
+        run: node --test test/karuta-kitten-power.test.mjs test/team-manual.test.mjs test/team-ecaflip-karuta.test.mjs
