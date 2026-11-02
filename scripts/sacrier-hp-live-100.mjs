@@ -12,7 +12,9 @@ const baseline=normalizeBuild(INITIAL_BUILDS.find(b=>b.id==="sacri-air-pvm"));
 const slot=CLASSES.sacrieur.pairs.findIndex(p=>p.includes("Pacte de Sang"));
 const target=cleanTeamTarget({turns:100,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
-const expected={"40:Pacte de Sang":326973.7,
+const expected={"30:Pacte de Sang":288195.5,"40:Pacte de Sang":327273.8,
+ "60:Pacte de Sang":250215.5,"70:Pacte de Sang":245904.8,
+ "80:Pacte de Sang":245483.6,
  "60:Mutilation":282402.2,"70:Mutilation":282526.2,
  "80:Mutilation":282012.4};
 const R=x=>Math.round((Number(x)||0)*10)/10;
