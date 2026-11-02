@@ -525,3 +525,34 @@ test("Pacte de Sang équipé reste reconnu aux PV 30-80 même si Mutilation a un
  assert.match(node("team-members").innerHTML,/Pacte de Sang équipé/);
  assert.doesNotMatch(node("team-members").innerHTML,/Mutilation indisponible/);
 }));
+
+
+test("Mode manuel : les 44 sorts de chaque classe sont visibles et les 22 variantes opposées sont bloquées",()=>{
+ for(const b of INITIAL_BUILDS){
+  withBrowser(({root,node})=>{
+   mountTeamModule({getBuilds:()=>[b]});
+   root.listeners.change({target:{closest(selector){
+    return selector==='input[name="team-mode"]'?{value:"manual"}:null;
+   }}});
+   const html=node("team-manual-board").innerHTML;
+   assert.equal((html.match(/data-manual-cast="/g)||[]).length,45,
+    b.classId+" : 44 sorts de classe + arme");
+   assert.equal((html.match(/is-variant-alternative/g)||[]).length,22,
+    b.classId+" : 22 variantes alternatives affichées et désactivées");
+   assert.match(html,/22 sorts équipés/);
+   assert.match(html,/22 variantes non équipées/);
+   assert.match(html,/Variante non équipée/);
+   if(b.classId==="ecaflip"){
+    assert.match(html,/>Griffe Invocatrice/);
+    assert.match(html,/>Caresse Invocatrice/);
+    assert.match(html,/sort_12300\.png/);
+    const griffe=html.match(/<button[^>]*data-manual-cast="eca-15-0"[^>]*>/);
+    assert.ok(griffe);
+    assert.doesNotMatch(griffe[0],/disabled/);
+    const caresse=html.match(/<button[^>]*data-manual-cast="eca-15-1"[^>]*>/);
+    assert.ok(caresse);
+    assert.match(caresse[0],/disabled/);
+   }
+  });
+ }
+});
