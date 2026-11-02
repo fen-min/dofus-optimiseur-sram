@@ -304,6 +304,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      (s.autoRefreshed?'↻ ':'')+safe(s.name)+' <small>'+safe(s.pa)+' PA</small></span>').join(""):
     '<span class="team-empty-actions">Passer ce tour</span>')+'</div>'+
    '<div class="team-rotation-meta">'+fmt(a.spent)+'/'+fmt(a.availablePA??displayed.members.find(m=>m.id===a.id)?.ap??0)+' PA utilisés'+
+   (a.safetyWarning?' · ⚠ '+safe(a.safetyWarning):'')+
    (a.paBonus?' · bonus '+(a.paBonus>0?'+':'')+fmt(a.paBonus)+' PA':'')+' · directs '+fmt(a.direct)+
    ' · différés '+fmt(a.poison)+
    (Number.isFinite(a.criticalRate)?
