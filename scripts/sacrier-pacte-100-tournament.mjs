@@ -12,7 +12,8 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget,optimizeTeamTurn} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
-import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
+import {sacrierHealthAboveFloor,sacrierCastAboveFloor} from "../src/sacrier-safety.js";
+import {initialState,eligible,castSpell} from "../src/engine.js";
 const R=n=>Math.round((Number(n)||0)*10)/10;
 const base=normalizeBuild(INITIAL_BUILDS.find(b=>b.id==="sacri-air-pvm"));
 const slot=CLASSES.sacrieur.pairs.findIndex(p=>p.includes("Pacte de Sang"));
@@ -57,9 +58,17 @@ function run(pct,setup){
   try{
    if(t<=setup.first.length){
     const names=setup.first[t-1];
+    let current=previous?.session.actors[0].state||initialState(c.settings);
     const ids=names.map(name=>{
-     const spell=c.spells.find(s=>s.name===name);
-     assert.ok(spell,"Unknown equipped spell "+name);return String(spell.id);
+     const spell=c.spells.find(s=>s.name===name&&
+      (s.isWeapon||c.settings.variants?.[s.variantGroup]===s.name));
+     assert.ok(spell,"Unknown equipped spell "+name);
+     assert.ok(eligible(spell,current,c.settings),"Ineligible cast "+name);
+     const after=castSpell(current,spell,c.settings);
+     assert.ok(sacrierCastAboveFloor(current,spell,after,floor),
+      "Under HP floor during "+name+" T"+t);
+     current=after;
+     return String(spell.id);
     });
     previous=playSequentialTeam([c],target,()=>{},{previous,oneRound:true,
      manualOverrides:{[c.build.id]:ids},teamStrategy:policy});
