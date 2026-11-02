@@ -255,7 +255,8 @@ test("Écaflip : Griffe Invocatrice équipée est visible, lançable et soumis �
  assert.equal(griffe.enabled,true);
  assert.notEqual(griffe.equipped,false);
  assert.equal(griffe.pa,3);
- assert.match(griffe.reason,/Chaton non simulé/);
+ assert.match(griffe.reason,/cumul max 3/);
+ assert.match(griffe.reason,/jusqu’à leur mort/);
  assert.match(griffe.icon,/sort_12300\.png$/);
  assert.equal(caresse.enabled,false);
  assert.equal(caresse.equipped,false);
