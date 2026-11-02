@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [ALL, NOSTAT]
+        mode: [ALL, NOSTAT, ALL_KITTENS]
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
