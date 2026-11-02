@@ -127,7 +127,7 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
       (result||worker||mode==="manual"?' disabled':'')+
       ' aria-label="PV de départ du Sacrieur en pourcentage">'+
       [30,40,50,60,70,80,90,100].map(p=>'<option value="'+p+'"'+
-       (p===settings.startHpPercent?' selected':'')+'>'+p+' %</option>').join('')+
+       (p===(settings.startHpPercent??100)?' selected':'')+'>'+p+' %</option>').join('')+
      '</select></label>':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
@@ -387,7 +387,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const members=getMembers();
   if(!members.length){status("Ajoute au moins un personnage.");return;}
   const invalidHp=members.find(b=>b.classId==="sacrieur"&&
-   memberSettings(b).startHpPercent<strategy.minHpPercent);
+   (memberSettings(b).startHpPercent??100)<strategy.minHpPercent);
   if(!result&&invalidHp){
    status("Le Sacrieur commence à "+memberSettings(invalidHp).startHpPercent+
     " % PV, sous le seuil de sécurité de "+strategy.minHpPercent+
