@@ -1,0 +1,20 @@
+name: OMBRE - Sacrieur rotations optimisées 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-hp-live-100.mjs"
+      - "src/sacrier-hp-rotation.js"
+      - ".github/workflows/sacrier-hp-live-100.yml"
+  workflow_dispatch:
+jobs:
+  live-100:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Vérifier automatiquement les 4 champions Sacrieur sur 100 tours
+        run: node scripts/sacrier-hp-live-100.mjs
