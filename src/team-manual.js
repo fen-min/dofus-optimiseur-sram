@@ -147,8 +147,9 @@ export function manualSpellChoices(contexts,target,draft){
     ((spell.status?.buff?.duration>0||spell.status?.buff?.untilRemoved)?40:0));
    return {id:String(spell.id),name:spell.name,pa:spell.pa,
     enabled:true,reason:spell.name==="Griffe Invocatrice"?
-     "Chaton vivant : +90 Puissance chacun, cumul max 3 (+270) ; "+ 
-      "6 invocations possibles ; bonus jusqu’à leur mort (ennemis/IA non simulés)":
+     "Chaton vivant : +90 Puissance chacun, cumul max 3 (+270) ; "+
+      current.settings.ecaflipMaxSummons+
+      " invocations possibles ; bonus jusqu’à leur mort (ennemis/IA non simulés)":
      score>=damage+50?"Buff, cartes ou effet utile":"Attaque disponible",
     damage,delayed,utility,score,icon:manualSpellIcon(spell),
     isWeapon:!!spell.isWeapon};
