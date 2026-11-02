@@ -1,0 +1,19 @@
+name: OMBRE - Recherche Sacrieur DPS selon PV
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-hp-beam.mjs"
+      - ".github/workflows/sacrier-hp-beam.yml"
+  workflow_dispatch:
+jobs:
+  sacrier-beam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Explorer les rotations Sacrieur sur 3 tours puis rejouer manuellement
+        run: node scripts/sacrier-hp-beam.mjs
