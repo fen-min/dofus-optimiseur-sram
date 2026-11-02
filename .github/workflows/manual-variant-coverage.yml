@@ -1,0 +1,25 @@
+name: OMBRE - Catalogue manuel 3 classes et variantes
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-manual.js"
+      - "src/team-ui.js"
+      - "test/team-manual.test.mjs"
+      - "test/team-ui.test.mjs"
+      - "scripts/audit-manual-three-classes.mjs"
+      - ".github/workflows/manual-variant-coverage.yml"
+  workflow_dispatch:
+jobs:
+  manual-variants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tester tout le catalogue, les paires et les interactions
+        run: node --test test/team-manual.test.mjs test/team-ui.test.mjs
+      - name: Vérifier les 44 sorts des 3 classes et Griffe Invocatrice
+        run: node scripts/audit-manual-three-classes.mjs
