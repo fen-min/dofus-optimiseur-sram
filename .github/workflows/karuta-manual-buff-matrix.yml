@@ -1,0 +1,26 @@
+name: OMBRE - Karuta DPS manuel avec et sans buffs
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-manual-buff-matrix.mjs"
+      - ".github/workflows/karuta-manual-buff-matrix.yml"
+  workflow_dispatch:
+jobs:
+  karuta-matrix:
+    name: "${{ matrix.rounds }}t / ${{ matrix.scenario }}"
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        rounds: [1, 3, 10, 15, 100]
+        scenario: [ALL, NOPREP, NOSTAT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Simuler les sorts equipés et rejouer manuellement
+        run: node scripts/karuta-manual-buff-matrix.mjs ${{ matrix.rounds }} ${{ matrix.scenario }}
