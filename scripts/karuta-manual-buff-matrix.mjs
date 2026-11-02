@@ -51,7 +51,7 @@ const format=path=>path.map(turn=>turn.map(id=>ctx.spells.find(sp=>String(sp.id)
 const sig=s=>JSON.stringify([s.turn,s.pa,s.used,s.ready,
  s.buffs?.map(b=>[b.key,b.stat,b.amount,b.until]),
  s.ecaHand,s.ecaTable,s.turquoiseProcs,s.enemyCriticalShreds,
- s.dots,s.charges,s.enemyDebuff,s.position,s.visible,s.invo​​cations]);
+ s.dots,s.charges,s.enemyDebuff,s.position,s.visible,s.invocations]);
 const projected=(s,weight)=>{
  const remain=duration-s.turn+1;
  if(remain<=0)return 0;
