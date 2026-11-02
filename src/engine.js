@@ -39,6 +39,9 @@ export function cleanSettings(input={}){
  ));
  c.enemyLowHp=!!c.enemyLowHp;c.inLine=!!c.inLine;c.lineOfSight=!!c.lineOfSight;c.criticals=!!c.criticals;
  c.dofusTurquoise=c.classId==="ecaflip"&&c.dofusTurquoise===true;
+ // Summon slots come from the actual character sheet, not spell stacks.
+ c.ecaflipMaxSummons=c.classId==="ecaflip"?
+  Math.max(1,Math.min(30,Math.floor(Number(c.ecaflipStats?.summons)||1))):0;
  c.triggerTraps=!!c.triggerTraps;c.triggerOnPush=!!c.triggerOnPush;c.comploteurContact=!!c.comploteurContact;
  c.variantPairs=Array.isArray(c.variantPairs)&&c.variantPairs.length===22?c.variantPairs:VARIANT_PAIRS;
  const fallback=c.variantPairs.map((pair,i)=>pair.includes(c.defaultVariants?.[i])?c.defaultVariants[i]:(c.variantPairs===VARIANT_PAIRS?DEFAULT_VARIANTS[i]:pair[0]));
@@ -65,6 +68,8 @@ export function eligible(spell,s,c){
  // A single enemy is being modeled, so 'per target' limits also apply.
  if(spell.perTarget&&(s.used[spell.id]||0)>=spell.perTarget)return false;
  if(spell.name==="Comploteur"&&s.invocations.some(x=>x.kind==="Comploteur"))return false;
+ if(spell.name==="Griffe Invocatrice"&&c.classId==="ecaflip"&&
+  s.invocations.filter(x=>x.kind==="Chaton Enragé").length>=c.ecaflipMaxSummons)return false;
  return true;
 }
 function activeEnemyCriticalShred(s){
@@ -240,6 +245,21 @@ function addBuff(s,key,stat,amount,duration,maxStacks,unit="",persistent=false){
  if(previous.length>=maxStacks){const replace=previous.sort((a,b)=>a.until-b.until)[0];s.buffs.splice(s.buffs.indexOf(replace),1);}
  s.buffs.push({key,stat,amount,unit,until:persistent?Number.MAX_SAFE_INTEGER:s.turn+duration-1,persistent});
 }
+// +90 Power per surviving Angry Kitten, capped at THREE buff stacks
+// independently of the SIX physical summon slots of Karuta's build.
+// No enemy attacks are simulated; summons therefore persist until explicitly
+// removed from the state. Reconciliation handles their future deaths safely.
+function syncEcaflipKittenPower(s){
+ const live=s.invocations.filter(x=>x.kind==="Chaton Enragé").length;
+ s.buffs=s.buffs.filter(b=>b.key!=="Griffe Invocatrice");
+ if(live>0)s.buffs.push({
+  key:"Griffe Invocatrice",stat:"Puissance",
+  amount:90*Math.min(3,live),unit:"",
+  until:Number.MAX_SAFE_INTEGER,persistent:true,
+  summonLinked:true,summonCount:live
+ });
+ return live;
+}
 function dot(s,spell,c){
  const d=spell.status.poison;
  s.dots[spell.id]={name:spell.name,element:spell.element,phase:d.phase,left:d.duration,
@@ -381,7 +401,19 @@ export function castSpell(origin,spell,input={}){
    action.notes.push("Mutilation I/III : +150 Puissance jusqu’à Coagulation");
   }
  }
- const bonuses=coagulation?[]:[...(status.buff?[status.buff]:[]),...(status.extraBuffs||[])];
+ if(name==="Griffe Invocatrice"&&c.classId==="ecaflip"){
+  s.invocations.push({kind:"Chaton Enragé",turn:s.turn,source:name});
+  const living=syncEcaflipKittenPower(s);
+  action.notes.push("Chaton Enragé : "+living+"/"+c.ecaflipMaxSummons+
+   " invocations vivantes ; +"+(90*Math.min(3,living))+
+   " Puissance (90 par Chaton, cumul max 3, jusqu’à leur mort ; IA non simulée)");
+ }
+ // The Griffe power buff is managed by the living summon count above.
+ // Do not add it again as a fixed-duration generic buff.
+ const bonuses=coagulation?[]:[
+  ...(status.buff&&name!=="Griffe Invocatrice"?[status.buff]:[]),
+  ...(status.extraBuffs||[])
+ ];
  for(const b of bonuses){
   const key=bonuses.length===1?name:name+":"+b.stat;
   addBuff(s,key,b.stat,b.value,b.duration,b.stacks,b.unit||"",b.untilRemoved===true);
@@ -482,6 +514,7 @@ export function endTurn(original,input={}){
   }else summons.push(summon);
  }
  s.invocations=summons;
+ if(c.classId==="ecaflip")syncEcaflipKittenPower(s);
  const summary={number:s.turn,actions:s.actions,turquoiseBonus:round(activeTurquoiseBonus(s)),spent:turnActionPoints(c,s.turn)-s.pa,sacrierEndHealth:s.sacrierHealth?{...s.sacrierHealth}:null,
   immediate:round(s.turnImmediate),poison:round(poison),
   total:round(s.turnDamage),ticks,activeBuff:buffsNow(s).map(x=>x.key),
