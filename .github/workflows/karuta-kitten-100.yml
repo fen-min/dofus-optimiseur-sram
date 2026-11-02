@@ -1,0 +1,24 @@
+name: OMBRE - Karuta 100 tours avec 0-3 chatons vivants
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-kitten-100-compare.mjs"
+      - ".github/workflows/karuta-kitten-100.yml"
+  workflow_dispatch:
+jobs:
+  compare:
+    name: "${{ matrix.mode }} chatons"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [NONE, ONE, TWO, THREE]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Jouer 100 tours, comparer 0 1 2 3 chatons, puis rejouer en manuel
+        run: node scripts/karuta-kitten-100-compare.mjs ${{ matrix.mode }}
