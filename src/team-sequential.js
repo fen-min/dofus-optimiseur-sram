@@ -137,8 +137,10 @@ function selectedBuffs(ctx,state,settings){
   (spell.status?.buff&&offensive.has(spell.status.buff.stat)&&spell.status.buff.value>0)||
   (spell.ecaflipCriticalRateBuff?.critical>0)
  )&&eligible(spell,state,settings)&&
-  (!spell.nonDirect||!state.buffs.some(buff=>
-   buff.until>=state.turn&&(buff.key===spell.name||buff.key.startsWith(spell.name+":")))))
+  (spell.name==="Griffe Invocatrice"?
+   state.invocations.filter(x=>x.kind==="Chaton Enragé").length<3:
+   (!spell.nonDirect||!state.buffs.some(buff=>
+    buff.until>=state.turn&&(buff.key===spell.name||buff.key.startsWith(spell.name+":"))))))
   .sort((a,b)=>amount(b)/Math.max(1,b.pa)-amount(a)/Math.max(1,a.pa)).slice(0,5);
 }
 /** Crit reliability is a strategic criterion, not a fictitious damage bonus.
