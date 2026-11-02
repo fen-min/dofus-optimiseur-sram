@@ -104,7 +104,7 @@ for(const setup of setups){
  const group=all.filter(x=>x.pct===setup.pct&&x.floor===setup.floor);
  const ordered=group.slice().sort((a,b)=>Number(b.valid)-Number(a.valid)||b.total-a.total);
  console.log("SACRI_HP_COMPARE "+JSON.stringify({
-  ...setup,ranking:ordered.map(({variant,mode,total,three,lowestHp,opening})=>
+  ...setup,ranking:ordered.map(({variant,mode,total,three,lowestHp,opening,valid,turnsPlayed})=>
    ({variant,mode,total,three,lowestHp,opening,valid,turnsPlayed}))
  }));
 }
