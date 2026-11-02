@@ -511,3 +511,17 @@ test("Sacrieur 30% PV: seuil 20 disponible et Mutilation reconnue pour DPS long"
  assert.equal(node("team-min-hp").value,"20");
  assert.equal(node("team-horizon").value,"10");
 }));
+
+test("Pacte de Sang équipé reste reconnu aux PV 30-80 même si Mutilation a un DPS supérieur",()=>withBrowser(({node,localStorage})=>{
+ const builds=structuredClone(INITIAL_BUILDS);
+ const sacri=builds.find(b=>b.id==="sacri-air-pvm");
+ const group=CLASSES.sacrieur.pairs.findIndex(p=>p.includes("Pacte de Sang"));
+ sacri.variants[group]="Pacte de Sang";
+ localStorage.setItem("ombre-team-dps-v1",JSON.stringify({
+  ids:["sacri-air-pvm"],memberOptions:{"sacri-air-pvm":{ap:12,startHpPercent:60}},
+  strategy:{mode:"long",horizon:10,minHpPercent:50}
+ }));
+ mountTeamModule({getBuilds:()=>builds});
+ assert.match(node("team-members").innerHTML,/Pacte de Sang équipé/);
+ assert.doesNotMatch(node("team-members").innerHTML,/Mutilation indisponible/);
+}));
