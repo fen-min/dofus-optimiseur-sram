@@ -9,6 +9,7 @@ import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22
 import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.64";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
+import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.70";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.56";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
@@ -641,7 +642,8 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // The Sacrier has two audited Pacte DPS openings: one prioritizes a
     // three-round fight, the other delays Pacte for sustained 10-round DPS.
     // Compare them against the generic planner using actual simulated casts.
-    const audited=planSacrierAuditedDps(entry,strategy,planned);
+    const hpAudited=planAuditedSacrierHpTurn(entry,strategy);
+    const audited=hpAudited||planSacrierAuditedDps(entry,strategy,planned);
     const proposed=safeAutomaticActions(entry,audited||planned,strategy.minHpPercent);
     // Manigance lasts multiple rounds and has one stack. In the generic
     // fallback, do not spend 2 PA recasting an active Manigance.
