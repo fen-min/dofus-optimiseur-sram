@@ -1,0 +1,20 @@
+name: OMBRE - Audit catalogue manuel 3 classes
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/audit-manual-three-classes.mjs"
+      - ".github/workflows/audit-manual-three-classes.yml"
+      - "src/team-manual.js"
+      - "src/team-ui.js"
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/audit-manual-three-classes.mjs
