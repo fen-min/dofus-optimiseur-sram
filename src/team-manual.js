@@ -21,6 +21,7 @@ const isSelected=(spell,ctx)=>spell.isWeapon===true||
 const knownIcons=Object.freeze({
  // Official Dofus iconId, verified against the OpenDofusDB spell page.
  "Yams":"https://api.openddb.dev/static/spell/2x/sort_13413.png",
+ "Griffe Invocatrice":"https://api.openddb.dev/static/spell/2x/sort_12300.png",
  "Griffe Joueuse":"https://api.openddb.dev/static/spell/2x/sort_12313.png",
  "Baraka":"https://api.openddb.dev/static/spell/2x/sort_13396.png",
  "Tout ou Rien":"https://api.openddb.dev/static/spell/2x/sort_13459.png",
