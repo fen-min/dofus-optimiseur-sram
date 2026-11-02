@@ -1,0 +1,24 @@
+name: OMBRE - Karuta 100 tours manuel buffs vs sans buffs
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-manual-100-crosscheck.mjs"
+      - ".github/workflows/karuta-manual-100-crosscheck.yml"
+  workflow_dispatch:
+jobs:
+  compare:
+    name: "${{ matrix.scenario }} 100 tours"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [AUTO, PREFIX15, REPEAT12, REPEAT11]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rejouer 100 tours sur moteur manuel
+        run: node scripts/karuta-manual-100-crosscheck.mjs ${{ matrix.scenario }}
