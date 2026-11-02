@@ -1,0 +1,21 @@
+name: OMBRE - Audit Sacrieur DPS par pourcentage de PV
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-health-sweep.mjs"
+      - ".github/workflows/sacrier-health-sweep.yml"
+      - "src/sacrier-dps-rotation.js"
+      - "src/sacrier-state.js"
+  workflow_dispatch:
+jobs:
+  sacrier-hp-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tester DPS Sacrieur 30 40 60 70 80 pourcent de PV
+        run: node scripts/sacrier-health-sweep.mjs
