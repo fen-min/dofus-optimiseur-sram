@@ -14,7 +14,23 @@ import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js
 
 const F=Object.freeze(["Furie","Furie","Assaut","Désolation"]);
 const CHAMPIONS=Object.freeze([
- {starting:40,floor:20,variant:"Pacte de Sang",rounds:[F,F,F]},
+ {starting:30,floor:20,variant:"Pacte de Sang",rounds:[
+  ["Furie","Désolation","Furie","Assaut"],
+  ["Pacte de Sang","Furie","Furie","Assaut","Assaut"],
+  ["Furie","Furie","Fulgurance","Assaut"]]},
+ {starting:40,floor:20,variant:"Pacte de Sang",rounds:[
+  ["Furie","Désolation","Furie","Assaut"],F,F]},
+ {starting:60,floor:50,variant:"Pacte de Sang",rounds:[
+  ["Furie","Furie","Fulgurance","Assaut"],
+  ["Assaut","Pacte de Sang","Furie","Furie","Assaut"],
+  ["Furie","Furie","Fulgurance","Assaut"]]},
+ {starting:70,floor:50,variant:"Pacte de Sang",rounds:[
+  ["Furie","Furie","Fulgurance","Assaut"],
+  ["Pacte de Sang","Furie","Furie","Assaut","Assaut"],
+  ["Furie","Furie","Fulgurance","Assaut"]]},
+ {starting:80,floor:50,variant:"Pacte de Sang",rounds:[
+  ["Furie","Furie","Désolation","Assaut"],
+  ["Pacte de Sang","Furie","Furie","Assaut","Assaut"],F]},
  {starting:60,floor:50,variant:"Mutilation",rounds:[
   ["Mutilation","Furie","Furie","Désolation"],F,F]},
  {starting:70,floor:50,variant:"Mutilation",rounds:[
