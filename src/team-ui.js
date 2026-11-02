@@ -24,7 +24,7 @@ const readStore=()=>{
 const saveStore=(ids,target,memberOptions,strategy)=>{
  // Do not re-save obsolete manual buff controls from the earlier team UI.
  const paOnly=Object.fromEntries(Object.entries(memberOptions||{}).map(([id,options])=>[
-  id,{ap:options.ap}
+  id,{ap:options.ap,...(options.startHpPercent!==undefined?{startHpPercent:options.startHpPercent}:{})}
  ]));
  try{localStorage.setItem(TEAM_STORAGE_KEY,JSON.stringify({ids,target,memberOptions:paOnly,strategy:cleanTeamStrategy(strategy)}));}catch{}
 };
@@ -44,7 +44,8 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  const repairSacriBasePA=getBuilds().some(b=>b.id==="sacri-air-pvm"&&
   b.classId==="sacrieur")&&Number(storedOptions["sacri-air-pvm"]?.ap)===13;
  let memberOptions=Object.fromEntries(Object.entries(storedOptions).map(([id,options])=>[id,{
-  ap:repairSacriBasePA&&id==="sacri-air-pvm"?12:options?.ap
+  ap:repairSacriBasePA&&id==="sacri-air-pvm"?12:options?.ap,
+   ...(options?.startHpPercent!==undefined?{startHpPercent:options.startHpPercent}:{})
  }]));
  let result=null,activeTurn=1,worker=null,job=0,mode="automatic",manualDraft=null;
  // Ephemeral, absolute PA totals for the NEXT round only. Never save these
@@ -120,13 +121,21 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
      ' aria-label="PA totaux de '+safe(b.character)+' pour le tour '+nextTurnNumber()+' (buffs inclus)"></label>':
      (mode==="manual"?'<small>PA ajustables dans le choix manuel pour chaque tour.</small>':''))+
     '':'';
+   const health=b?.classId==="sacrieur"?
+     '<label class="team-slot-health" for="team-start-hp-'+safe(b.id)+'">PV au début du combat '+
+     '<select id="team-start-hp-'+safe(b.id)+'" data-team-start-hp="'+safe(b.id)+'"'+
+      (result||worker||mode==="manual"?' disabled':'')+
+      ' aria-label="PV de départ du Sacrieur en pourcentage">'+
+      [30,40,50,60,70,80,90,100].map(p=>'<option value="'+p+'"'+
+       (p===settings.startHpPercent?' selected':'')+'>'+p+' %</option>').join('')+
+     '</select></label>':'';
    return '<article class="team-slot'+(b?' is-filled':'')+'"'+(cls?' style="--team-accent:'+cls.color+'"':'')+'>'+
     '<span class="team-slot-order">'+(i+1)+'</span>'+
     '<span class="team-slot-icon" aria-hidden="true">'+(cls?safe(cls.glyph):'＋')+'</span>'+
     '<div class="team-slot-body"><label for="team-pick-'+i+'">'+(b?safe(b.character):'Emplacement libre')+'</label>'+
     '<select id="team-pick-'+i+'" data-team-slot="'+i+'" aria-label="Personnage en position '+(i+1)+'">'+options+'</select>'+
     '<small>'+(b?(b.initiative===null?'Initiative non renseignée':fmt(b.initiative)+' initiative')+
-     ' · '+safe(cls.name):'Choisir parmi Personnages & builds')+'</small>'+extra+
+     ' · '+safe(cls.name):'Choisir parmi Personnages & builds')+'</small>'+extra+health+
      (b?buffSelector(b,cls):'')+'</div></article>';
   }).join("");
   $("team-count").textContent=roster.length+" / "+TEAM_LIMIT+" personnages";
@@ -329,7 +338,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const build=getMembers().find(b=>b.id===id);
   if(!build)return;
   if(result||worker||mode==="manual"){
-   renderMembers();status("Les PA de base ne changent qu'avant le combat. Utilise « PA disponibles » pour le prochain tour, sans recommencer.");return;
+   renderMembers();status("Les PA de base et les PV de départ se règlent avant le combat. Les PA disponibles du prochain tour restent modifiables.");return;
   }
   if(field==="ap"){
    const pa=Number(value);
@@ -338,8 +347,15 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    }
    value=pa;
   }
-  if(field!=="ap")return;
-  memberOptions={...memberOptions,[id]:{ap:value}};
+  if(field==="startHpPercent"){
+    if(build.classId!=="sacrieur"||!Number.isInteger(Number(value))||
+       Number(value)<1||Number(value)>100){
+     renderMembers();status("Choisis des PV de départ compris entre 1 et 100 %.");return;
+    }
+    value=Number(value);
+   }
+   if(!["ap","startHpPercent"].includes(field))return;
+   memberOptions={...memberOptions,[id]:{...memberOptions[id],[field]:value}};
   pendingTurnPa={...pendingTurnPa};delete pendingTurnPa[id];
   storeState();cancel();manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();renderManual();
   status("Réglages de "+build.character+" modifiés. Relance le calcul pour voir la nouvelle rotation.");
@@ -370,6 +386,14 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
  function calculate(){
   const members=getMembers();
   if(!members.length){status("Ajoute au moins un personnage.");return;}
+  const invalidHp=members.find(b=>b.classId==="sacrieur"&&
+   memberSettings(b).startHpPercent<strategy.minHpPercent);
+  if(!result&&invalidHp){
+   status("Le Sacrieur commence à "+memberSettings(invalidHp).startHpPercent+
+    " % PV, sous le seuil de sécurité de "+strategy.minHpPercent+
+    " %. Ajuste « Sacrieur · PV minimum » avant le calcul.");
+   return;
+  }
   if(result?.finished){status("Combat terminé. Recommence au tour 1.");return;}
   const previous=result;
   cancel();
@@ -470,6 +494,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(slot){changeSlot(Number(slot.dataset.teamSlot),slot.value);return;}
   const pa=event.target.closest("input[data-team-ap]");
   if(pa){changeMemberOption(pa.dataset.teamAp,"ap",pa.value);return;}
+  const hp=event.target.closest("select[data-team-start-hp]");
+  if(hp){changeMemberOption(hp.dataset.teamStartHp,"startHpPercent",hp.value);return;}
   const roundPa=event.target.closest("input[data-team-turn-ap]");
   if(roundPa){changeRoundPA(roundPa.dataset.teamTurnAp,roundPa.value);return;}
   if(event.target.closest("#team-settings"))changeTarget();
