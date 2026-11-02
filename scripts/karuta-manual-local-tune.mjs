@@ -14,7 +14,7 @@ import {initialState,eligible,castSpell,endTurn} from "../src/engine.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
 import {KARUTA_FIFTEEN_ROUNDS} from "../src/karuta-fifteen-plan.js";
 const mode=process.argv[2]||"ALL";
-assert.ok(["ALL","NOSTAT"].includes(mode));
+assert.ok(["ALL","NOSTAT","ALL_KITTENS"].includes(mode));
 const R=x=>Math.round((Number(x)||0)*10)/10;
 const target=cleanTeamTarget({turns:15,hp:1e12,criticals:true,
  resistances:{Eau:0,Air:0,Terre:0,Feu:0,Neutre:0}});
@@ -27,16 +27,26 @@ const names=ctx.spells.filter(s=>(s.isWeapon||ctx.settings.variants?.[s.variantG
 const statBuff=sp=>!!(sp.status?.buff||sp.ecaflipCriticalRateBuff||
  sp.ecaflipCritDamageBuff||sp.ecaflipCritResistanceShred||
  sp.playSuit||sp.playHand||sp.restoreTable);
-const spellNames=mode==="ALL"?names:names.filter(x=>!statBuff(x));
+const spellNames=mode==="NOSTAT"?names.filter(x=>!statBuff(x)):names;
 const spells=spellNames.map(sp=>String(sp.id));
 const byId=new Map(ctx.spells.map(s=>[String(s.id),s]));
 const convert=names=>names.map(n=>{
  const sp=ctx.spells.find(s=>s.name===n);
  assert.ok(sp,"Missing spell "+n);return String(sp.id);
 });
-const allRows=mode==="ALL"?KARUTA_FIFTEEN_ROUNDS.map(convert):
+const allRows=mode!=="NOSTAT"?KARUTA_FIFTEEN_ROUNDS.map(convert):
  Array.from({length:15},()=>convert(["Pile ou Face","Sceptre du Roi Joueur",
  "Sceptre du Roi Joueur","Infortune"]));
+if(mode==="ALL_KITTENS"){
+ for(const t of [1,5,9]){
+  const row=allRows[t-1];
+  const sword=ctx.spells.find(s=>s.name==="Sceptre du Roi Joueur").id;
+  const griffe=ctx.spells.find(s=>s.name==="Griffe Invocatrice").id;
+  const i=row.lastIndexOf(String(sword));
+  assert.ok(i>=0,"No weapon cast at T"+t);
+  row[i]=String(griffe);
+ }
+}
 const key=path=>JSON.stringify(path);
 const seen=new Set();
 let candidates=0,valid=0,improvements=0;
