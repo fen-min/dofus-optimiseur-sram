@@ -97,7 +97,7 @@ console.log("KARUTA_LOCAL_BASE "+JSON.stringify({
  mode,total:best.report.total,spells:spellNames.map(s=>s.name)
 }));
 const t0=Date.now(),bestForced=new Map();
-for(let pass=1;pass<=7;pass++){
+for(let pass=1;pass<=30;pass++){
  let candidate=null;
  for(let turn=0;turn<15;turn++){
   for(const path of localMoves(best.path,turn)){
