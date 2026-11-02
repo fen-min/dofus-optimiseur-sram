@@ -722,6 +722,15 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // than the pre-expiration snapshot from the end-turn summary.
     actor.health=entry.state.sacrierHealth?
      {...entry.state.sacrierHealth}:null;
+    // If no legal action can keep the model over the configured floor
+    // (e.g. an expiring Pacte at low HP), report it explicitly. Do not
+    // silently label an unsafe rotation as safe just because spells were
+    // removed from the proposed sequence.
+    const safetyFloor=options.teamStrategy?.minHpPercent;
+    if(entry.ctx.settings.classId==="sacrieur"&&Number(safetyFloor)>0&&
+       !sacrierHealthAboveFloor(entry.state,safetyFloor)){
+     actor.safetyWarning="PV sous le seuil de "+safetyFloor+" %";
+    }
     if(turn===1&&plan.label.startsWith("Ouverture"))members[index].chosenOpening=plan.label.slice(10);
     members[index].strategiesTested=entry.trials;
     members[index].estimated=round(members[index].estimated+actor.damage);
