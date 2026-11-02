@@ -1,0 +1,21 @@
+name: OMBRE - Regression DPS manuel Karuta avec et sans buffs
+on:
+  push:
+    branches: [main]
+    paths:
+      - "test/karuta-manual-buffs-regression.test.mjs"
+      - "test/karuta-fifteen-plan.test.mjs"
+      - "src/karuta-fifteen-plan.js"
+      - ".github/workflows/karuta-manual-buffs-regression.yml"
+  workflow_dispatch:
+jobs:
+  manual-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verifier 17 sorts simules, scenario sans buffs et champion 15 tours
+        run: node --test test/karuta-manual-buffs-regression.test.mjs test/karuta-fifteen-plan.test.mjs
