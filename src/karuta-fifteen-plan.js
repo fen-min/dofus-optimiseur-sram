@@ -1,8 +1,12 @@
 /**
  * Audited 15-round Karuta manual rotation (12 PA, crits on).
- * Re-verified on 2026-10-28 after full-hand draw fix: 67 004.4 solo
- * theoretical damage, target at 0% resistance. Historical result only:
- * future engine changes must remeasure it rather than trusting this number.
+ * Re-verified on 2026-11-03 after exhaustive single-spell manual
+ * neighborhood tests of every modeled equipped spell:
+ * 68 290.0 damage over 15 rounds, 429 286.1 over 100 rounds when
+ * followed by the regular optimizer from round 16. Both totals were
+ * independently replayed through the true manual combat engine.
+ * These are the best TESTED legal rotations, not a global proof.
+ * Future engine changes must remeasure them rather than trusting history.
  * This is a reusable reference trajectory, not a fabricated damage bonus.
  * Only apply while the build, equipped variants AND modeled ongoing state
  * match the audited trajectory. Fall back to the generic team optimizer on
@@ -12,17 +16,17 @@ import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.56";
 import {ECAFLIP_KARUTA_STATS} from "./character-stats.js?v=3.20";
 
 export const KARUTA_FIFTEEN_ROUNDS=Object.freeze([
- ["Yams","Griffe Joueuse","Kraps","Sceptre du Roi Joueur"],
- ["Yams","Infortune","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur"],
- ["Baraka","Tout ou Rien","Rekop","Yams"],
+ ["Yams","Griffe Joueuse","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Infortune","Pile ou Face","Pile ou Face","Yams"],
+ ["Tout ou Rien","Sceptre du Roi Joueur","Rekop","Yams"],
  ["Griffe Joueuse","Kraps","Infortune"],
  ["Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
- ["Baraka","Kraps","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Baraka","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
  ["Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
  ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
- ["Yams","Kraps","Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
+ ["Kraps","Griffe Joueuse","Pile ou Face","Pile ou Face","Sceptre du Roi Joueur"],
  ["Pile ou Face","Sceptre du Roi Joueur","Sceptre du Roi Joueur","Infortune"],
- ["Griffe Joueuse","Baraka","Infortune"],
+ ["Griffe Joueuse","Kraps","Infortune"],
  ["Griffe Joueuse","Sceptre du Roi Joueur","Infortune"],
  ["Yams","Pile ou Face","Pile ou Face","Yams","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
  ["Kraps","Kraps","Sceptre du Roi Joueur","Sceptre du Roi Joueur"],
