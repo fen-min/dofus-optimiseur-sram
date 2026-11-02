@@ -60,8 +60,10 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  const memberSettings=b=>cleanTeamMemberOptions(b,memberOptions[b.id]);
  const sacrierHpMutilationReference=b=>b?.id==="sacri-air-pvm"&&
   b.classId==="sacrieur"&&memberSettings(b).ap===12&&
-  [60,70,80].includes(memberSettings(b).startHpPercent??100)&&
-  strategy.minHpPercent===50&&strategy.mode==="long"&&strategy.horizon===10;
+  ((memberSettings(b).startHpPercent===30&&strategy.minHpPercent===20)||
+   ([60,70,80].includes(memberSettings(b).startHpPercent??100)&&
+    strategy.minHpPercent===50))&&
+  strategy.mode==="long"&&strategy.horizon===10;
  const nextTurnNumber=()=> (result?.turns.length||0)+1;
  const proposedTurnPA=build=>{
   const base=memberSettings(build).ap;
