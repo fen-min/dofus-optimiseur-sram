@@ -1,0 +1,19 @@
+name: OMBRE - Sacrieur alternatives restantes 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-hp-other-100.mjs"
+      - ".github/workflows/sacrier-hp-other-100.yml"
+  workflow_dispatch:
+jobs:
+  alternatives:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Vérifier autres variantes à 30 40 60 70 80 PV
+        run: node scripts/sacrier-hp-other-100.mjs
