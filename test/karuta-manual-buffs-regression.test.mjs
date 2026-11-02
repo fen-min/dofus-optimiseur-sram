@@ -38,8 +38,13 @@ test("Karuta manual: all 17 simulated actions and exactly 6 unsupported equipped
  assert.equal(spells.filter(s=>!s.isWeapon&&s.status?.unsupported).length,6);
  assert.equal(ctx.settings.variants.length,22);
  const manual=manualSpellChoices([ctx],target,newManualDraft([ctx],target));
- for(const s of modeled)assert.ok(manual.some(c=>c.name===s.name&&c.enabled),
-  "Available simulated spell absent: "+s.name);
+ for(const sp of modeled){
+  const item=manual.find(c=>c.name===sp.name);
+  assert.ok(item,"Modeled spell absent from manual mode: "+sp.name);
+  assert.notEqual(item.equipped,false,"Equipped variant missing: "+sp.name);
+  if(sp.name==="Rekop")assert.equal(item.enabled,false,
+   "Rekop cannot be cast before a winning hand exists");
+ }
  assert.ok(modeled.some(s=>s.name==="Griffe Invocatrice"&&s.nonDirect&&
   s.status?.buff?.stat==="Puissance"));
  assert.ok(modeled.some(s=>s.name==="Yams"&&s.ecaflipCriticalRateBuff));
@@ -54,7 +59,7 @@ test("Karuta best-tested no-stat-buff manual path repeats legally and preserves 
   assert.ok(s&&!s.status?.buff&&!s.ecaflipCriticalRateBuff&&
    !s.ecaflipCritDamageBuff&&!s.ecaflipCritResistanceShred&&
    !s.playSuit&&!s.playHand&&!s.restoreTable,
-   "Spell '+n+' would add active stat buff");
+   "Spell "+n+" would add active stat buff");
  }
  const result=play(Array.from({length:15},()=>noStat));
  assert.equal(round(result.turns[0].theoretical),3861.1);
