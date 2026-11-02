@@ -211,3 +211,101 @@ test("Table affichée : ne montre pas de carte périmée ou de buff d'un autre p
  assert.deepEqual(manualActiveEcaflipTable({
   current:ctx.find(c=>c.build.classId==="sram"),state}),[]);
 });
+
+
+test("Inventaire manuel complet : 44 sorts + arme, 22 paires exclusives pour les trois classes",()=>{
+ for(const source of INITIAL_BUILDS){
+  const cls=source.classId,build=structuredClone(source);
+  const current=createTeamContext(build,target);
+  const draft=newManualDraft([current],target);
+  const spells=manualSpellChoices([current],target,draft);
+  const classSpells=spells.filter(s=>!s.isWeapon);
+  assert.equal(classSpells.length,44,cls+": 44 sorts de classe doivent être visibles");
+  assert.equal(new Set(classSpells.map(s=>s.name)).size,44,cls+": aucune duplication");
+  assert.equal(classSpells.filter(s=>s.equipped===false).length,22,cls+": 22 variantes alternatives");
+  assert.equal(classSpells.filter(s=>s.equipped!==false).length,22,cls+": 22 sorts équipés");
+  for(let i=0;i<22;i++){
+   const pair=current.settings.variantPairs[i];
+   assert.equal(pair.length,2);
+   const selected=current.settings.variants[i];
+   assert.ok(pair.includes(selected),"Paire "+i+" sélection absente");
+   const other=pair.find(name=>name!==selected);
+   const active=classSpells.find(s=>s.name===selected);
+   const inactive=classSpells.find(s=>s.name===other);
+   assert.ok(active,"Sort équipé manquant : "+selected);
+   assert.notEqual(active.equipped,false,"Sort équipé incorrect : "+selected);
+   assert.equal(inactive.equipped,false,"Variante alternative activée : "+other);
+   assert.equal(inactive.enabled,false,"Variante alternative lançable : "+other);
+   assert.match(inactive.reason,/Variante non équipée/);
+   assert.throws(()=>chooseManualSpell([current],target,draft,inactive.id),
+    /Variante non équipée/,"Une variante non équipée ne peut jamais être lancée");
+  }
+ }
+});
+
+test("Écaflip : Griffe Invocatrice équipée est visible, lançable et soumis à sa relance",()=>{
+ const source=structuredClone(INITIAL_BUILDS.find(b=>b.classId==="ecaflip"));
+ const current=createTeamContext(source,target);
+ const d=newManualDraft([current],target);
+ const spells=manualSpellChoices([current],target,d);
+ const griffe=spells.find(s=>s.name==="Griffe Invocatrice");
+ const caresse=spells.find(s=>s.name==="Caresse Invocatrice");
+ assert.ok(griffe,"Griffe Invocatrice doit être présente");
+ assert.ok(caresse,"Caresse Invocatrice doit être présente");
+ assert.equal(griffe.enabled,true);
+ assert.notEqual(griffe.equipped,false);
+ assert.equal(griffe.pa,3);
+ assert.match(griffe.icon,/sort_12300\.png$/);
+ assert.equal(caresse.enabled,false);
+ assert.equal(caresse.equipped,false);
+ assert.match(caresse.reason,/Griffe Invocatrice est sélectionné/);
+ const chosen=chooseManualSpell([current],target,d,griffe.id);
+ const preview=previewManualDraft([current],target,chosen);
+ assert.equal(preview.state.pa,9);
+ assert.equal(preview.actor.actions.at(-1).name,"Griffe Invocatrice");
+ assert.equal(manualSpellChoices([current],target,chosen)
+  .find(s=>s.name==="Griffe Invocatrice").enabled,false);
+ const committed=nextManualActor([current],target,chosen).result;
+ const turn2=newManualDraft([current],target,committed);
+ const griffeLater=manualSpellChoices([current],target,turn2).find(s=>s.name==="Griffe Invocatrice");
+ assert.equal(griffeLater.enabled,false);
+ assert.match(griffeLater.reason,/Relance : tour 5/);
+});
+
+test("Écaflip : sélectionner Caresse Invocatrice désactive Griffe Invocatrice, sans la faire disparaître",()=>{
+ const source=structuredClone(INITIAL_BUILDS.find(b=>b.classId==="ecaflip"));
+ const index=source.variants.indexOf("Griffe Invocatrice");
+ assert.ok(index>=0);
+ source.variants[index]="Caresse Invocatrice";
+ const current=createTeamContext(source,target);
+ const draft=newManualDraft([current],target);
+ const spells=manualSpellChoices([current],target,draft);
+ const griffe=spells.find(s=>s.name==="Griffe Invocatrice");
+ const caresse=spells.find(s=>s.name==="Caresse Invocatrice");
+ assert.ok(griffe&&caresse);
+ assert.equal(griffe.equipped,false);
+ assert.equal(griffe.enabled,false);
+ assert.match(griffe.reason,/Caresse Invocatrice est sélectionné/);
+ assert.notEqual(caresse.equipped,false);
+ assert.equal(caresse.enabled,false,"Effet de Caresse non modélisé, pas de DPS inventé");
+ assert.match(caresse.reason,/Effet non simulé/);
+});
+
+test("Les 22 variantes inversées de chaque classe sont représentées sans activer leur opposée",()=>{
+ for(const source of INITIAL_BUILDS){
+  const build=structuredClone(source);
+  const old=createTeamContext(build,target);
+  build.variants=old.settings.variantPairs.map((pair,i)=>
+   pair.find(n=>n!==build.variants[i]));
+  const current=createTeamContext(build,target),draft=newManualDraft([current],target);
+  const choices=manualSpellChoices([current],target,draft);
+  assert.equal(choices.filter(s=>!s.isWeapon).length,44);
+  assert.equal(choices.filter(s=>s.equipped===false).length,22);
+  for(const pair of current.settings.variantPairs){
+   const one=choices.find(s=>s.name===pair[0]);
+   const two=choices.find(s=>s.name===pair[1]);
+   assert.notEqual(one.equipped===false,two.equipped===false);
+   assert.ok(!one.enabled||!two.enabled);
+  }
+ }
+});
