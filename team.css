@@ -291,3 +291,8 @@
 .team-slot-body .team-slot-turn-pa{width:100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;gap:7px;border-radius:7px;border:1px solid #9f8263;background:#342c32;padding:6px 8px;color:#fff!important}
 .team-slot-turn-pa input{margin-left:auto;border-color:#cfac6c!important;font-weight:800}
 .team-slot-pa input:disabled{opacity:.62;cursor:not-allowed}
+
+/* Sacrieur PV at combat start: independent from per-round PA input. */
+.team-slot-body .team-slot-health{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:6px;padding:6px 8px;background:#202938;border:1px solid #577088;border-radius:8px;color:#d9efff!important;font-size:11px!important;font-weight:700!important}
+.team-slot-health select{width:auto!important;min-width:90px;max-width:115px;margin-left:auto;background:#142332!important;border-color:#54708b!important;color:#fff}
+.team-slot-health select:disabled{opacity:.6;cursor:not-allowed}
