@@ -1,0 +1,19 @@
+name: OMBRE - Pacte de Sang 30 et 60 PV
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sacrier-pacte-30-60.mjs"
+      - ".github/workflows/sacrier-pacte-30-60.yml"
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pacte de Sang comparer auto et meilleur beam 100 tours
+        run: node scripts/sacrier-pacte-30-60.mjs
