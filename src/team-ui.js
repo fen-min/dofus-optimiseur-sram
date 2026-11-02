@@ -203,6 +203,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    const choices=manualSpellChoices(contexts,target,manualDraft);
    const equippedCount=choices.filter(c=>!c.isWeapon&&c.equipped!==false).length;
    const alternateCount=choices.filter(c=>c.equipped===false).length;
+   const unmodeledCount=choices.filter(c=>c.equipped!==false&&
+    c.reason==="Effet non simulé").length;
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
    const actions=(manualDraft.actions[current.build.id]||[]).map(id=>
@@ -224,6 +226,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     tableHtml+
     '<div class="manual-spell-inventory"><strong>'+equippedCount+' sorts équipés</strong> · '+
     alternateCount+' variantes non équipées'+
+    (unmodeledCount?' · '+unmodeledCount+' effets non simulés':'')+
     (choices.some(c=>c.isWeapon)?' · arme équipée':'')+'</div>'+
     '<div class="manual-spells" role="group" aria-label="Sorts manuels">'+choices.map((c,index)=>{
      const image=c.icon?'<img src="'+safe(c.icon)+'" alt="" loading="lazy">':'';
