@@ -6,7 +6,8 @@ import {TEAM_FIFTY_AUDITED} from "../src/team-audited-fifty-plan.js";
 
 const target=turns=>cleanTeamTarget({turns,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
-const context=(t,count=3)=>INITIAL_BUILDS.slice(0,count).map(b=>{
+const context=(t,count=3)=>(count===2?
+ [INITIAL_BUILDS[0],INITIAL_BUILDS[2]]:INITIAL_BUILDS.slice(0,count)).map(b=>{
  const build=normalizeBuild(b);
  if(build.classId==="sacrieur"||build.classId==="sram")build.distance=1;
  return createTeamContext(build,t);
@@ -94,4 +95,24 @@ test("Missing checkpoint and changed target fail without overwriting existing re
  assert.throws(()=>recalculateTeamCurrentTurn(team,t,()=>{},noCheckpoint,fast),/Aucun tour/);
  assert.throws(()=>recalculateTeamCurrentTurn(team,target(4),()=>{},original,fast),/cible/i);
  assert.equal(original.turns.length,1);
+});
+
+
+test("100-tour session reproduces all 50 optimized rounds before returning to dynamic mode", {timeout:300000},()=>{
+ const t=target(100),team=context(t,3);
+ let previous=null;
+ for(let turn=1;turn<=50;turn++){
+  previous=optimizeTeamTurn(team,t,()=>{},previous,long);
+  assert.equal(previous.turns.length,turn);
+  assert.equal(previous.session.teamFiftyPlan?.enabled,true,
+   "Missing audited 50-round route T"+turn);
+ }
+ assert.equal(previous.theoretical,560130.7,
+  "100-turn mode must match full optimized 50-turn damage");
+ const fifty=structuredClone(previous.turns);
+ const next=optimizeTeamTurn(team,t,()=>{},previous,long);
+ assert.equal(next.turns.length,51);
+ assert.equal(next.session.teamFiftyPlan?.enabled,false);
+ assert.deepEqual(next.turns.slice(0,50),fifty,
+  "T51 dynamic fallback must not rewrite any previous round");
 });
