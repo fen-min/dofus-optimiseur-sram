@@ -6,8 +6,8 @@
  * Drafts are ephemeral. Only after every actor ends their turn is the
  * computed round committed as the next previous result.
  */
-import {playSequentialTeam} from "./team-sequential.js?v=3.83";
-import {eligible,castSpell} from "./engine.js?v=3.56";
+import {playSequentialTeam} from "./team-sequential.js?v=3.90";
+import {eligible,castSpell} from "./engine.js?v=3.90";
 
 const sortContexts=contexts=>contexts.slice().sort((a,b)=>{
  const ia=a.build.initiative,ib=b.build.initiative;
