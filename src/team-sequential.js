@@ -3,14 +3,14 @@
  * en tenant compte de la cible et des états laissés par les actions précédentes.
  * Les tours individuels ne sont jamais planifiés à l'avance sur 50 tours.
  */
-import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.56";
+import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.90";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
-import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.64";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.90";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
 import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.76";
-import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.83";
+import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.90";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
 import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.63";
