@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS} from "../src/classes.js";
 import {cleanTeamTarget,createTeamContext,optimizeTeamTurn} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
-import {KARUTA_FIFTEEN_ROUNDS} from "../src/karuta-fifteen-plan.js";
+import {KARUTA_LONG_KITTEN_ROUNDS} from "../src/karuta-fifteen-plan.js";
 
 const target=cleanTeamTarget({turns:100,hp:1_000_000_000_000,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
@@ -67,7 +67,7 @@ async function check(label,contexts,strategy){
     karuta:actors.find(a=>a.classId==="ecaflip")});
   }
   if(turn<=15&&label==="solo-long"){
-   assert.deepEqual(actors[0].spells,KARUTA_FIFTEEN_ROUNDS[turn-1],
+   assert.deepEqual(actors[0].spells,KARUTA_LONG_KITTEN_ROUNDS[turn-1],
     "audited Karuta rotation differs at T"+turn);
   }
  }
