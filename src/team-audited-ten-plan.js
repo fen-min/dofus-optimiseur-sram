@@ -195,6 +195,12 @@ function replayCandidate(contexts,target,sequence,runManual){
 export function chooseTeamTenOpening(contexts,target,strategy,runManual){
  const lineup=canBuildTeam(contexts,strategy,target);
  if(!lineup)return null;
+ // The old ten-round Ecaflip preset predated persistent +90/+180/+270
+ // Power from live kittens. Do not allow it to suppress summons in a
+ // long team fight; keep that historical comparison for short fights.
+ if(target.turns>=30&&lineup.get("ecaflip")?.spells.some(spell=>
+   spell.name==="Griffe Invocatrice"&&selected(lineup.get("ecaflip"),spell)))
+  return null;
  const baseline=replayCandidate(contexts,target,TEAM_TEN_BASELINE,runManual);
  const previous=replayCandidate(contexts,target,TEAM_TEN_AUDITED,runManual);
  // Every candidate is replayed with actual saved builds and current rules.
