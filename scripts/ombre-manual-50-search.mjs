@@ -17,7 +17,7 @@ const reference=JSON.parse(readFileSync(new URL("./manual50-user-baseline.json",
 assert.equal(reference.rounds.length,49);
 const target=cleanTeamTarget({turns:50,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
-const contexts=INITIAL_BUILDS.map(b=>createTeamContext(normalizeBuild(b),target));
+const contexts=INITIAL_BUILDS.map(b=>{ const build=normalizeBuild(b); if(["sacrieur","sram"].includes(build.classId))build.distance=1; return createTeamContext(build,target); });
 const classes=["sacrieur","ecaflip","sram"];
 const ctx=Object.fromEntries(contexts.map(c=>[c.settings.classId,c]));
 const actorName={sacrieur:"Mon Sacrieur",ecaflip:"Karuta",sram:"Matryoshka"};
