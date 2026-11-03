@@ -1,0 +1,21 @@
+name: OMBRE - Chatons Karuta en équipe (résistances et variantes)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "test/karuta-team-kittens-fallback.test.mjs"
+      - "src/team-sequential.js"
+      - "src/team-audited-ten-plan.js"
+      - ".github/workflows/karuta-team-kittens-fallback.yml"
+  workflow_dispatch:
+jobs:
+  team-kittens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify Karuta summons in real three-character team
+        run: node --test test/karuta-team-kittens-fallback.test.mjs test/karuta-fifteen-plan.test.mjs
