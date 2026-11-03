@@ -169,7 +169,7 @@ for(const cls of classes){
  if(!current){console.log("OMBRE50_SINGLE_INVALID "+cls);champions[cls]=best;continue;}
  const initial=current.score;
  let attempts=0,valid=0,steps=[];
- for(let pass=1;pass<=2;pass++){
+ for(let pass=1;pass<=6;pass++){
   let gains=0;
   for(let turn=0;turn<50;turn++){
    const original=best[turn];
