@@ -62,8 +62,46 @@ const runManual=(team,label)=>{
   return null;
  }
 };
-const original=runAuto();
-console.log("ACTIVATION_DIAG_ORIGINAL_TOTAL "+original.theoretical);
-runManual(baselineSettings,"default-real-world-distances");
-const bothOne=standard.map(b=>({...b,distance:["sacrieur","sram"].includes(b.classId)?1:b.distance}));
-runManual(contexts(bothOne),"old-test-melee-distance-one");
+// Match the ORIGINAL user 49-turn log by replaying exact spell sequences
+// at plausible melee distances. This identifies the only relevant presets.
+const {readFileSync}=await import("node:fs");
+const reference=JSON.parse(readFileSync(new URL("./manual50-user-baseline.json",import.meta.url),"utf8"));
+const norm=number=>Math.round(number*10)/10;
+for(const sacri of [1,2,3]){
+ for(const sram of [1,2,3]){
+  const selected=standard.map(b=>({...b,
+   distance:b.classId==="sacrieur"?sacri:b.classId==="sram"?sram:b.distance
+  }));
+  const team=contexts(selected);
+  let previous=null,why=null,firstMismatch=null;
+  for(const row of reference.rounds){
+   try{
+    const overrides=Object.fromEntries(team.map(c=>[c.build.id,
+     row.actors[names[c.settings.classId]].actions.map(name=>{
+      const sp=c.spells.find(s=>s.name===name);assert.ok(sp,name);return String(sp.id);
+     })]));
+    previous=playSequentialTeam(team,target,()=>{},{previous,oneRound:true,manualOverrides:overrides});
+    if(!firstMismatch){
+     for(const actor of previous.turns.at(-1).actors){
+      const expected=row.actors[actor.character].damage;
+      if(Math.abs(expected-actor.damage)>.2){
+       firstMismatch={turn:row.round,actor:actor.character,expected,actual:actor.damage};
+       break;
+      }
+     }
+    }
+   }catch(error){why=String(error);break;}
+  }
+  const total=norm(previous?.theoretical||0);
+  const matched=previous?.turns.length===49&&Math.abs(total-reference.referenceTotal49)<.1&&!firstMismatch;
+  console.log("REFERENCE_DISTANCE_MATCH "+JSON.stringify({
+   sacri,sram,done:previous?.turns.length||0,total,
+   expected:reference.referenceTotal49,matched,firstMismatch,why
+  }));
+  if(matched){
+   console.log("REFERENCE_DISTANCE_ACTIVATION "+JSON.stringify({
+    sacri,sram,eligible:Boolean(chooseTeamFiftyPlan(team,target,policy))}));
+   runManual(team,"matched-user-log-sacri-"+sacri+"-sram-"+sram);
+  }
+ }
+}
