@@ -18,5 +18,10 @@ jobs:
           node-version: "22"
       - name: Benchmark 100 tours auto et replay MANUEL complet
         run: node scripts/ombre-manual-100-search.mjs
-      - name: Recherche locale MANUELLE, puis validation moteur sur 100 tours
+      - name: Deuxième recherche MANUELLE sur 100 tours, depuis le meilleur plan
+        env:
+          OMBRE100_SEED: optimized
+          OMBRE100_FROM: "1"
+          OMBRE100_PASSES: "4"
+          OMBRE100_BUDGET: "15000"
         run: node scripts/ombre-manual-100-optimizer.mjs
