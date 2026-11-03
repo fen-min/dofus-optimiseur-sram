@@ -1,0 +1,19 @@
+name: OMBRE - Diagnostiquer activation rotation 50 tours réelle
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/diagnose-team-fifty-real-builds.mjs"
+      - ".github/workflows/diagnose-team-fifty-real-builds.yml"
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Compare the ACTUAL default UI lineup and manual 50-round route
+        run: node scripts/diagnose-team-fifty-real-builds.mjs
