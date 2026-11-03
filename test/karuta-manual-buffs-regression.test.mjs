@@ -70,13 +70,14 @@ test("Karuta best-tested no-stat-buff manual path repeats legally and preserves 
  assert.equal(round(result.theoretical),61171.3);
 });
 
-test("Karuta new 15-turn buffed manual champion improves reference by 1,285.6 damage",()=>{
+test("Karuta 15-turn kitten-buffed manual champion correctly persists +90 Power",()=>{
  assert.equal(KARUTA_FIFTEEN_ROUNDS.length,15);
- assert.ok(!KARUTA_FIFTEEN_ROUNDS.flat().includes("Griffe Invocatrice"),
-  "The highest-tested champion does not spend AP on kitten summon");
+ assert.equal(KARUTA_FIFTEEN_ROUNDS[0][0],"Griffe Invocatrice");
  const result=play(KARUTA_FIFTEEN_ROUNDS);
- assert.equal(cumulative(result,3),12567.8);
- assert.equal(cumulative(result,10),44800.8);
- assert.equal(round(result.theoretical),68290);
- assert.equal(round(result.theoretical-67004.4),1285.6);
+ assert.equal(cumulative(result,3),11702.8);
+ assert.equal(cumulative(result,10),44785.5);
+ assert.equal(round(result.theoretical),68822.9);
+ assert.equal(round(result.theoretical-67004.4),1818.5);
+ assert.equal(result.session.actors[0].state.invocations.filter(x=>x.kind==="Chaton Enragé").length,1);
+ assert.equal(result.session.actors[0].state.buffs.find(x=>x.key==="Griffe Invocatrice")?.amount,90);
 });
