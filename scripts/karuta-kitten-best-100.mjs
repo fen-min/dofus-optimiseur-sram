@@ -33,7 +33,13 @@ for(const t of mode==="SHORT"?[]:mode==="TWO_FIRST"?[5]:[5,9]){
  assert.ok(i>=0,"Need a weapon action to replace T"+t);
  row.splice(i,1);
  if(mode==="THREE_LATE")row.push("Griffe Invocatrice");
- else row.unshift("Griffe Invocatrice");
+ else if(mode==="THREE_FIRST"&&t===9){
+  // Pile ou Face refunds PA AFTER paying its 2 PA cost. Both first.
+  // Starting with kitten+Kraps+Griffe Joueuse leaves only 1 PA,
+  // insufficient to legally cast the next Pile or Face.
+  planned[t-1]=["Pile ou Face","Pile ou Face","Griffe Invocatrice",
+   "Kraps","Griffe Joueuse"];
+ }else row.unshift("Griffe Invocatrice");
 }
 const target=cleanTeamTarget({turns:100,hp:1e12,criticals:true,
  resistances:{Air:0,Eau:0,Terre:0,Feu:0,Neutre:0}});
