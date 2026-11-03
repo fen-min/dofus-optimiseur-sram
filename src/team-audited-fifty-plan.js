@@ -14,6 +14,7 @@ import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "./classes.js?v=3.90";
 import {prepareBuildSpells} from "./build-damage.js?v=3.90";
 import {eligible,castSpell,endTurn} from "./engine.js?v=3.90";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
+import {TEAM_HUNDRED_AUDITED,TEAM_HUNDRED_META} from "./team-audited-hundred-data.js?v=1";
 
 const classes=["sacrieur","ecaflip","sram"];
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -257,14 +258,37 @@ export function chooseTeamFiftyPlan(contexts,target,strategy){
  return {id:"team-audited-fifty-v1",enabled:true,rounds:50,
   referenceDamage:546776,expectedDamage:560130.7,minHpPercent:50};
 }
+/**
+ * Enable the whole 100-round MANUALLY verified route ONLY on the exact
+ * builds and model in which all 100 turns were replayed. In particular the
+ * Sram was tested at distance 3 for this longer search. The 50-turn plan
+ * remains a separate, fully preserved fallback for other reference setups.
+ */
+export function chooseTeamHundredPlan(contexts,target,strategy){
+ if(target?.turns!==100||!chooseTeamFiftyPlan(contexts,target,strategy))return null;
+ const byClass=new Map(contexts.map(c=>[c.settings.classId,c]));
+ if(byClass.get("sram")?.settings.distance!==3)return null;
+ for(const cls of classes){
+  const ctx=byClass.get(cls);
+  const required=new Set(TEAM_HUNDRED_AUDITED[cls].flat());
+  for(const name of required){
+   const spell=ctx.spells.find(s=>s.name===name);
+   if(!spell||!selected(ctx,spell))return null;
+  }
+ }
+ return {id:"team-audited-hundred-v1",enabled:true,rounds:100,
+  referenceDamage:TEAM_HUNDRED_META.baseline,
+  expectedDamage:TEAM_HUNDRED_META.damage,minHpPercent:50};
+}
 /** Choose only current actor actions, never commit future turns or grant DPS. */
 export function teamFiftyCurrentPlan(entry,plan,strategy){
- if(!plan?.enabled||plan.id!=="team-audited-fifty-v1"||
+ const hundred=plan?.id==="team-audited-hundred-v1";
+ if(!plan?.enabled||(!hundred&&plan.id!=="team-audited-fifty-v1")||
   strategy?.mode!=="long"||strategy.minHpPercent!==50||
   entry.currentPA!==12)return null;
  const cls=entry.ctx.settings.classId,now=entry.state.turn;
- const names=TEAM_FIFTY_AUDITED[cls]?.[now-1];
- if(!names||now<1||now>50)return null;
+ const names=(hundred?TEAM_HUNDRED_AUDITED:TEAM_FIFTY_AUDITED)[cls]?.[now-1];
+ if(!names||now<1||now>(hundred?100:50))return null;
  const equipped=new Map(entry.ctx.spells.filter(s=>selected(entry.ctx,s))
   .map(s=>[s.name,s]));
  let state=entry.state;
@@ -281,6 +305,8 @@ export function teamFiftyCurrentPlan(entry,plan,strategy){
  if(cls==="sacrieur"&&
    !sacrierHealthAboveFloor(endTurn(state,entry.ctx.settings),50))
   return null;
- return {actions,settings:entry.ctx.settings,auditedFifty:true,
-  label:"DPS équipe · rotation manuelle validée 50 tours (PV Sacrieur ≥50 %)"};
+ return {actions,settings:entry.ctx.settings,auditedFifty:!hundred,
+  auditedHundred:hundred,
+  label:"DPS équipe · rotation manuelle validée "+(hundred?100:50)+
+   " tours (PV Sacrieur ≥50 %)"};
 }

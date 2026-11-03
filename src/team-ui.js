@@ -2,11 +2,11 @@ import {CLASSES} from "./classes.js?v=3.90";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
  undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
- manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=4.01";
+ manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=4.03";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=4.01";
+} from "./team-core.js?v=4.03";
 import {cleanTeamStrategy} from "./team-long-plan.js?v=3.90";
 import {sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 import {renderCombatLog,combatReportText} from "./team-combat-log.js?v=3.45";
@@ -349,7 +349,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     '</div>';
   }).join("");
   const planDiagnostic=present&&displayed.session?.teamFiftyPlan?.id?
-   '<p class="team-plan-status">✓ Rotation manuelle 50 tours : '+
+   '<p class="team-plan-status">✓ Rotation manuelle '+(displayed.session.teamFiftyPlan.rounds||50)+' tours : '+
     (displayed.session.teamFiftyPlan.enabled?'activée':'interrompue — '+safe(displayed.session.teamFiftyPlan.reason||"optimisation dynamique"))+'</p>':
    (present&&displayed.session?.teamFiftyRejection?
     '<p class="team-plan-status">Rotation 50 tours non activée : '+
@@ -490,7 +490,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   status((recalculate?"Recalcul du tour "+latest.number+" · ":"Calcul du tour "+(previous?previous.turns.length+1:1)+" · ")+
    (strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=4.01",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=4.03",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};

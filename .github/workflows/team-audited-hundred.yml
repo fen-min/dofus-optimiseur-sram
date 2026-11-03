@@ -1,0 +1,29 @@
+name: OMBRE - Vérification optimisation équipe sur 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-audited-hundred-data.js"
+      - "src/team-audited-fifty-plan.js"
+      - "src/team-sequential.js"
+      - "src/team-core.js"
+      - "src/team-ui.js"
+      - "src/team-combat-log.js"
+      - "test/team-audited-hundred-plan.test.mjs"
+      - "test/team-audited-fifty-plan.test.mjs"
+      - "test/team-recalculate-current-turn.test.mjs"
+      - ".github/workflows/team-audited-hundred.yml"
+  workflow_dispatch:
+jobs:
+  verify-100-rounds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 100/50 tours, rejeu manuel, variantes, PA et sécurité
+        run: node --test test/team-audited-hundred-plan.test.mjs test/team-audited-fifty-plan.test.mjs test/team-recalculate-current-turn.test.mjs
+      - name: Interface équipe et journal
+        run: node --test test/team-ui.test.mjs

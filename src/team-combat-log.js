@@ -76,7 +76,7 @@ export function combatReportText(result,selectedTurn=null){
    " | horizon "+(result.session?.teamStrategy?.horizon||"non précisé"),
   "Les dégâts sont des estimations. Les effets de placement et les attaques ennemies ne sont pas simulés.",""];
  if(result.session?.teamFiftyPlan?.id)
-  lines.splice(3,0,"Rotation optimisée 50 tours : "+
+  lines.splice(3,0,"Rotation optimisée "+(result.session.teamFiftyPlan.rounds||50)+" tours : "+
    (result.session.teamFiftyPlan.enabled?"ACTIVE":
     "INTERROMPUE — "+(result.session.teamFiftyPlan.reason||"Retour au calcul dynamique.")));
  else if(result.session?.teamFiftyRejection)

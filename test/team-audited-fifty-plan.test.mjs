@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget,optimizeTeamTurn} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
-import {TEAM_FIFTY_AUDITED,chooseTeamFiftyPlan,teamFiftyDiagnostic} from "../src/team-audited-fifty-plan.js";
+import {TEAM_FIFTY_AUDITED,chooseTeamFiftyPlan,chooseTeamHundredPlan,teamFiftyDiagnostic} from "../src/team-audited-fifty-plan.js";
+import {TEAM_HUNDRED_AUDITED} from "../src/team-audited-hundred-data.js";
 import {combatReportText} from "../src/team-combat-log.js";
 import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
 
@@ -101,28 +102,34 @@ test("Pure manual team mode never activates the automatic 50-turn preset",()=>{
 });
 
 
-test("User's 49-turn reference matches Sram distance 3 and Sacrier distance 1; AUTOMATIC 100-tour plan plays the improved 50-turn rotation", {timeout:300000},()=>{
+test("With the real user's Sram distance 3, the 100-turn plan uses the audited 100-turn route from T1", {timeout:300000},()=>{
  const target=targetFor(0,100);
  const contexts=references(target,b=>{if(b.classId==="sram")b.distance=3;});
- const plan=chooseTeamFiftyPlan(contexts,target,strategy);
- assert.equal(plan?.enabled,true,"Sram at distance 3 must use the audited legal rotation");
- let auto=null;
+ const plan=chooseTeamHundredPlan(contexts,target,strategy);
+ assert.equal(plan?.enabled,true,"Sram at distance 3 must use the audited 100-round route");
+ let auto=null,manual=null;
  for(let t=1;t<=50;t++){
+  const overrides=Object.fromEntries(contexts.map(c=>[c.build.id,
+   TEAM_HUNDRED_AUDITED[c.settings.classId][t-1].map(name=>{
+    const sp=c.spells.find(s=>s.name===name);assert.ok(sp);return String(sp.id);
+   })]));
+  manual=playSequentialTeam(contexts,target,()=>{},{previous:manual,oneRound:true,
+   manualOverrides:overrides});
   auto=optimizeTeamTurn(contexts,target,()=>{},auto,strategy);
   assert.equal(auto.turns.length,t);
+  assert.equal(auto.session.teamFiftyPlan?.id,"team-audited-hundred-v1");
   assert.equal(auto.session.teamFiftyPlan?.enabled,true,"Plan deactivated at T"+t);
   for(const actor of auto.turns.at(-1).actors){
    const cls=contexts.find(c=>c.build.id===actor.id).settings.classId;
-   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_FIFTY_AUDITED[cls][t-1],
-    "Wrong rotation for "+cls+" T"+t);
+   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_HUNDRED_AUDITED[cls][t-1],
+    "Wrong hundred rotation for "+cls+" T"+t);
   }
+  assert.equal(auto.theoretical,manual.theoretical,"Automatic/manual mismatch T"+t);
  }
- assert.equal(R(auto.theoretical),560130.7);
  assert.equal(auto.session.teamFiftyRejection,null);
- assert.match(combatReportText(auto),/Rotation optimisée 50 tours : ACTIVE/);
- console.log("USER_REAL_BUILD_FIFTY "+JSON.stringify({
-  sramDistance:3,sacriDistance:1,turns:50,damage:R(auto.theoretical),
-  baselineUserLog:547656.7,difference:R(auto.theoretical-547656.7)
+ assert.match(combatReportText(auto),/Rotation optimisée 100 tours : ACTIVE/);
+ console.log("USER_REAL_BUILD_HUNDRED_FIRST50 "+JSON.stringify({
+  sramDistance:3,sacriDistance:1,rounds:50,damage:R(auto.theoretical)
  }));
 });
 
