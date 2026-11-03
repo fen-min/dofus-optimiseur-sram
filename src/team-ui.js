@@ -283,7 +283,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const latest=result?.turns?.at(-1);
   const possible=mode==="automatic"&&latest&&
    result.session?.beforeCurrentRound?.turn===result.turns.length;
-  if(!possible){panel.hidden=true;panel.innerHTML="";return;}
+  if(!possible){recalcTurnPa={};panel.hidden=true;panel.innerHTML="";return;}
   panel.hidden=false;
   panel.innerHTML='<div class="team-recalculate-title"><strong>↻ Recalculer le tour '+latest.number+'</strong>'+
    '<small>Modifie les PA disponibles (buffs inclus), puis recalcule uniquement ce dernier tour.</small></div>'+
@@ -496,7 +496,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
      if(data.type==="error"){renderRecalculate();status("Calcul interrompu : "+data.message);return;}
      result=data.result;activeTurn=result.turns.length;
-     if(recalculate)recalcTurnPa={};else pendingTurnPa={};
+     recalcTurnPa={};
+     if(!recalculate)pendingTurnPa={};
      renderMembers();renderResult();
      status(recalculate?
       "Tour "+activeTurn+" recalculé avec les nouveaux PA. Tous les tours précédents ont été conservés.":
