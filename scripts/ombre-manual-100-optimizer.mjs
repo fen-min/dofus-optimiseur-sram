@@ -30,8 +30,13 @@ const contexts=INITIAL_BUILDS.map(b=>{
 const classes=["sacrieur","ecaflip","sram"];
 const byClass=Object.fromEntries(contexts.map(c=>[c.settings.classId,c]));
 const id=Object.fromEntries(classes.map(cls=>[cls,byClass[cls].build.id]));
+const sourceSeed=process.env.OMBRE100_SEED==="optimized"?
+ JSON.parse(readFileSync("results/ombre-manual-100-optimized.json","utf8")):null;
+const selectedSeed=sourceSeed?.rotations||baseline.rotations;
+assert.equal(selectedSeed.length,100);
+const routeKey=cls=>cls==="ecaflip"?"karuta":cls==="sram"?"matryoshka":"sacrieur";
 const starting=Object.fromEntries(classes.map(cls=>[
- cls,baseline.rotations.map(x=>x[cls==="ecaflip"?"karuta":cls==="sram"?"matryoshka":"sacrieur"].slice())
+ cls,selectedSeed.map(x=>x[routeKey(cls)].slice())
 ]));
 const actionSpell=Object.fromEntries(classes.map(cls=>[cls,
  new Map(byClass[cls].spells.map(s=>[s.name,s]))]));
@@ -164,9 +169,9 @@ function replay(routes,label){
  console.log("OMBRE100_REPLAY "+JSON.stringify({label,...summary}));
  return summary;
 }
-const baseReplay=replay(starting,"actual-auto-100");
+const baseReplay=replay(starting,sourceSeed?"previous-manual-100":"actual-auto-100");
 assert.ok(baseReplay.valid,"AUTO baseline cannot be replayed safely: "+baseReplay.why);
-assert.equal(baseReplay.score,baseline.auto100,"100-round AUTO->manual parity");
+assert.equal(baseReplay.score,sourceSeed?sourceSeed.manualOptimized100:baseline.auto100,"100-round seed->manual parity");
 console.log("OMBRE100_SEARCH_BEGINS "+JSON.stringify({baseline:baseReplay.score,
  fromTurn,limit,budget,pool:Object.fromEntries(classes.map(c=>[c,pool[c].length]))}));
 
@@ -240,8 +245,10 @@ for(const cls of ["ecaflip","sram","sacrieur"]){
 const final=replay(candidateRoutes,"final-100");
 assert.ok(final.valid&&final.score>=baseReplay.score,"Manual search damaged 100-turn result");
 const result={title:"OMBRE — recherche manuelle 100 tours (meilleur résultat testé, non optimum global)",
+ seed100:baseReplay.score,
  conditions:baseline.conditions, baseline100:baseReplay.score,manualOptimized100:final.score,
- delta:R(final.score-baseReplay.score),improvementPercent:+((final.score/baseReplay.score-1)*100).toFixed(2),
+ delta:R(final.score-baseline.auto100),gainOverSeed:R(final.score-baseReplay.score),
+ improvementPercent:+((final.score/baseline.auto100-1)*100).toFixed(2),
  minSacrierHpPercent:final.minSacrierHp,byCharacter:final.byCharacter,
  accepted:teamAccepted,search,
  changedTurns:Object.fromEntries(classes.map(cls=>[cls,candidateRoutes[cls].flatMap((s,i)=>
@@ -258,7 +265,7 @@ const result={title:"OMBRE — recherche manuelle 100 tours (meilleur résultat 
 mkdirSync("results",{recursive:true});
 writeFileSync("results/ombre-manual-100-optimized.json",JSON.stringify(result,null,2)+"\n");
 console.log("OMBRE100_SEARCH_FINAL "+JSON.stringify({baseline100:result.baseline100,
- final100:result.manualOptimized100,delta:result.delta,pct:result.improvementPercent,
+ final100:result.manualOptimized100,delta:result.delta,overSeed:result.gainOverSeed,pct:result.improvementPercent,
  minHp:result.minSacrierHpPercent,byCharacter:result.byCharacter,
  accepted:result.accepted,changedTurns:result.changedTurns,
  attempts:Object.fromEntries(classes.map(c=>[c,search[c]?.attempts||0])),
