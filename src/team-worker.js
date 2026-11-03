@@ -1,9 +1,10 @@
-import {optimizeTeamTurn} from "./team-core.js?v=3.97";
+import {optimizeTeamTurn,recalculateTeamCurrentTurn} from "./team-core.js?v=3.98";
 
 self.onmessage=event=>{
  try{
-  const {contexts,target,previous,strategy,turnPaOverrides}=event.data||{};
-  const result=optimizeTeamTurn(contexts,target,progress=>{
+  const {contexts,target,previous,strategy,turnPaOverrides,recalculateCurrent}=event.data||{};
+  const calculate=recalculateCurrent?recalculateTeamCurrentTurn:optimizeTeamTurn;
+  const result=calculate(contexts,target,progress=>{
    self.postMessage({type:"progress",progress});
   },previous,strategy,turnPaOverrides||{});
   self.postMessage({type:"complete",result});

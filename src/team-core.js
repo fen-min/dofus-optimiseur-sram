@@ -328,6 +328,55 @@ export function optimizeTeam(contexts,target,onProgress=()=>{}){
 }
 
 /**
+ * Recalculate ONLY the last completed automatic team round, with optional
+ * new absolute PA totals for its actors. All preceding turns are immutable.
+ *
+ * The one-round checkpoint contains the pre-round states, not a nested full
+ * result: no repeated past-turn history or duplicated damage accumulation.
+ */
+export function recalculateTeamCurrentTurn(contexts,target,onProgress=()=>{},
+ previous=null,strategy={mode:"fast"},turnPaOverrides={}){
+ const checkpoint=previous?.session?.beforeCurrentRound;
+ const count=previous?.turns?.length??0;
+ if(!checkpoint||!count||checkpoint.turn!==count||
+   !Array.isArray(checkpoint.actors)||!Array.isArray(checkpoint.members))
+  throw Error("Aucun tour automatique disponible à recalculer. Calcule d’abord un tour.");
+ const cleaned=cleanTeamTarget(target);
+ if(JSON.stringify(previous.target)!==JSON.stringify(cleaned))
+  throw Error("La cible a changé : le tour ne peut pas être recalculé.");
+ const historicTurns=structuredClone(previous.turns.slice(0,-1));
+ const checkpointTotal=Number(checkpoint.theoretical)||0;
+ const checkpointDirect=Number(checkpoint.directTotal)||0;
+ const checkpointPoison=Number(checkpoint.poisonTotal)||0;
+ const checkpointEffective=Number(checkpoint.effective)||0;
+ const starting={
+  ...previous,
+  turns:historicTurns,
+  members:structuredClone(checkpoint.members),
+  theoretical:checkpointTotal,direct:checkpointDirect,poison:checkpointPoison,
+  effective:checkpointEffective,
+  overkill:Math.max(0,checkpointTotal-checkpointEffective),
+  averagePerTurn:historicTurns.length?Math.round(checkpointTotal/historicTurns.length*10)/10:0,
+  finished:false,
+  session:{
+   ...previous.session,
+   actors:structuredClone(checkpoint.actors),
+   remainingHp:checkpoint.remainingHp,
+   shared:structuredClone(checkpoint.shared),
+   teamTenPlan:structuredClone(checkpoint.teamTenPlan),
+   teamFiftyPlan:structuredClone(checkpoint.teamFiftyPlan),
+   beforeCurrentRound:null
+  }
+ };
+ // Uses the same shared engine and safety checks as "Tour suivant".
+ // A failed calculation leaves the original result unchanged in the UI.
+ const replacement=optimizeTeamTurn(contexts,cleaned,onProgress,starting,strategy,turnPaOverrides);
+ if(replacement.turns.length!==count)
+  throw Error("Le recalcul a avancé ou supprimé un tour de manière inattendue.");
+ return replacement;
+}
+
+/**
  * Interactive team mode: run EXACTLY one complete team round on demand.
  * Previous actor states are restored; no later rounds are executed.
  */

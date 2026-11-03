@@ -77,7 +77,10 @@ test("Benchmark not forced onto different HP floors, target conditions, builds o
  assert.equal(chooseTeamFiftyPlan(contexts,t,{...strategy,mode:"fast"}),null);
  assert.equal(chooseTeamFiftyPlan(contexts,t,{...strategy,minHpPercent:60}),null);
  const t100=targetFor(0,100);
- assert.equal(chooseTeamFiftyPlan(references(t100),t100,strategy),null);
+ assert.equal(chooseTeamFiftyPlan(references(t100),t100,strategy)?.enabled,true,
+  "First 50 turns of 100-round team session must reuse tested rotation");
+ const targetShort=targetFor(0,40);
+ assert.equal(chooseTeamFiftyPlan(references(targetShort),targetShort,strategy),null);
  const t20=targetFor(20,50);
  assert.equal(chooseTeamFiftyPlan(references(t20),t20,strategy),null);
  assert.equal(chooseTeamFiftyPlan(references(t,b=>{if(b.classId==="sacrieur")b.distance=2;}),t,strategy),null);

@@ -638,8 +638,28 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
   (!manualOverrides&&!teamFiftyPlan?chooseTeamTenOpening(contexts,target,
    cleanTeamStrategy(options.teamStrategy||{mode:"fast"}),playSequentialTeam):null);
  const previewStates=options.manualPreview?{}:null;
+ // One compact checkpoint BEFORE the most recent round allows recalculation
+ // of that round, without replaying earlier rounds or nesting old checkpoints.
+ // All actor states, buffs, poisons, HP and team buffs are restored exactly.
+ let beforeCurrentRound=null;
  for(let turn=turns.length+1;turn<=stopAt;turn++){
   if(remainingHp<=0)break;
+  if(options.oneRound){
+   beforeCurrentRound={
+    turn,
+    members:structuredClone(members),
+    actors:entries.map(entry=>({
+     id:entry.ctx.build.id,
+     state:structuredClone(entry.state),
+     trials:entry.trials,
+     teamBuffs:structuredClone(entry.teamBuffs)
+    })),
+    remainingHp,shared:structuredClone(shared),effective,
+    theoretical,directTotal,poisonTotal,
+    teamTenPlan:structuredClone(teamTenPlan),
+    teamFiftyPlan:structuredClone(teamFiftyPlan)
+   };
+  }
   const actors=[],roundStart=remainingHp;
   for(let index=0;index<entries.length;index++){
    const entry=entries[index],actor=blankActor(entry,remainingHp);
@@ -814,7 +834,7 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
   finished:remainingHp<=0||turns.length>=target.turns,
   session:{
-   remainingHp,shared,configSignature,teamTenPlan,teamFiftyPlan,
+   remainingHp,shared,configSignature,teamTenPlan,teamFiftyPlan,beforeCurrentRound,
    actors:entries.map(entry=>({
     id:entry.ctx.build.id,state:entry.state,trials:entry.trials,teamBuffs:entry.teamBuffs
    }))

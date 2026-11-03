@@ -3,9 +3,11 @@
  * team optimization. Source: results/ombre-manual-50-rotations.json,
  * GitHub Actions run 41557487034.
  *
- * EXACT benchmark only: 546776 -> 560130.7 damage on the reference
+ * EXACT 50-round benchmark only: 546776 -> 560130.7 damage on the reference
  * 12-PA three-character team, 0% target resistances, melee Sram/Sacrier.
- * No global optimality guarantee. No enemy attacks, positioning or
+ * The 50-turn route is also an audited OPENING of a 100-turn session.
+ * After T50, normal dynamic optimization resumes. The 100-turn total is
+ * not guaranteed to improve. No enemy attacks, positioning or
  * summon AI are modeled. Never transplant this route onto edited builds.
  */
 import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "./classes.js?v=3.90";
@@ -186,7 +188,7 @@ const referenceBuild=cls=>{
 /** Called once when starting a NEW automatic team combat. */
 export function chooseTeamFiftyPlan(contexts,target,strategy){
  if(strategy?.mode!=="long"||strategy.minHpPercent!==50||
-  target?.turns!==50||target?.hp!==1_000_000_000_000||
+  target?.turns<50||target?.turns>100||target?.hp!==1_000_000_000_000||
   target?.criticals!==true||
   Object.values(target.resistances||{}).some(v=>Number(v)!==0)||
   !Array.isArray(contexts)||contexts.length!==3)return null;
@@ -195,7 +197,7 @@ export function chooseTeamFiftyPlan(contexts,target,strategy){
  for(const cls of classes){
   const ctx=byClass.get(cls),ref=referenceBuild(cls);
   if(!ref||ctx.build.id!==ref.id||ctx.build.character!==ref.character||
-    ctx.settings.ap!==12||ctx.settings.turns!==50||
+    ctx.settings.ap!==12||ctx.settings.turns!==target.turns||
     ctx.settings.distance!==ref.distance||
     ctx.settings.criticals!==true||
     !same(ctx.settings.variants,ref.variants)||

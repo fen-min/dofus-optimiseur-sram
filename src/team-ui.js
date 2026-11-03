@@ -2,11 +2,11 @@ import {CLASSES} from "./classes.js?v=3.90";
 import {updateDamageLeaderboard} from "./team-dps-board.js?v=1";
 import {newManualDraft,previewManualDraft,manualSpellChoices,chooseManualSpell,
  undoManualSpell,resetManualActor,nextManualActor,setManualTurnPA,
- manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=3.97";
+ manualCurrentTurnDamage,manualActiveEcaflipTable} from "./team-manual.js?v=3.98";
 import {
  TEAM_STORAGE_KEY,TEAM_LIMIT,RESIST_ELEMENTS,defaultTeamTarget,cleanTeamTarget,
  teamMembers,createTeamContext,cleanTeamMemberOptions
-} from "./team-core.js?v=3.97";
+} from "./team-core.js?v=3.98";
 import {cleanTeamStrategy} from "./team-long-plan.js?v=3.90";
 import {sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 import {renderCombatLog,combatReportText} from "./team-combat-log.js?v=3.44";
@@ -51,6 +51,8 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
  // Ephemeral, absolute PA totals for the NEXT round only. Never save these
  // into the build or the combat configuration signature.
  let pendingTurnPa={};
+ // Optional PA overrides for replacing ONLY the last computed automatic round.
+ let recalcTurnPa={};
  // 100 is the default for new sessions, but an explicitly chosen 10-turn
  // horizon must remain 10 after a reload (including HP-audited strategies).
  let strategy=cleanTeamStrategy(saved?.strategy);
@@ -81,6 +83,7 @@ export function mountTeamModule({getBuilds,onChangeVariant}){
   if(worker){worker.terminate();worker=null;}
   $("team-calculate").disabled=false;
   $("team-cancel").disabled=true;
+  const repeat=$("team-recalculate");if(repeat)repeat.disabled=false;
  }
  function buffSelector(build,cls){
   if(!cls||!["sram","sacrieur"].includes(build.classId))return "";
@@ -274,6 +277,29 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     '<p class="manual-footnote">Dégâts approximatifs par lancer ; le tri estime aussi la valeur des buffs et des cartes. Certains effets et le placement ne sont pas simulés.</p>';
   }catch(error){board.innerHTML='<p class="manual-guide">'+safe(error.message)+'</p>';}
  }
+ function renderRecalculate(){
+  const panel=$("team-recalculate-panel");
+  if(!panel)return;
+  const latest=result?.turns?.at(-1);
+  const possible=mode==="automatic"&&latest&&
+   result.session?.beforeCurrentRound?.turn===result.turns.length;
+  if(!possible){panel.hidden=true;panel.innerHTML="";return;}
+  panel.hidden=false;
+  panel.innerHTML='<div class="team-recalculate-title"><strong>↻ Recalculer le tour '+latest.number+'</strong>'+
+   '<small>Modifie les PA disponibles (buffs inclus), puis recalcule uniquement ce dernier tour.</small></div>'+
+   '<div class="team-recalculate-fields">'+latest.actors.map(a=>
+    '<label for="team-recalc-pa-'+safe(a.id)+'">'+safe(a.character)+
+    '<input id="team-recalc-pa-'+safe(a.id)+'" type="number" data-team-recalc-pa="'+safe(a.id)+
+    '" min="1" max="30" step="1" value="'+(recalcTurnPa[a.id]??a.availablePA)+
+    '"'+(worker?' disabled':'')+
+    ' aria-label="PA disponibles pour '+safe(a.character)+' au tour '+latest.number+'"></label>'
+   ).join("")+'</div>'+
+   '<button id="team-recalculate" class="team-recalculate-button" type="button"'+(worker?' disabled':'')+
+   '>↻ Recalculer le tour en cours</button>'+
+   '<small class="team-recalculate-note">Les tours 1 à '+(latest.number-1)+
+   ' sont conservés. Les nouveaux dégâts et buffs du tour '+latest.number+
+   ' remplacent les anciens, même si le combat était terminé.</small>';
+ }
  function renderResult(){
   let draftPreview=null;
   if(mode==="manual"&&manualDraft){
@@ -346,6 +372,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
    '</div></div>').join(""):
    '<p class="team-placeholder">Choisis tes personnages à droite, règle la cible et lance le calcul pour voir les sorts conseillés, classés par initiative.</p>');
   updateDamageLeaderboard($("team-damage"),displayed,activeTurn,{safe,fmt});
+  renderRecalculate();
   const info=$("team-assumptions");
   info.textContent=present?displayed.warnings.filter(note=>!/PV de la cible|cible possède des PV/i.test(note)).join(" "):
    "Chaque personnage joue après le précédent, avec les PV de cible communs et les buffs et relances personnels. Les buffs de soutien entre alliés ne sont pas encore entièrement modélisés.";
@@ -410,7 +437,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   storeState();cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;renderTarget();renderResult();renderManual();
   status("Cible modifiée. Lance le calcul pour actualiser les résultats.");
  }
- function calculate(){
+ function calculate(recalculate=false){
   const members=getMembers();
   if(!members.length){status("Ajoute au moins un personnage.");return;}
   const invalidHp=members.find(b=>b.classId==="sacrieur"&&
@@ -421,7 +448,28 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     " %. Ajuste « Sacrieur · PV minimum » avant le calcul.");
    return;
   }
-  if(result?.finished){status("Combat terminé. Recommence au tour 1.");return;}
+  if(recalculate){
+   if(mode!=="automatic"||!result?.session?.beforeCurrentRound){
+    status("Aucun tour automatique à recalculer.");return;
+   }
+  }else if(result?.finished){
+   status("Combat terminé. Recommence au tour 1.");return;
+  }
+  const latest=result?.turns.at(-1);
+  const chosenPA={};
+  if(recalculate){
+   // Read values directly: clicking the button immediately after typing
+   // does not need a blur/change event to capture the new amount.
+   for(const a of latest.actors){
+    const input=root.querySelector('input[data-team-recalc-pa="'+a.id+'"]');
+    const pa=Number(input?.value);
+    if(!input||!Number.isInteger(pa)||pa<1||pa>30){
+     status("Choisis entre 1 et 30 PA pour chaque personnage du tour "+latest.number+".");
+     input?.focus();return;
+    }
+    chosenPA[a.id]=pa;
+   }
+  }
   const previous=result;
   cancel();
   if(typeof Worker==="undefined"){status("Le navigateur ne prend pas en charge les calculs en arrière-plan.");return;}
@@ -429,9 +477,14 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   const currentJob=++job;
   $("team-calculate").disabled=true;
   $("team-cancel").disabled=false;
-  status("Calcul du tour "+(previous?previous.turns.length+1:1)+" · "+(strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
+  if(recalculate){
+   recalcTurnPa={...chosenPA};
+   const button=$("team-recalculate");if(button)button.disabled=true;
+  }
+  status((recalculate?"Recalcul du tour "+latest.number+" · ":"Calcul du tour "+(previous?previous.turns.length+1:1)+" · ")+
+   (strategy.mode==="long"?"DPS équipe, vision "+strategy.horizon+" tours":"optimisation rapide")+"…");
   try{
-   worker=new Worker(new URL("./team-worker.js?v=3.97",import.meta.url),{type:"module"});
+   worker=new Worker(new URL("./team-worker.js?v=3.98",import.meta.url),{type:"module"});
    worker.onmessage=event=>{
     if(currentJob!==job)return;
     const data=event.data||{};
@@ -441,24 +494,41 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     }
     if(data.type==="complete"||data.type==="error"){
      worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
-     if(data.type==="error"){status("Calcul interrompu : "+data.message);return;}
-     result=data.result;activeTurn=result.turns.length;pendingTurnPa={};
+     if(data.type==="error"){renderRecalculate();status("Calcul interrompu : "+data.message);return;}
+     result=data.result;activeTurn=result.turns.length;
+     if(recalculate)recalcTurnPa={};else pendingTurnPa={};
      renderMembers();renderResult();
-     status("Tour "+activeTurn+" calculé. "+(result.finished?"Combat terminé.":"Clique sur « Tour suivant » pour calculer uniquement le tour "+(activeTurn+1)+"."));
+     status(recalculate?
+      "Tour "+activeTurn+" recalculé avec les nouveaux PA. Tous les tours précédents ont été conservés.":
+      "Tour "+activeTurn+" calculé. "+(result.finished?"Combat terminé.":"Clique sur « Tour suivant » pour calculer uniquement le tour "+(activeTurn+1)+"."));
     }
    };
    worker.onerror=event=>{
     if(currentJob!==job)return;
     worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
-    status("Erreur du calcul : "+(event.message||"vérifie les builds."));
+    renderRecalculate();status("Erreur du calcul : "+(event.message||"vérifie les builds."));
    };
-   worker.postMessage({contexts,target,previous,strategy,turnPaOverrides:{...pendingTurnPa}});
+   worker.postMessage({contexts,target,previous,strategy,
+    recalculateCurrent:recalculate,turnPaOverrides:recalculate?chosenPA:{...pendingTurnPa}});
   }catch(error){
    worker?.terminate();worker=null;$("team-calculate").disabled=false;$("team-cancel").disabled=true;
-   status("Impossible de lancer le calcul : "+error.message);
+   renderRecalculate();status("Impossible de lancer le calcul : "+error.message);
   }
  }
  root.addEventListener("change",event=>{
+  const revised=event.target.closest("input[data-team-recalc-pa]");
+  if(revised){
+   if(mode!=="automatic"||!result||worker)return;
+   const pa=Number(revised.value);
+   if(!Number.isInteger(pa)||pa<1||pa>30){
+    status("Choisis un nombre entier entre 1 et 30 PA pour "+revised.dataset.teamRecalcPa+".");
+    revised.setAttribute("aria-invalid","true");return;
+   }
+   revised.removeAttribute("aria-invalid");
+   recalcTurnPa={...recalcTurnPa,[revised.dataset.teamRecalcPa]:pa};
+   status("PA du tour "+result.turns.length+" mis à jour. Clique sur « Recalculer le tour en cours ».");
+   return;
+  }
   const paChoice=event.target.closest('input[data-manual-turn-pa]');
   if(paChoice&&mode==="manual"&&manualDraft){
    try{
@@ -528,6 +598,9 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
+  if(event.target.closest("button#team-recalculate")){
+   calculate(true);return;
+  }
   const copyButton=event.target.closest("button[data-team-copy-log]");
   if(copyButton?.dataset?.teamCopyLog!==undefined){
    const source=mode==="manual"&&manualDraft?
@@ -593,7 +666,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     "Tour manuel enregistré. Clique sur Commencer le tour suivant pour continuer.");
   }catch(error){status("Choix manuel : "+error.message);}
  });
- $("team-calculate").addEventListener("click",calculate);
+ $("team-calculate").addEventListener("click",()=>calculate(false));
  $("team-restart").addEventListener("click",()=>{
   cancel();pendingTurnPa={};manualDraft=null;result=null;activeTurn=1;renderMembers();renderResult();
   status("Combat réinitialisé. Clique pour calculer uniquement le tour 1.");

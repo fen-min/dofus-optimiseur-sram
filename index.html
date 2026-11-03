@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#10101a">
   <title>OMBRE — Atelier de builds DOFUS</title>
   <link rel="stylesheet" href="./styles.css?v=3.11">
-  <link rel="stylesheet" href="./team.css?v=3.78">
+  <link rel="stylesheet" href="./team.css?v=3.79">
   <link rel="stylesheet" href="./combat.css?v=1.8">
 </head>
 <body>
@@ -88,6 +88,7 @@
                 </div>
               </div>
               <div class="team-calc-actions"><button id="team-calculate" class="team-calculate" type="button">▶ Calculer le tour 1</button><button id="team-restart" class="team-cancel" type="button" disabled>Recommencer au tour 1</button><button id="team-cancel" class="team-cancel" type="button" disabled>Annuler</button></div>
+              <section id="team-recalculate-panel" class="team-recalculate-panel" aria-label="Recalculer le tour actuel avec d'autres PA" hidden></section>
               <p id="team-status" class="team-status" role="status" aria-live="polite"></p>
               <div class="team-turn-navigation"><label for="team-turn-select">Afficher le tour</label><select id="team-turn-select" aria-label="Aller directement à un tour" disabled><option value="">Calcule d'abord une rotation</option></select></div>
               <nav id="team-turn-buttons" class="team-turn-buttons" aria-label="Sélection du tour"></nav>
@@ -322,6 +323,6 @@
       <small>Seulement les sorts et les PA · rotation théorique</small>
     </div>
   </aside>
-  <script type="module" src="./src/app.js?v=3.97"></script>
+  <script type="module" src="./src/app.js?v=3.98"></script>
 </body>
 </html>

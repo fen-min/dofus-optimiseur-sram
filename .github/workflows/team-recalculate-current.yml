@@ -1,0 +1,25 @@
+name: OMBRE - Recalculer tour courant et ajuster PA
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-core.js"
+      - "src/team-sequential.js"
+      - "src/team-worker.js"
+      - "src/team-ui.js"
+      - "src/team-audited-fifty-plan.js"
+      - "test/team-recalculate-current-turn.test.mjs"
+      - "test/team-audited-fifty-plan.test.mjs"
+      - ".github/workflows/team-recalculate-current.yml"
+  workflow_dispatch:
+jobs:
+  recalculate-current:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tests recalcul du dernier tour et PA
+        run: node --test test/team-recalculate-current-turn.test.mjs test/team-audited-fifty-plan.test.mjs
