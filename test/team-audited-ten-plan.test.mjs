@@ -6,14 +6,18 @@ import {playSequentialTeam} from "../src/team-sequential.js";
 import {chooseTeamTenOpening,teamTenCurrentPlan,TEAM_TEN_AUDITED,TEAM_TEN_ATTACK,TEAM_TEN_SAFE60} from "../src/team-audited-ten-plan.js";
 import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
 
-const target=cleanTeamTarget({turns:100,hp:1e12,criticals:true,
+// Historical 10-turn preset is only suitable for SHORT fights. The
+// corrected +90/+180/+270 persistent Chaton Power makes its old Ecaflip
+// rotation obsolete at 30-100 turns.
+const target=cleanTeamTarget({turns:10,hp:1e12,criticals:true,
  resistances:{Air:0,Terre:0,Feu:0,Eau:0,Neutre:0}});
-const makeContexts=()=>INITIAL_BUILDS.map(original=>{
+const longTarget=cleanTeamTarget({...target,turns:100});
+const makeContexts=(fight=target)=>INITIAL_BUILDS.map(original=>{
  const build=normalizeBuild(original);
  // The user-provided combat log can cast melee weapon Manthache and
  // 1-1 Carnage; saved player distance is therefore 1 for both.
  if(["sacrieur","sram"].includes(build.classId))build.distance=1;
- return createTeamContext(build,target);
+ return createTeamContext(build,fight);
 });
 const strategy={mode:"long",horizon:100,effort:"deep",minHpPercent:50};
 const R=n=>Math.round(n*10)/10;
@@ -72,36 +76,29 @@ test("Automatic 10-round team replay matches manual audited damage and Pacte ref
  }));
 });
 
-test("After T10 keep dynamic decisions and 50% Sacrier floor through T15",{timeout:200000},()=>{
- const ctx=makeContexts();
+test("Old team 10-turn preset is retired for 100-turn Karuta kitten uptime", {timeout:200000},()=>{
+ const ctx=makeContexts(longTarget);
+ assert.equal(chooseTeamTenOpening(ctx,longTarget,strategy,playSequentialTeam),null);
  let previous=null;
  for(let i=0;i<15;i++){
-  previous=optimizeTeamTurn(ctx,target,()=>{},previous,strategy);
-  if(i<10)continue;
+  previous=optimizeTeamTurn(ctx,longTarget,()=>{},previous,strategy);
   const turn=previous.turns[i];
   assert.equal(turn.actors.length,3);
   assert.ok(turn.actors.every(a=>a.spent<=a.availablePA+.01));
   assert.ok(turn.actors.every(a=>!a.log.plan.includes("DPS équipe vérifié")));
   const sacri=turn.actors.find(a=>a.character==="Mon Sacrieur");
   const actual=previous.session.actors.find(a=>a.id===sacri.id).state.sacrierHealth;
-  assert.deepEqual(sacri.health,actual,"HP après expiration T"+(i+1));
-  assert.ok(sacri.health.hp>=sacri.health.maxHp*.5,
-   "PV sous la limite au tour "+(i+1));
+  assert.deepEqual(sacri.health,actual,"Sacrier HP must persist through T"+(i+1));
+  assert.ok(sacri.health.hp>=sacri.health.maxHp*.5);
+  const karuta=turn.actors.find(a=>a.character==="Karuta");
+  if([1,5,9].includes(i+1))assert.ok(
+   karuta.actions.some(action=>action.name==="Griffe Invocatrice"),
+   "The historical 10-round team opening must not suppress kittens at T"+(i+1));
  }
+ const kittens=previous.session.actors.find(a=>a.id==="ecaflip-karuta-eau").state.invocations;
+ assert.equal(kittens.filter(x=>x.kind==="Chaton Enragé").length,3);
+ assert.equal(previous.session.teamTenPlan,null);
  assert.equal(previous.turns.length,15);
- assert.ok(Math.abs(previous.theoretical-163658.7)<.2,
-  "The 15-round team extension must include the verified poison renewal gain");
- assert.equal(previous.members.find(member=>member.character==="Matryoshka").estimated,51578.1);
- assert.deepEqual(previous.turns[10].actors.find(actor=>actor.character==="Matryoshka")
-  .actions.map(action=>action.name),["Injection Toxique","Arsenic","Épidémie"]);
- assert.ok(previous.theoretical>previous.session.teamTenPlan.projected);
- console.log("TEAM_FIFTEEN_CONTINUATION "+JSON.stringify({
-  total:previous.theoretical,extra:Math.round((previous.theoretical-previous.session.teamTenPlan.projected)*10)/10,
-  nextTurns:previous.turns.slice(10).map(t=>({
-   turn:t.number,total:t.theoretical,
-   sacriHealth:t.actors.find(a=>a.character==="Mon Sacrieur").health
-  }))
- }));
 });
 
 test("Replaying with different current build or HP/strategy settings preserves dynamic fallback",()=>{
