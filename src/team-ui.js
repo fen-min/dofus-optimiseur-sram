@@ -598,7 +598,8 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
   if(event.target.closest("#team-settings"))changeTarget();
  });
  root.addEventListener("click",event=>{
-  if(event.target.closest("button#team-recalculate")){
+  const recalcButton=mode==="automatic"?event.target.closest("button#team-recalculate"):null;
+  if(recalcButton?.id==="team-recalculate"){
    calculate(true);return;
   }
   const copyButton=event.target.closest("button[data-team-copy-log]");
