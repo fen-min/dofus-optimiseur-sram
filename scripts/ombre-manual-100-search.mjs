@@ -42,7 +42,16 @@ const path=Object.fromEntries(classes.map(cls=>[cls,[]]));
 let baseline=null,minimum=100;
 const checkpoints={};
 for(let t=1;t<=100;t++){
- baseline=optimizeTeamTurn(contexts,target,()=>{},baseline,strategy);
+ // Keep the ORIGINAL 100-turn reference reproducible even after the new
+ // 100-round champion has been installed in the automatic UI. Explicitly
+ // replay the old verified 50-round opening, then use the normal adaptive
+ // engine for turns 51-100. Both paths share the same chronological model.
+ if(t<=50){
+  const overrides=Object.fromEntries(classes.map(cls=>[ids[cls],
+   TEAM_FIFTY_AUDITED[cls][t-1].map(name=>spellId(cls,name))]));
+  baseline=playSequentialTeam(contexts,target,()=>{},{previous:baseline,
+   oneRound:true,manualOverrides:overrides});
+ }else baseline=optimizeTeamTurn(contexts,target,()=>{},baseline,strategy);
  assert.equal(baseline.turns.length,t,"AUTO round counter mismatch");
  const row=baseline.turns.at(-1);
  for(const actor of row.actors){
