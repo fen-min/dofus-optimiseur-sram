@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget,optimizeTeamTurn} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
-import {TEAM_FIFTY_AUDITED,chooseTeamFiftyPlan} from "../src/team-audited-fifty-plan.js";
+import {TEAM_FIFTY_AUDITED,chooseTeamFiftyPlan,teamFiftyDiagnostic} from "../src/team-audited-fifty-plan.js";
+import {combatReportText} from "../src/team-combat-log.js";
 import {sacrierHealthAboveFloor} from "../src/sacrier-safety.js";
 
 const targetFor=(res=0,turns=50)=>cleanTeamTarget({
@@ -97,4 +98,48 @@ test("Pure manual team mode never activates the automatic 50-turn preset",()=>{
  const noSpells=Object.fromEntries(contexts.map(c=>[c.build.id,[]]));
  const result=playSequentialTeam(contexts,t,()=>{},{oneRound:true,manualOverrides:noSpells});
  assert.equal(result.session.teamFiftyPlan,null);
+});
+
+
+test("User's 49-turn reference matches Sram distance 3 and Sacrier distance 1; AUTOMATIC 100-tour plan plays the improved 50-turn rotation", {timeout:300000},()=>{
+ const target=targetFor(0,100);
+ const contexts=references(target,b=>{if(b.classId==="sram")b.distance=3;});
+ const plan=chooseTeamFiftyPlan(contexts,target,strategy);
+ assert.equal(plan?.enabled,true,"Sram at distance 3 must use the audited legal rotation");
+ let auto=null;
+ for(let t=1;t<=50;t++){
+  auto=optimizeTeamTurn(contexts,target,()=>{},auto,strategy);
+  assert.equal(auto.turns.length,t);
+  assert.equal(auto.session.teamFiftyPlan?.enabled,true,"Plan deactivated at T"+t);
+  for(const actor of auto.turns.at(-1).actors){
+   const cls=contexts.find(c=>c.build.id===actor.id).settings.classId;
+   assert.deepEqual(actor.actions.map(a=>a.name),TEAM_FIFTY_AUDITED[cls][t-1],
+    "Wrong rotation for "+cls+" T"+t);
+  }
+ }
+ assert.equal(R(auto.theoretical),560130.7);
+ assert.equal(auto.session.teamFiftyRejection,null);
+ assert.match(combatReportText(auto),/Rotation optimisée 50 tours : ACTIVE/);
+ console.log("USER_REAL_BUILD_FIFTY "+JSON.stringify({
+  sramDistance:3,sacriDistance:1,turns:50,damage:R(auto.theoretical),
+  baselineUserLog:547656.7,difference:R(auto.theoretical-547656.7)
+ }));
+});
+
+test("Sram distances 1 to 3 were audited; Sacrier at distance 2 is incompatible with melee spells",()=>{
+ const target=targetFor(0,100);
+ for(const distance of [1,2,3]){
+  const team=references(target,b=>{if(b.classId==="sram")b.distance=distance;});
+  assert.ok(chooseTeamFiftyPlan(team,target,strategy),
+   "Sram distance "+distance+" was verified through the manual engine");
+  assert.equal(teamFiftyDiagnostic(team,target,strategy),null);
+ }
+ const sacri2=references(target,b=>{if(b.classId==="sacrieur")b.distance=2;});
+ assert.equal(chooseTeamFiftyPlan(sacri2,target,strategy),null);
+ assert.match(teamFiftyDiagnostic(sacri2,target,strategy),/distance 2/);
+ const modifiedStats=references(target,b=>{
+  if(b.classId==="sram")b.stats={...b.stats,agility:b.stats.agility+10};
+ });
+ assert.equal(chooseTeamFiftyPlan(modifiedStats,target,strategy),null);
+ assert.match(teamFiftyDiagnostic(modifiedStats,target,strategy),/caractéristiques/);
 });

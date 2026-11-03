@@ -314,6 +314,8 @@
 .team-recalculate-note{font-size:10px;color:#afc3dd;line-height:1.5}
 @media(max-width:540px){.team-recalculate-fields label{max-width:none;flex:1 1 100%}}
 
+.team-plan-status{margin:0 0 10px;padding:5px 0;font-size:11px;
+ color:#d7e4f8;line-height:1.55}
 /* Sacrieur PV at combat start: independent from per-round PA input. */
 .team-slot-body .team-slot-health{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:6px;padding:6px 8px;background:#202938;border:1px solid #577088;border-radius:8px;color:#d9efff!important;font-size:11px!important;font-weight:700!important}
 .team-slot-health select{width:auto!important;min-width:90px;max-width:115px;margin-left:auto;background:#142332!important;border-color:#54708b!important;color:#fff}

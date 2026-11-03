@@ -75,6 +75,12 @@ export function combatReportText(result,selectedTurn=null){
   "Stratégie : "+(result.session?.teamStrategy?.mode||"non précisée")+
    " | horizon "+(result.session?.teamStrategy?.horizon||"non précisé"),
   "Les dégâts sont des estimations. Les effets de placement et les attaques ennemies ne sont pas simulés.",""];
+ if(result.session?.teamFiftyPlan?.id)
+  lines.splice(3,0,"Rotation optimisée 50 tours : "+
+   (result.session.teamFiftyPlan.enabled?"ACTIVE":
+    "INTERROMPUE — "+(result.session.teamFiftyPlan.reason||"Retour au calcul dynamique.")));
+ else if(result.session?.teamFiftyRejection)
+  lines.splice(3,0,"Rotation optimisée 50 tours : NON ACTIVÉE — "+result.session.teamFiftyRejection);
  const turns=selectedTurn?result.turns.filter(t=>t.number===selectedTurn):result.turns;
  for(const turn of turns){
   lines.push("=== TOUR "+turn.number+" | équipe : "+round(turn.theoretical)+" dégâts ===");

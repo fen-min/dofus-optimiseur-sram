@@ -185,31 +185,65 @@ const referenceBuild=cls=>{
  if(cls==="sacrieur"||cls==="sram")build.distance=1;
  return build;
 };
-/** Called once when starting a NEW automatic team combat. */
-export function chooseTeamFiftyPlan(contexts,target,strategy){
- if(strategy?.mode!=="long"||strategy.minHpPercent!==50||
-  target?.turns<50||target?.turns>100||target?.hp!==1_000_000_000_000||
-  target?.criticals!==true||
-  Object.values(target.resistances||{}).some(v=>Number(v)!==0)||
-  !Array.isArray(contexts)||contexts.length!==3)return null;
+/**
+ * The user-supplied 49-turn battle log was replayed exactly (537298.3 damage)
+ * at Sacrier distance=1 and Sram distance=1,2,3. Full 50-turn MANUAL replay
+ * has also passed at all three Sram distances, producing 560130.7 damage.
+ * Consequently, do not reject a perfectly legal and equally powerful
+ * rotation just because the Sram build retains its default distance=3.
+ * Other builds, variants, stats and PA must still match the audited models.
+ */
+const allowedSramDistances=new Set([1,2,3]);
+function incompatibility(contexts,target,strategy){
+ if(!Array.isArray(contexts)||contexts.length!==3)return "Composition différente de la référence à trois personnages.";
  const byClass=new Map(contexts.map(c=>[c.settings?.classId,c]));
- if(byClass.size!==3||classes.some(c=>!byClass.has(c)))return null;
+ if(byClass.size!==3||classes.some(cls=>!byClass.has(cls)))
+  return "Composition différente de Karuta, Matryoshka et du Sacrieur.";
+ if(strategy?.mode!=="long")return "Activer la stratégie DPS longue durée.";
+ if(strategy.minHpPercent!==50)return "Régler le seuil de sécurité du Sacrieur à 50 %.";
+ if(target?.turns<50||target?.turns>100)return "Le combat doit prévoir au moins 50 tours (maximum 100).";
+ if(target?.hp!==1_000_000_000_000)return "La cible de référence utilise des PV virtuels non limitants.";
+ if(target?.criticals!==true)return "Activer les critiques probables.";
+ if(Object.values(target.resistances||{}).some(v=>Number(v)!==0))
+  return "La rotation a été vérifiée sur une cible à 0 % de résistances.";
  for(const cls of classes){
   const ctx=byClass.get(cls),ref=referenceBuild(cls);
-  if(!ref||ctx.build.id!==ref.id||ctx.build.character!==ref.character||
-    ctx.settings.ap!==12||ctx.settings.turns!==target.turns||
-    ctx.settings.distance!==ref.distance||
-    ctx.settings.criticals!==true||
-    !same(ctx.settings.variants,ref.variants)||
-    !same(ctx.spells,prepareBuildSpells(ref,CLASSES[cls])))return null;
+  const name=ctx.build?.character||cls;
+  if(!ref||ctx.build?.id!==ref.id||ctx.build?.character!==ref.character)
+   return "Le personnage "+name+" n'est pas le build de référence.";
+  if(ctx.settings.ap!==12)return name+" : le plan validé exige 12 PA de base.";
+  if(ctx.settings.turns!==target.turns)return name+" : durée du combat différente de la cible.";
+  if(!(cls==="sram"?allowedSramDistances.has(ctx.settings.distance):
+   ctx.settings.distance===ref.distance))
+   return name+" : distance "+ctx.settings.distance+
+    " non vérifiée pour cette rotation (Sacrieur à distance 1 ; Sram à distance 1–3).";
+  if(ctx.settings.criticals!==true)return name+" : activer les critiques.";
+  if(!same(ctx.settings.variants,ref.variants))
+   return name+" : certaines variantes de sorts diffèrent de la rotation vérifiée.";
+  if(!same(ctx.spells,prepareBuildSpells(ref,CLASSES[cls])))
+   return name+" : caractéristiques, arme ou calibration différentes du build vérifié.";
   if(cls==="sacrieur"&&(
     ctx.settings.sacrierStartingHpPercent!==100||
     ctx.settings.sacrierMaxHp!==ref.stats.hitPoints||
-    !ctx.settings.sacrierHealthSimulation))return null;
+    !ctx.settings.sacrierHealthSimulation))
+   return "Le Sacrieur doit commencer à 100 % des PV du build de référence.";
   if(cls==="ecaflip"&&(
     ctx.settings.dofusTurquoise!==true||
-    !same(ctx.settings.ecaflipStats,ref.stats)))return null;
+    !same(ctx.settings.ecaflipStats,ref.stats)))
+   return "Karuta : statistiques ou Dofus Turquoise différents du build vérifié.";
  }
+ return null;
+}
+/** Returns an explanation only for the original three reference builds. */
+export function teamFiftyDiagnostic(contexts,target,strategy){
+ if(!Array.isArray(contexts)||contexts.length!==3)return null;
+ const ids=new Set(contexts.map(ctx=>ctx.build?.id));
+ if(classes.some(cls=>!ids.has(referenceBuild(cls)?.id)))return null;
+ return incompatibility(contexts,target,strategy);
+}
+/** Called once when starting a NEW automatic team combat. */
+export function chooseTeamFiftyPlan(contexts,target,strategy){
+ if(incompatibility(contexts,target,strategy))return null;
  return {id:"team-audited-fifty-v1",enabled:true,rounds:50,
   referenceDamage:546776,expectedDamage:560130.7,minHpPercent:50};
 }

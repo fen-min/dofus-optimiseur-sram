@@ -12,8 +12,8 @@ import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
 import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.76";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.90";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
-import {chooseTeamFiftyPlan,teamFiftyCurrentPlan} from "./team-audited-fifty-plan.js?v=1";
-import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
+import {chooseTeamFiftyPlan,teamFiftyCurrentPlan,teamFiftyDiagnostic} from "./team-audited-fifty-plan.js?v=2";
+import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.45";
 import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.92";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
@@ -633,6 +633,10 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
  let teamFiftyPlan=previous?(previous.session.teamFiftyPlan||null):
   (!manualOverrides?chooseTeamFiftyPlan(contexts,target,
    cleanTeamStrategy(options.teamStrategy||{mode:"fast"})):null);
+ // Explain incompatible reference builds in UI and in the combat journal.
+ const teamFiftyRejection=previous?(previous.session.teamFiftyRejection||null):
+  (!manualOverrides?teamFiftyDiagnostic(contexts,target,
+   cleanTeamStrategy(options.teamStrategy||{mode:"fast"})):null);
  let teamTenPlan=previous?
   (previous.session.teamTenPlan||null):
   (!manualOverrides&&!teamFiftyPlan?chooseTeamTenOpening(contexts,target,
@@ -834,13 +838,14 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
   averagePerTurn:round(theoretical/Math.max(1,turns.length)),
   finished:remainingHp<=0||turns.length>=target.turns,
   session:{
-   remainingHp,shared,configSignature,teamTenPlan,teamFiftyPlan,beforeCurrentRound,
+   remainingHp,shared,configSignature,teamTenPlan,teamFiftyPlan,teamFiftyRejection,beforeCurrentRound,
    actors:entries.map(entry=>({
     id:entry.ctx.build.id,state:entry.state,trials:entry.trials,teamBuffs:entry.teamBuffs
    }))
   },
   warnings:[
-   ...(teamFiftyPlan?.id?[
+   ...(teamFiftyRejection?["Rotation 50 tours non appliquée : "+teamFiftyRejection]:[]),
+    ...(teamFiftyPlan?.id?[
     teamFiftyPlan.enabled?
      "Plan manuel 50 tours intégré à l'optimisateur automatique d'équipe pour ces builds : 12 PA, 0 % résistance, PV Sacrieur ≥50 %.":
      (teamFiftyPlan.reason||"Plan manuel 50 tours interrompu ; retour à l'optimisation dynamique.")
