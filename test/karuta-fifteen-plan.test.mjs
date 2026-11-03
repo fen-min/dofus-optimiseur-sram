@@ -4,7 +4,7 @@ import {INITIAL_BUILDS} from "../src/classes.js";
 import {createTeamContext,optimizeTeamTurn,cleanTeamTarget} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
 import {initialState,castSpell,endTurn} from "../src/engine.js";
-import {KARUTA_FIFTEEN_ROUNDS,planAuditedKarutaTurn} from "../src/karuta-fifteen-plan.js";
+import {KARUTA_FIFTEEN_ROUNDS,KARUTA_LONG_KITTEN_ROUNDS,planAuditedKarutaTurn} from "../src/karuta-fifteen-plan.js";
 import {cleanTeamStrategy} from "../src/team-long-plan.js";
 
 const karuta=INITIAL_BUILDS.find(b=>b.id==="ecaflip-karuta-eau");
@@ -23,8 +23,8 @@ test("Karuta: 15-round reference stays legal and is remeasured with corrected fu
    manualOverrides:{[ctx.build.id]:ids}});
  }
  assert.equal(prior.turns.length,15);
- assert.ok(Math.abs(prior.theoretical-68290)<.2,
-  "Rotation manuelle Karuta 15 tours dégradée: "+prior.theoretical+" contre 68290");
+ assert.ok(Math.abs(prior.theoretical-68822.9)<.2,
+  "Rotation manuelle Karuta 15 tours dégradée: "+prior.theoretical+" contre 68822.9");
  assert.ok(prior.turns.every(t=>t.actors[0].spent<=12));
 });
 
@@ -34,12 +34,12 @@ test("Karuta: long optimizer replays validated record for 15 rounds with 100 rou
  for(let turn=1;turn<=15;turn++){
   previous=optimizeTeamTurn([ctx],t,()=>{},previous,strategy);
   assert.deepEqual(previous.turns.at(-1).actors[0].actions.map(s=>s.name),
-   KARUTA_FIFTEEN_ROUNDS[turn-1],"Karuta round "+turn+" diverged from verified champion");
+   KARUTA_LONG_KITTEN_ROUNDS[turn-1],"Karuta round "+turn+" diverged from verified champion");
   assert.equal(previous.turns.length,turn);
   assert.ok(previous.turns.at(-1).actors[0].spent<=12);
  }
- assert.ok(Math.abs(previous.theoretical-68290)<.2,
-  "Karuta 15 tours automatique doit reproduire 68290 : "+previous.theoretical);
+ assert.ok(Math.abs(previous.theoretical-67825.5)<.2,
+  "Karuta 15 tours automatique avec 3 chatons doit reproduire 67825.5 : "+previous.theoretical);
  console.log("KARUTA_AUDITED_15_IN_100 "+JSON.stringify({
   total:previous.theoretical,turns:previous.turns.map(t=>({
    number:t.number,damage:t.actors[0].damage,spells:t.actors[0].actions.map(a=>a.name)
