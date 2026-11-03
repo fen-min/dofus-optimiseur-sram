@@ -78,7 +78,9 @@ export function combatReportText(result,selectedTurn=null){
  if(result.session?.teamFiftyPlan?.id)
   lines.splice(3,0,"Rotation optimisée "+(result.session.teamFiftyPlan.rounds||50)+" tours : "+
    (result.session.teamFiftyPlan.enabled?"ACTIVE":
-    "INTERROMPUE — "+(result.session.teamFiftyPlan.reason||"Retour au calcul dynamique.")));
+    (result.session.teamFiftyPlan.reason?.startsWith("Plan 50 tours terminé")?
+     "TERMINÉE — ":"INTERROMPUE — ")+
+     (result.session.teamFiftyPlan.reason||"Retour au calcul dynamique.")));
  else if(result.session?.teamFiftyRejection)
   lines.splice(3,0,"Rotation optimisée 50 tours : NON ACTIVÉE — "+result.session.teamFiftyRejection);
  const turns=selectedTurn?result.turns.filter(t=>t.number===selectedTurn):result.turns;

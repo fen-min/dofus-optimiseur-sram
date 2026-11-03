@@ -12,8 +12,8 @@ import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
 import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.76";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.90";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
-import {chooseTeamFiftyPlan,chooseTeamHundredPlan,teamFiftyCurrentPlan,teamFiftyDiagnostic} from "./team-audited-fifty-plan.js?v=4";
-import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.45";
+import {chooseTeamFiftyPlan,chooseTeamHundredPlan,teamFiftyCurrentPlan,teamFiftyDiagnostic} from "./team-audited-fifty-plan.js?v=5";
+import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.46";
 import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.92";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
@@ -691,12 +691,18 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
    }:(()=>{
     const strategy=cleanTeamStrategy(options.teamStrategy||{mode:"fast"});
     if(teamFiftyPlan?.enabled){
-     const audited=teamFiftyCurrentPlan(entry,teamFiftyPlan,strategy);
-     if(audited)return audited;
-     // Do not resume a stale 50-turn route after PA, cooldowns, spells
-     // or Sacrier health change; let the normal optimizer adapt.
-     teamFiftyPlan={...teamFiftyPlan,enabled:false,reason:
-      "Plan "+teamFiftyPlan.rounds+" tours interrompu : PA, effets, relances ou PV non conformes."};
+     // Completing a 50-round reference is NORMAL, not a plan failure:
+     // continue dynamically from T51 without rewriting the first 50 turns.
+     if(teamFiftyPlan.rounds===50&&turn>50){
+      teamFiftyPlan={...teamFiftyPlan,enabled:false,reason:
+       "Plan 50 tours terminé ; optimisation dynamique à partir du tour 51."};
+     }else{
+      const audited=teamFiftyCurrentPlan(entry,teamFiftyPlan,strategy);
+      if(audited)return audited;
+      // A PA/variant/cooldown/HP change invalidates the remaining route.
+      teamFiftyPlan={...teamFiftyPlan,enabled:false,reason:
+       "Plan "+teamFiftyPlan.rounds+" tours interrompu : PA, effets, relances ou PV non conformes."};
+     }
     }
     if(teamTenPlan?.enabled&&turn<=10){
      const teamCandidate=teamTenCurrentPlan(entry,teamTenPlan,strategy);

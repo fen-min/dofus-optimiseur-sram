@@ -265,7 +265,10 @@ export function chooseTeamFiftyPlan(contexts,target,strategy){
  * remains a separate, fully preserved fallback for other reference setups.
  */
 export function chooseTeamHundredPlan(contexts,target,strategy){
- if(target?.turns!==100||!chooseTeamFiftyPlan(contexts,target,strategy))return null;
+ // Keep the player's 50-tour objective accessible via the existing
+ // « Tours anticipés » selector even while the battle can continue to T100.
+ if(target?.turns!==100||strategy?.horizon!==100||
+  !chooseTeamFiftyPlan(contexts,target,strategy))return null;
  const byClass=new Map(contexts.map(c=>[c.settings.classId,c]));
  if(byClass.get("sram")?.settings.distance!==3)return null;
  for(const cls of classes){

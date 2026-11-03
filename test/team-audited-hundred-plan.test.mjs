@@ -107,6 +107,9 @@ test("100-round route requires the exact verified builds, target, minimum HP and
  assert.ok(chooseTeamHundredPlan(valid,t,policy));
  assert.equal(chooseTeamHundredPlan(valid,target(50),policy),null);
  assert.equal(chooseTeamHundredPlan(valid,t,{...policy,minHpPercent:60}),null);
+ assert.equal(chooseTeamHundredPlan(valid,t,{...policy,horizon:50}),null,
+  "The player must be able to select the separate 50-turn goal");
+ assert.equal(chooseTeamFiftyPlan(valid,t,{...policy,horizon:50})?.enabled,true);
  assert.equal(chooseTeamHundredPlan(valid,t,{...policy,mode:"fast"}),null);
  const changedTarget=cleanTeamTarget({...t,resistances:{...t.resistances,Air:20}});
  assert.equal(chooseTeamHundredPlan(contexts(changedTarget),changedTarget,policy),null);
@@ -161,4 +164,20 @@ test("Recalculate PA at T51 replaces the current round, preserving T1-T50 and sa
  assert.equal(subsequent.turns.length,52);
  assert.equal(subsequent.session.teamFiftyPlan?.enabled,false);
  assert.deepEqual(subsequent.turns.slice(0,50),original);
+});
+
+
+test("Selecting 50 tours anticipés keeps the 50-round champion and labels T51 as finished, not failed", {timeout:300000},()=>{
+ const t=target(100),team=contexts(t),short={...policy,horizon:50};
+ let prior=null;
+ for(let round=1;round<=50;round++)prior=optimizeTeamTurn(team,t,()=>{},prior,short);
+ assert.equal(R(prior.theoretical),560130.7);
+ assert.equal(prior.session.teamFiftyPlan?.id,"team-audited-fifty-v1");
+ const fifty=structuredClone(prior.turns);
+ const next=optimizeTeamTurn(team,t,()=>{},prior,short);
+ assert.equal(next.turns.length,51);
+ assert.equal(next.session.teamFiftyPlan?.enabled,false);
+ assert.match(next.session.teamFiftyPlan?.reason||"",/50 tours terminé/);
+ assert.deepEqual(next.turns.slice(0,50),fifty);
+ assert.match(combatReportText(next),/Rotation optimisée 50 tours : TERMINÉE/);
 });
