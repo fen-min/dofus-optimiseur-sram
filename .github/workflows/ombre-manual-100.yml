@@ -4,12 +4,13 @@ on:
     branches: [main]
     paths:
       - "scripts/ombre-manual-100-search.mjs"
+      - "scripts/ombre-manual-100-optimizer.mjs"
       - ".github/workflows/ombre-manual-100.yml"
   workflow_dispatch:
 jobs:
   team-100-baseline:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,3 +18,5 @@ jobs:
           node-version: "22"
       - name: Benchmark 100 tours auto et replay MANUEL complet
         run: node scripts/ombre-manual-100-search.mjs
+      - name: Recherche locale MANUELLE, puis validation moteur sur 100 tours
+        run: node scripts/ombre-manual-100-optimizer.mjs
