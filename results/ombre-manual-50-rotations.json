@@ -1,0 +1,1053 @@
+{
+  "title": "OMBRE - Rotations manuelles validées sur 50 tours",
+  "reference": {
+    "source": "Journal de combat 49 tours fourni dans le chat",
+    "tours": 49,
+    "damage49": 537298.3
+  },
+  "conditions": {
+    "turns": 50,
+    "pa": 12,
+    "criticals": true,
+    "targetResistancesPercent": 0,
+    "distanceSacrieur": 1,
+    "distanceSram": 1,
+    "minimumHpSacrieurPercent": 50,
+    "kittensBuffCap": 3
+  },
+  "results": {
+    "autoBaseline50": 546776,
+    "manualOptimized50": 560130.7,
+    "improvement": 13354.7,
+    "improvementPercent": 2.4,
+    "byCharacter": {
+      "Mon Sacrieur": 147989.1,
+      "Karuta": 252514.1,
+      "Matryoshka": 159627.5
+    },
+    "minimumHpSacrieurPercent": 50,
+    "gainsByClass": {
+      "ecaflip": 10040.3,
+      "sram": 999.7,
+      "sacrieur": 2314.7
+    }
+  },
+  "changedRounds": {
+    "sacrieur": 12,
+    "ecaflip": 45,
+    "sram": 7
+  },
+  "rotations": [
+    {
+      "turn": 1,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Carnage",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Invocatrice",
+        "Yams",
+        "Griffe Joueuse",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Arnaque",
+        "Injection Toxique",
+        "Arsenic"
+      ]
+    },
+    {
+      "turn": 2,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Furie",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 3,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arnaque",
+        "Arnaque",
+        "Arsenic"
+      ]
+    },
+    {
+      "turn": 4,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 5,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Furie",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Invocatrice",
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arnaque",
+        "Arnaque",
+        "Arsenic"
+      ]
+    },
+    {
+      "turn": 6,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 7,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 8,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Furie",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 9,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Invocatrice",
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Kraps"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arnaque",
+        "Arnaque",
+        "Arsenic"
+      ]
+    },
+    {
+      "turn": 10,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 11,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 12,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 13,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Pile ou Face",
+        "Griffe Joueuse",
+        "Yams",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 14,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 15,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 16,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 17,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 18,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 19,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 20,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arsenic",
+        "Épidémie",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 21,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Arnaque",
+        "Injection Toxique",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 22,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 23,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 24,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 25,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 26,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 27,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 28,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 29,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 30,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arsenic",
+        "Épidémie",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 31,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Arnaque",
+        "Injection Toxique",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 32,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 33,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 34,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 35,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 36,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 37,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 38,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 39,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 40,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arsenic",
+        "Épidémie",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 41,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Arnaque",
+        "Injection Toxique",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 42,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 43,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 44,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 45,
+      "sacrieur": [
+        "Carnage",
+        "Manthache",
+        "Furie"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 46,
+      "sacrieur": [
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Désolation"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Injection Toxique",
+        "Arsenic",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 47,
+      "sacrieur": [
+        "Pacte de Sang",
+        "Furie",
+        "Furie",
+        "Assaut",
+        "Assaut"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Yams",
+        "Pile ou Face",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Manigance",
+        "Arnaque",
+        "Arnaque",
+        "Épidémie"
+      ]
+    },
+    {
+      "turn": 48,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Griffe Joueuse",
+        "Kraps",
+        "Pile ou Face",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur"
+      ],
+      "matryoshka": [
+        "Truanderie",
+        "Arsenic",
+        "Arnaque",
+        "Arnaque"
+      ]
+    },
+    {
+      "turn": 49,
+      "sacrieur": [
+        "Carnage",
+        "Furie",
+        "Manthache"
+      ],
+      "karuta": [
+        "Kraps",
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Épidémie",
+        "Fourvoiement",
+        "Fourvoiement"
+      ]
+    },
+    {
+      "turn": 50,
+      "sacrieur": [
+        "Manthache",
+        "Furie",
+        "Carnage"
+      ],
+      "karuta": [
+        "Pile ou Face",
+        "Sceptre du Roi Joueur",
+        "Sceptre du Roi Joueur",
+        "Infortune"
+      ],
+      "matryoshka": [
+        "Fourvoiement",
+        "Fourvoiement",
+        "Épidémie"
+      ]
+    }
+  ],
+  "note": "50 tours rejoués dans le moteur manuel OMBRE, tous les sorts et PA vérifiés, cible virtuelle sans attaques ennemies; ce n'est pas une preuve d'optimum global."
+}
