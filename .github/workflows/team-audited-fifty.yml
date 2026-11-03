@@ -1,0 +1,22 @@
+name: OMBRE - Rotation manuelle 50 tours dans optimisateur equipe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/team-audited-fifty-plan.js"
+      - "src/team-sequential.js"
+      - "src/team-core.js"
+      - "test/team-audited-fifty-plan.test.mjs"
+      - ".github/workflows/team-audited-fifty.yml"
+  workflow_dispatch:
+jobs:
+  verify-audited-fifty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate 50-turn automatic/manual parity and safety fallbacks
+        run: node --test test/team-audited-fifty-plan.test.mjs
