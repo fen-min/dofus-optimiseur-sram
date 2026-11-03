@@ -29,7 +29,14 @@ let previous=null;const checkpoints={},power={},kittens={},first15=[];
 for(let t=1;t<=100;t++){
  if(t<=15){
   let names=KARUTA_FIFTEEN_ROUNDS[t-1].slice();
-  if(schedules[mode].includes(t)){
+  // T1 of the shared 15-round reference already summons a kitten.
+  // NONE removes it; ONE/TWO/THREE must not duplicate the same cast.
+  if(t===1&&mode==="NONE"){
+   const i=names.indexOf("Griffe Invocatrice");
+   assert.ok(i>=0,"Baseline summon missing on T1");
+   names[i]="Sceptre du Roi Joueur";
+  }
+  if(t!==1&&schedules[mode].includes(t)){
    const i=names.lastIndexOf("Sceptre du Roi Joueur");
    assert.ok(i>=0,"No weapon slot to swap on T"+t);
    names[i]="Griffe Invocatrice";
