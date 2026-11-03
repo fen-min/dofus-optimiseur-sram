@@ -1,0 +1,19 @@
+name: OMBRE - Recherche DPS manuelle 100 tours
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/ombre-manual-100-search.mjs"
+      - ".github/workflows/ombre-manual-100.yml"
+  workflow_dispatch:
+jobs:
+  team-100-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Benchmark 100 tours auto et replay MANUEL complet
+        run: node scripts/ombre-manual-100-search.mjs
