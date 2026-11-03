@@ -556,3 +556,25 @@ test("Mode manuel : les 44 sorts de chaque classe sont visibles et les 22 varian
   });
  }
 });
+
+test("Karuta mode manuel : compte les Chatons vivants et plafonne la Puissance visible à +270",()=>withBrowser(({root,node})=>{
+ const eca=INITIAL_BUILDS.find(b=>b.classId==="ecaflip");
+ mountTeamModule({getBuilds:()=>[eca]});
+ root.listeners.change({target:{closest(sel){
+  return sel==='input[name="team-mode"]'?{value:"manual"}:null;
+ }}});
+ let html=node("team-manual-board").innerHTML;
+ assert.match(html,/data-manual-kittens/);
+ assert.match(html,/Chatons vivants : <strong>0\/6/);
+ assert.match(html,/Puissance : <strong>\+0\/270/);
+ const griffe=CLASSES.ecaflip.spells.find(x=>x.name==="Griffe Invocatrice");
+ root.listeners.click({target:{closest(){
+  return {dataset:{manualCast:String(griffe.id)},hasAttribute(flag){
+   return flag==="data-manual-cast";
+  }};
+ }}});
+ html=node("team-manual-board").innerHTML;
+ assert.match(html,/Chatons vivants : <strong>1\/6/);
+ assert.match(html,/Puissance : <strong>\+90\/270/);
+ assert.doesNotMatch(node("team-status").textContent,/Choix manuel :/);
+}));
