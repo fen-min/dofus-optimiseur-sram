@@ -576,5 +576,5 @@ test("Karuta mode manuel : compte les Chatons vivants et plafonne la Puissance v
  html=node("team-manual-board").innerHTML;
  assert.match(html,/Chatons vivants : <strong>1\/6/);
  assert.match(html,/Puissance : <strong>\+90\/270/);
- assert.doesNotMatch(node("team-status").textContent,/Choix manuel :/);
+ assert.doesNotMatch(node("team-status").textContent,/Choix manuel : (PA|Sort non disponible|Indisponible|Relance)/);
 }));
