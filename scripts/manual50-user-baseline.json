@@ -1,0 +1,1736 @@
+{
+  "source": "user combat log, 49 turns",
+  "referenceTotal49": 537298.3,
+  "settingAssumptions": {
+    "criticals": true,
+    "resistances": 0,
+    "pa": 12
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "damage": 7089.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2607.5,
+          "paAvail": 12,
+          "actions": [
+            "Manthache",
+            "Furie",
+            "Carnage"
+          ]
+        },
+        "Karuta": {
+          "damage": 2419,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Invocatrice",
+            "Yams",
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2063,
+          "paAvail": 12,
+          "actions": [
+            "Arnaque",
+            "Injection Toxique",
+            "Arsenic"
+          ]
+        }
+      }
+    },
+    {
+      "round": 2,
+      "damage": 10784.7,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2308.7,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4414.6,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Infortune",
+            "Pile ou Face",
+            "Pile ou Face",
+            "Yams"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 4061.4,
+          "paAvail": 12,
+          "actions": [
+            "Fourvoiement",
+            "Fourvoiement",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "damage": 10882.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2949.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 4869.2,
+          "paAvail": 12,
+          "actions": [
+            "Tout ou Rien",
+            "Sceptre du Roi Joueur",
+            "Rekop",
+            "Yams"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3063.9,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arnaque",
+            "Arnaque",
+            "Arsenic"
+          ]
+        }
+      }
+    },
+    {
+      "round": 4,
+      "damage": 10694.4,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3007.1,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4226.4,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Kraps",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3460.9,
+          "paAvail": 12,
+          "actions": [
+            "Fourvoiement",
+            "Fourvoiement",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 5,
+      "damage": 8172.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2375.8,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 3442.4,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Invocatrice",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Pile ou Face",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2354.7,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arnaque",
+            "Arnaque",
+            "Arsenic"
+          ]
+        }
+      }
+    },
+    {
+      "round": 6,
+      "damage": 11118.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3007.1,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 4881.7,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Baraka",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3230.1,
+          "paAvail": 12,
+          "actions": [
+            "Injection Toxique",
+            "Arnaque",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 7,
+      "damage": 11337.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3121.6,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4941.4,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Pile ou Face",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3274.2,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Arsenic",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 8,
+      "damage": 11231.8,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2421.8,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4479.1,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 4330.9,
+          "paAvail": 12,
+          "actions": [
+            "Fourvoiement",
+            "Fourvoiement",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 9,
+      "damage": 8496.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3121.6,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 3047.9,
+          "paAvail": 12,
+          "actions": [
+            "Pile ou Face",
+            "Pile ou Face",
+            "Griffe Invocatrice",
+            "Kraps",
+            "Griffe Joueuse"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2326.7,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arnaque",
+            "Arnaque",
+            "Arsenic"
+          ]
+        }
+      }
+    },
+    {
+      "round": 10,
+      "damage": 12497.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3121.6,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 5894.7,
+          "paAvail": 12,
+          "actions": [
+            "Pile ou Face",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3480.9,
+          "paAvail": 12,
+          "actions": [
+            "Fourvoiement",
+            "Fourvoiement",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 11,
+      "damage": 9604.1,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4657.4,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Kraps",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2432.7,
+          "paAvail": 12,
+          "actions": [
+            "Injection Toxique",
+            "Arsenic",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 12,
+      "damage": 12091.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3121.6,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Manthache",
+            "Carnage"
+          ]
+        },
+        "Karuta": {
+          "damage": 5066.3,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3903.6,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Arnaque",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 13,
+      "damage": 11680.7,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5191.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Pile ou Face",
+            "Pile ou Face",
+            "Yams",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3224,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 14,
+      "damage": 10796.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4742,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Kraps",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3540.9,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 15,
+      "damage": 11701.8,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5551.5,
+          "paAvail": 12,
+          "actions": [
+            "Pile ou Face",
+            "Sceptre du Roi Joueur",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2885.5,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 16,
+      "damage": 9454.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2753.4,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4637.8,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2063,
+          "paAvail": 12,
+          "actions": [
+            "Arnaque",
+            "Injection Toxique",
+            "Arsenic"
+          ]
+        }
+      }
+    },
+    {
+      "round": 17,
+      "damage": 10872,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4489.6,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3868.4,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Épidémie",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 18,
+      "damage": 11154.4,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4718.8,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3170.8,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 19,
+      "damage": 12252.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5446.8,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3540.9,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 20,
+      "damage": 10358.4,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5440.6,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2403.8,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arsenic",
+            "Épidémie",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 21,
+      "damage": 11648.6,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3193.7,
+          "paAvail": 12,
+          "actions": [
+            "Arnaque",
+            "Injection Toxique",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 22,
+      "damage": 10476.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2858.3,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4397.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3220.3,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 23,
+      "damage": 11285.7,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4699.7,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 4072,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Épidémie",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 24,
+      "damage": 11154.8,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5455.3,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2434.7,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 25,
+      "damage": 12251.1,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5429.5,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3556.8,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 26,
+      "damage": 10136.8,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2432.7,
+          "paAvail": 12,
+          "actions": [
+            "Injection Toxique",
+            "Arsenic",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 27,
+      "damage": 11575.3,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 4406.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3903.6,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Arnaque",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 28,
+      "damage": 10772.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2858.3,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4690.2,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3224,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 29,
+      "damage": 11499.1,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5444.2,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3540.9,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 30,
+      "damage": 11109.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5440.6,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2403.8,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arsenic",
+            "Épidémie",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 31,
+      "damage": 11648.6,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3193.7,
+          "paAvail": 12,
+          "actions": [
+            "Arnaque",
+            "Injection Toxique",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 32,
+      "damage": 10132.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4397.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3220.3,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 33,
+      "damage": 12036.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 4699.7,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 4072,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Épidémie",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 34,
+      "damage": 10748.3,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2858.3,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5455.3,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2434.7,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 35,
+      "damage": 11500.3,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5429.5,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3556.8,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 36,
+      "damage": 10887.6,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2432.7,
+          "paAvail": 12,
+          "actions": [
+            "Injection Toxique",
+            "Arsenic",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 37,
+      "damage": 11575.3,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4406.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3903.6,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Arnaque",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 38,
+      "damage": 10428.2,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4690.2,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3224,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 39,
+      "damage": 12249.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 5444.2,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3540.9,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 40,
+      "damage": 10702.7,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2858.3,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5440.6,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2403.8,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arsenic",
+            "Épidémie",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 41,
+      "damage": 10897.8,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3193.7,
+          "paAvail": 12,
+          "actions": [
+            "Arnaque",
+            "Injection Toxique",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 42,
+      "damage": 10883,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4397.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3220.3,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 43,
+      "damage": 12036.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4699.7,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 4072,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Épidémie",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 44,
+      "damage": 10404,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5455.3,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2434.7,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 45,
+      "damage": 12251.1,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Manthache",
+            "Furie"
+          ]
+        },
+        "Karuta": {
+          "damage": 5429.5,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3556.8,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    },
+    {
+      "round": 46,
+      "damage": 10481.1,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2858.3,
+          "paAvail": 12,
+          "actions": [
+            "Furie",
+            "Furie",
+            "Désolation",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 5190.1,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 2432.7,
+          "paAvail": 12,
+          "actions": [
+            "Injection Toxique",
+            "Arsenic",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 47,
+      "damage": 10824.5,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 2514,
+          "paAvail": 12,
+          "actions": [
+            "Pacte de Sang",
+            "Furie",
+            "Furie",
+            "Assaut",
+            "Assaut"
+          ]
+        },
+        "Karuta": {
+          "damage": 4406.9,
+          "paAvail": 12,
+          "actions": [
+            "Yams",
+            "Griffe Joueuse",
+            "Pile ou Face",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3903.6,
+          "paAvail": 12,
+          "actions": [
+            "Manigance",
+            "Arnaque",
+            "Arnaque",
+            "Épidémie"
+          ]
+        }
+      }
+    },
+    {
+      "round": 48,
+      "damage": 11179,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 4690.2,
+          "paAvail": 12,
+          "actions": [
+            "Griffe Joueuse",
+            "Sceptre du Roi Joueur",
+            "Infortune"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3224,
+          "paAvail": 12,
+          "actions": [
+            "Truanderie",
+            "Arsenic",
+            "Arnaque",
+            "Arnaque"
+          ]
+        }
+      }
+    },
+    {
+      "round": 49,
+      "damage": 12249.9,
+      "actors": {
+        "Mon Sacrieur": {
+          "damage": 3264.8,
+          "paAvail": 12,
+          "actions": [
+            "Carnage",
+            "Furie",
+            "Manthache"
+          ]
+        },
+        "Karuta": {
+          "damage": 5444.2,
+          "paAvail": 12,
+          "actions": [
+            "Kraps",
+            "Pile ou Face",
+            "Infortune",
+            "Sceptre du Roi Joueur"
+          ]
+        },
+        "Matryoshka": {
+          "damage": 3540.9,
+          "paAvail": 12,
+          "actions": [
+            "Épidémie",
+            "Fourvoiement",
+            "Fourvoiement"
+          ]
+        }
+      }
+    }
+  ]
+}
