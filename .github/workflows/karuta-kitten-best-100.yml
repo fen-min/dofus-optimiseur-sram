@@ -1,0 +1,24 @@
+name: OMBRE - Karuta Chatons 100 tours meilleure rotation
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/karuta-kitten-best-100.mjs"
+      - ".github/workflows/karuta-kitten-best-100.yml"
+  workflow_dispatch:
+jobs:
+  best:
+    name: "${{ matrix.mode }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [SHORT, TWO_FIRST, THREE_LATE, THREE_FIRST]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tester 100 tours Karuta Chatons avec ordre optimal et relecture manuelle
+        run: node scripts/karuta-kitten-best-100.mjs ${{ matrix.mode }}
