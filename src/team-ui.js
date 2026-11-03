@@ -207,6 +207,13 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     c.reason==="Effet non simulé").length;
    const buffs=state.buffs.filter(b=>b.until>=state.turn).map(b=>safe(b.key)+
     ' ('+(b.until===Number.MAX_SAFE_INTEGER?'permanent':(b.until-state.turn+1)+' tours')+')');
+   const livingKittens=showEcaCards?(state.invocations||[]).filter(
+    x=>x.kind==="Chaton Enragé").length:0;
+   const kittenPower=90*Math.min(3,livingKittens);
+   const kittenStatus=showEcaCards?'<div class="manual-buffs" data-manual-kittens>'+
+    '🐱 Chatons vivants : <strong>'+livingKittens+'/'+current.settings.ecaflipMaxSummons+
+    '</strong> · Puissance : <strong>+'+kittenPower+'/270</strong>'+
+    ' (90 par Chaton, cumul max 3, tant qu’ils survivent ; IA non simulée)</div>':'';
    const actions=(manualDraft.actions[current.build.id]||[]).map(id=>
     current.spells.find(sp=>String(sp.id)===String(id))?.name||String(id));
    const max=Math.max(1,...choices.map(c=>c.score));
@@ -223,6 +230,7 @@ const manualContexts=()=>getMembers().map(b=>createTeamContext(b,target,memberOp
     hpWarning+
     '<div class="manual-buffs">Buffs : '+(buffs.length?buffs.join(' · '):'aucun')+
     '</div>'+
+    kittenStatus+
     tableHtml+
     '<div class="manual-spell-inventory"><strong>'+equippedCount+' sorts équipés</strong> · '+
     alternateCount+' variantes non équipées'+
