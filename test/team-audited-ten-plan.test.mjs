@@ -91,12 +91,12 @@ test("Old team 10-turn preset is retired for 100-turn Karuta kitten uptime", {ti
   assert.deepEqual(sacri.health,actual,"Sacrier HP must persist through T"+(i+1));
   assert.ok(sacri.health.hp>=sacri.health.maxHp*.5);
   const karuta=turn.actors.find(a=>a.character==="Karuta");
-  if([1,5,9].includes(i+1))assert.ok(
+  if([1,5,9,13].includes(i+1))assert.ok(
    karuta.actions.some(action=>action.name==="Griffe Invocatrice"),
    "The historical 10-round team opening must not suppress kittens at T"+(i+1));
  }
  const kittens=previous.session.actors.find(a=>a.id==="ecaflip-karuta-eau").state.invocations;
- assert.equal(kittens.filter(x=>x.kind==="Chaton Enragé").length,3);
+ assert.equal(kittens.filter(x=>x.kind==="Chaton Enragé").length,4);
  assert.equal(previous.session.teamTenPlan,null);
  assert.equal(previous.turns.length,15);
 });

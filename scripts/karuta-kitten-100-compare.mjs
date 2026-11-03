@@ -29,7 +29,14 @@ let previous=null;const checkpoints={},power={},kittens={},first15=[];
 for(let t=1;t<=100;t++){
  if(t<=15){
   let names=KARUTA_FIFTEEN_ROUNDS[t-1].slice();
-  if(schedules[mode].includes(t)){
+  // The baseline 15-round route already casts Griffe on T1.
+  // NONE removes it; ONE/TWO/THREE must never add a duplicate T1 cast.
+  if(t===1&&mode==="NONE"){
+   const i=names.indexOf("Griffe Invocatrice");
+   assert.ok(i>=0,"Baseline Griffe missing");
+   names[i]="Sceptre du Roi Joueur";
+  }
+  if(t!==1&&schedules[mode].includes(t)){
    const i=names.lastIndexOf("Sceptre du Roi Joueur");
    assert.ok(i>=0,"No weapon slot to swap on T"+t);
    names[i]="Griffe Invocatrice";

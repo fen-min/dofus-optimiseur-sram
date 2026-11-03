@@ -87,8 +87,9 @@ test("Griffe : original variant limits respected and manual tooltip is accurate"
  const draft=newManualDraft([ctx],target);
  const option=manualSpellChoices([ctx],target,draft).find(x=>x.name==="Griffe Invocatrice");
  assert.ok(option?.enabled);
- assert.match(option.reason,/jusqu’à 6 invocations/);
+ assert.match(option.reason,/6 invocations possibles/);
  assert.match(option.reason,/6 invocations/);
+ assert.match(option.reason,/jusqu’à \+540/);
  assert.match(option.reason,/jusqu’à leur mort/);
  const modified=structuredClone(b);
  const n=modified.variants.indexOf("Griffe Invocatrice");
