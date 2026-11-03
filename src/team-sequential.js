@@ -130,6 +130,42 @@ function better(a,b,remainingHp){
  if(Math.abs(score-previous)<=.01 && a.first>b.first+.01)return true;
  return false;
 }
+/**
+ * Karuta fallback for REAL team configurations that are not byte-for-byte
+ * identical to the audited benchmark (resists, criticals, edited stats,
+ * saved lookahead, etc.). The full audited 15-round rotation must not be
+ * imposed on an altered build, but its summon setup remains important in
+ * sustained 30-100 round encounters.
+ *
+ * Summon at the first legal opportunity, then again after the 4-turn
+ * cooldown until THREE kitten-linked Power stacks exist. The remaining
+ * actions are chosen by the real same-turn spell engine, never fabricated.
+ * This also works in the fast search mode (100-round team combat).
+ */
+export function planKarutaKittenMaintenance(entry){
+ const {ctx,state,currentPA}=entry;
+ if(ctx.settings.classId!=="ecaflip"||ctx.settings.turns<30)return null;
+ const kitten=ctx.spells.find(sp=>sp.name==="Griffe Invocatrice"&&
+  (sp.isWeapon||ctx.settings.variants?.[sp.variantGroup]===sp.name));
+ if(!kitten)return null;
+ const live=(state.invocations||[]).filter(x=>x.kind==="Chaton Enragé").length;
+ if(live>=3||!eligible(kitten,state,ctx.settings))return null;
+ // If an earlier summon was prevented by PA or a user-edited action,
+ // retry on the next legal turn; avoid silently dropping the bonus forever.
+ const current=Number(state.turn);
+ if(current<1+4*live)return null;
+ const settings=cleanSettings({...ctx.settings,turns:current,
+  apByTurn:{...ctx.settings.apByTurn,[current]:currentPA},
+  beamWidth:8,refreshTimedBuffs:false});
+ const seed=castSpell(state,kitten,ctx.settings);
+ const result=optimizeFromState(settings,ctx.spells,seed);
+ const actions=result.turns?.[current-1]?.actions||seed.actions;
+ if(!actions?.some(a=>String(a.id)===String(kitten.id)))return null;
+ return {actions:actions.map(a=>({id:a.id})),
+  settings:ctx.settings,label:"Karuta · entretien des Chatons ("+
+   (live+1)+"/3 cumuls, Puissance jusqu’à leur mort)",
+  kittenMaintenance:true};
+}
 function selectedBuffs(ctx,state,settings){
  const amount=spell=>spell.status?.buff?.value||
   spell.ecaflipCriticalRateBuff?.critical||0;
@@ -639,7 +675,11 @@ export function playSequentialTeam(contexts,target,onProgress=()=>{},options={})
     // When the build, cards, cooldowns or ally AP diverge, return to the
     // generic team planner without forcing an illegal/obsolete sequence.
     const karuta=planAuditedKarutaTurn(entry,strategy);
-    const planned=karuta||(strategy.mode==="long"?
+    // Explicit fallback when the strict benchmark is not applicable.
+    // For long battles it must still summon, even with modified target
+    // resistances, edited Karuta stats, or fast-mode optimization.
+    const kitten=karuta?null:planKarutaKittenMaintenance(entry);
+    const planned=karuta||kitten||(strategy.mode==="long"?
      planLongTeamTurn(entry,entries.slice(index+1),strategy,fast):fast);
     // The Sacrier has two audited Pacte DPS openings: one prioritizes a
     // three-round fight, the other delays Pacte for sustained 10-round DPS.
