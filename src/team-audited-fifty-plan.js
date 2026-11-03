@@ -218,8 +218,18 @@ function incompatibility(contexts,target,strategy){
    return name+" : distance "+ctx.settings.distance+
     " non vérifiée pour cette rotation (Sacrieur à distance 1 ; Sram à distance 1–3).";
   if(ctx.settings.criticals!==true)return name+" : activer les critiques.";
-  if(!same(ctx.settings.variants,ref.variants))
-   return name+" : certaines variantes de sorts diffèrent de la rotation vérifiée.";
+  // A player's unused variant selections must not block an otherwise
+  // identical legal damage rotation. Verify EVERY spell the 50-turn route
+  // actually casts, across all 50 rounds, using the current selected variant.
+  // The live engine still checks PA, cooldowns and Sacrier HP each turn.
+  const required=[...new Set(TEAM_FIFTY_AUDITED[cls].flat())];
+  const unavailable=required.find(spellName=>{
+   const spell=ctx.spells.find(x=>x.name===spellName);
+   return !spell||!selected(ctx,spell);
+  });
+  if(unavailable)
+   return name+" : le sort "+unavailable+
+    " nécessaire à la rotation 50 tours n'est pas la variante sélectionnée.";
   if(!same(ctx.spells,prepareBuildSpells(ref,CLASSES[cls])))
    return name+" : caractéristiques, arme ou calibration différentes du build vérifié.";
   if(cls==="sacrieur"&&(

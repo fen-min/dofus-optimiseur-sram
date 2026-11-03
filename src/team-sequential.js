@@ -12,7 +12,7 @@ import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
 import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.76";
 import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.90";
 import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
-import {chooseTeamFiftyPlan,teamFiftyCurrentPlan,teamFiftyDiagnostic} from "./team-audited-fifty-plan.js?v=2";
+import {chooseTeamFiftyPlan,teamFiftyCurrentPlan,teamFiftyDiagnostic} from "./team-audited-fifty-plan.js?v=3";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.45";
 import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.92";
 

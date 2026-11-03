@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
+import {INITIAL_BUILDS,CLASSES,normalizeBuild} from "../src/classes.js";
 import {createTeamContext,cleanTeamTarget,optimizeTeamTurn} from "../src/team-core.js";
 import {playSequentialTeam} from "../src/team-sequential.js";
 import {TEAM_FIFTY_AUDITED,chooseTeamFiftyPlan,teamFiftyDiagnostic} from "../src/team-audited-fifty-plan.js";
@@ -142,4 +142,64 @@ test("Sram distances 1 to 3 were audited; Sacrier at distance 2 is incompatible 
  });
  assert.equal(chooseTeamFiftyPlan(modifiedStats,target,strategy),null);
  assert.match(teamFiftyDiagnostic(modifiedStats,target,strategy),/caractéristiques/);
+});
+
+
+test("Unused variants changed for Sacrier/Karuta/Matryoshka do not reject the 50-turn team champion", {timeout:300000},()=>{
+ const target=targetFor(0,100);
+ const changed=[];
+ const contexts=references(target,build=>{
+  const required=new Set(TEAM_FIFTY_AUDITED[build.classId]);
+  // The full optimized sequence, not just the opening, defines requirements.
+  const used=new Set(TEAM_FIFTY_AUDITED[build.classId].flat());
+  let edits=0;
+  for(const [i,pair] of CLASSES[build.classId].pairs.entries()){
+   if(pair.some(n=>used.has(n)))continue;
+   const alternate=pair.find(n=>n!==build.variants[i]);
+   if(!alternate)continue;
+   const prior=build.variants[i];
+   build.variants[i]=alternate;
+   changed.push({classId:build.classId,index:i,from:prior,to:alternate});
+   if(++edits>=3)break;
+  }
+  assert.ok(edits>=1,"Need at least one irrelevant variant pair in "+build.classId);
+ });
+ assert.ok(changed.some(x=>x.classId==="sacrieur"));
+ assert.ok(chooseTeamFiftyPlan(contexts,target,strategy),
+  "Unrelated variants must not reject an otherwise matching 50-round plan");
+ assert.equal(teamFiftyDiagnostic(contexts,target,strategy),null);
+ let previous=null;
+ for(let t=1;t<=50;t++){
+  previous=optimizeTeamTurn(contexts,target,()=>{},previous,strategy);
+  assert.equal(previous.session.teamFiftyPlan?.enabled,true,"T"+t+" blocked");
+  for(const a of previous.turns.at(-1).actors){
+   const cls=contexts.find(c=>c.build.id===a.id).settings.classId;
+   assert.deepEqual(a.actions.map(x=>x.name),TEAM_FIFTY_AUDITED[cls][t-1],
+    cls+" T"+t+" differed with alternative unused variants");
+  }
+ }
+ assert.equal(R(previous.theoretical),560130.7);
+ assert.match(combatReportText(previous),/Rotation optimisée 50 tours : ACTIVE/);
+ console.log("USER_DIFFERENT_UNUSED_VARIANTS_OK "+JSON.stringify({
+  changed,damage:R(previous.theoretical),turns:previous.turns.length
+ }));
+});
+
+test("A required variant still blocks safely with the precise missing spell, not a vague mismatch",()=>{
+ const target=targetFor(0,100);
+ const variants=["Pacte de Sang","Carnage","Furie","Désolation","Assaut"];
+ for(const forbidden of variants){
+  const team=references(target,build=>{
+   if(build.classId!=="sacrieur")return;
+   const group=CLASSES.sacrieur.pairs.findIndex(pair=>pair.includes(forbidden));
+   assert.ok(group>=0);
+   build.variants[group]=CLASSES.sacrieur.pairs[group].find(name=>name!==forbidden);
+  });
+  const message=teamFiftyDiagnostic(team,target,strategy);
+  assert.ok(message?.includes(forbidden),"Expected precise reason for "+forbidden+"; got "+message);
+  assert.equal(chooseTeamFiftyPlan(team,target,strategy),null);
+  const fallback=optimizeTeamTurn(team,target,()=>{},null,strategy);
+  assert.equal(fallback.session.teamFiftyPlan,null);
+  assert.match(combatReportText(fallback),new RegExp(forbidden));
+ }
 });
