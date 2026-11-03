@@ -30,7 +30,7 @@ test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrie
     "invalid damage "+classId+" T"+i);
    histories[classId].push({
     turn:i,names:a.actions.map(x=>x.name),damage:a.damage,
-    buffs:session.state.buffs.map(b=>({key:b.key,until:b.until,stat:b.stat})),
+    buffs:session.state.buffs.map(b=>({key:b.key,until:b.until,stat:b.stat,amount:b.amount})),
     ready:session.state.ready,hand:session.state.ecaHand,table:session.state.ecaTable,
     suffering:session.state.sacrierHealth?.suffering??null,
     stage:session.state.mutilationStage
@@ -47,6 +47,15 @@ test("100 sequential team rounds: Eca recurring four-club combos and Sram/Sacrie
     hand:x.hand.map(c=>c.suit+":"+c.rank),suffering:x.suffering,stage:x.stage}))));
  }
  const eca=histories.ecaflip;
+ const summonTurns=eca.filter(row=>row.names.includes("Griffe Invocatrice"))
+  .map(row=>row.turn);
+ assert.deepEqual(summonTurns,[1,5,9,13,17,21],
+  "100-round team must summon 6 kittens on cooldown and never a seventh");
+ for(const row of eca){
+  const expected=Math.min(6,Math.floor((row.turn-1)/4)+1);
+  const power=row.buffs.find(b=>b.key==="Griffe Invocatrice")?.amount||0;
+  assert.equal(power,90*expected,"Wrong persistent kitten Power T"+row.turn);
+ }
  // Once a fifth draw plays the full hand automatically, the original
  // four-club Rekop cadence [T3,T5,T7,T9] is not forced. Verify the
  // continuous 100-round combat model instead of obsolete exact combos.

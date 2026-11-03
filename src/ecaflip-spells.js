@@ -45,7 +45,7 @@ const DATA={
  "Tout ou Rien":{pa:3,e:"Eau",n:[16,18],c:[21,21],cc:10,r:[0,3],turn:1,cooldown:2,playHand:true,restoreTable:true,conditional:"Dégâts dans le meilleur élément, soins/zone non chiffrés"},
  "Bonne Pioche":{pa:1,r:[0,0],turn:3,self:true,refundPA:1,randomDraw:1},
  "Redistribution":{pa:1,r:[0,0],turn:1,self:true,refundPA:1,randomDraw:4,playHand:true,cooldown:0},
- "Griffe Invocatrice":{pa:3,r:[1,4],self:true,cooldown:4,buff:{stat:"Puissance",value:90,untilRemoved:true,stacks:3},conditional:"Chaton vivant : +90 Puissance, cumul max 3. Jusqu’à 6 invocations avec le build de Karuta. Mort et dégâts des Chatons non simulés"},
+ "Griffe Invocatrice":{pa:3,r:[1,4],self:true,cooldown:4,buff:{stat:"Puissance",value:90,untilRemoved:true,stacks:6},conditional:"Chaton vivant : +90 Puissance, 90 Puissance par Chaton vivant, jusqu’à 6 invocations avec le build de Karuta. Mort et dégâts des Chatons non simulés"},
  "Château de Cartes":{pa:3,r:[0,6],self:true,cooldown:3,playHand:true},
  "Roulette":{pa:1,r:[0,0],self:true,turn:1,refundPA:1,randomDraw:0},
  "Pile ou Face":{pa:2,e:"Terre",n:[18,18],c:[22,22],cc:5,r:[0,6],turn:3,target:2,card:["diamond",2],refundPA:1,conditional:"Face/Pile : +1 PA ou +1 PM supplémentaire non anticipé"},

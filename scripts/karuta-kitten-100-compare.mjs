@@ -2,7 +2,7 @@
  * Compare the same validated 15-turn Karuta reference with 0/1/2/3
  * Griffe kitten summons, then real adaptive decisions through turn 100.
  * Manually replay ALL 100 turns and verify damage/AP and summon-linked
- * Power (cap +270) at each checkpoint.
+ * Power (assumed cap +540 with six surviving kittens) at each checkpoint.
  */
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
@@ -44,8 +44,8 @@ for(let t=1;t<=100;t++){
  const living=state.invocations.filter(s=>s.kind==="Chaton Enragé").length;
  const amount=state.buffs.filter(b=>b.key==="Griffe Invocatrice")
   .reduce((v,b)=>v+b.amount,0);
- assert.ok(amount<=270,"Power cap exceeded T"+t);
- assert.equal(amount,90*Math.min(3,living));
+ assert.ok(amount<=540,"Power cap exceeded T"+t);
+ assert.equal(amount,90*living);
  if([1,3,5,9,10,13,15,20,30,50,75,100].includes(t)){
   checkpoints[t]=R(previous.theoretical);power[t]=amount;kittens[t]=living;
  }

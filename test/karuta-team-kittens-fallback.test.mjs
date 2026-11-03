@@ -136,3 +136,27 @@ test("All THREE characters: real team turn-by-turn with 20% resistance summons o
  assert.equal(manual.session.actors.find(x=>x.id==="ecaflip-karuta-eau").state
   .buffs.find(x=>x.key==="Griffe Invocatrice").amount,270);
 });
+
+
+test("30 consecutive TEAM turns: six kittens with Sram and Sacrier", {timeout:300000},()=>{
+ const t=target(20,true,30),contexts=team(t),policy={mode:"long",horizon:10,minHpPercent:50};
+ const schedule=[1,5,9,13,17,21];
+ let previous=null;
+ for(let turn=1;turn<=30;turn++){
+  previous=optimizeTeamTurn(contexts,t,()=>{},previous,policy);
+  assert.equal(previous.turns.length,turn,"One round per click");
+  const actors=previous.turns.at(-1).actors;
+  assert.equal(actors.length,3);
+  assert.ok(actors.every(a=>a.spent<=a.availablePA));
+  const karuta=actors.find(a=>a.character==="Karuta");
+  assert.equal(karuta.actions.some(a=>a.name==="Griffe Invocatrice"),
+   schedule.includes(turn),"Wrong Griffe timing T"+turn);
+  const state=previous.session.actors.find(a=>a.id==="ecaflip-karuta-eau").state;
+  const living=state.invocations.filter(x=>x.kind==="Chaton Enragé").length;
+  const expected=Math.min(6,Math.floor((turn-1)/4)+1);
+  assert.equal(living,expected,"Wrong number of kittens T"+turn);
+  assert.equal(state.buffs.find(b=>b.key==="Griffe Invocatrice")?.amount,90*expected,
+   "Wrong kitten-linked Power T"+turn);
+ }
+ assert.equal(previous.finished,true);
+});

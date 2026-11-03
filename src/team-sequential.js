@@ -3,17 +3,17 @@
  * en tenant compte de la cible et des états laissés par les actions précédentes.
  * Les tours individuels ne sont jamais planifiés à l'avance sur 50 tours.
  */
-import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.90";
+import {initialState,cleanSettings,eligible,castSpell,endTurn,optimizeFromState} from "./engine.js?v=3.93";
 import {estimatedCardFutureValue} from "./ecaflip-cards.js?v=3.24";
 import {theoreticalCriticalRate,activeTurquoiseBonus} from "./critical.js?v=3.22";
-import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.90";
+import {planLongTeamTurn,cleanTeamStrategy} from "./team-long-plan.js?v=3.93";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
-import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.56";
-import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.76";
-import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.90";
-import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.56";
+import {planSacrierAuditedDps} from "./sacrier-dps-rotation.js?v=3.93";
+import {planAuditedSacrierHpTurn} from "./sacrier-hp-rotation.js?v=3.93";
+import {planAuditedKarutaTurn} from "./karuta-fifteen-plan.js?v=3.93";
+import {sramAuditedPlan} from "./sram-audited-plan.js?v=3.93";
 import {combatCastLog,combatEndLog} from "./team-combat-log.js?v=3.44";
-import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.92";
+import {chooseTeamTenOpening,teamTenCurrentPlan} from "./team-audited-ten-plan.js?v=3.93";
 
 const round=n=>Math.round((Number(n)||0)*10)/10;
 const offensive=new Set(["Puissance","Dommages","Dommages finaux","Critique","Air","Terre","Feu","Eau","Neutre"]);
@@ -138,7 +138,7 @@ function better(a,b,remainingHp){
  * sustained 30-100 round encounters.
  *
  * Summon at the first legal opportunity, then again after the 4-turn
- * cooldown until THREE kitten-linked Power stacks exist. The remaining
+ * cooldown until all available kitten slots are occupied. The remaining
  * actions are chosen by the real same-turn spell engine, never fabricated.
  * This also works in the fast search mode (100-round team combat).
  */
@@ -149,7 +149,8 @@ export function planKarutaKittenMaintenance(entry){
   (sp.isWeapon||ctx.settings.variants?.[sp.variantGroup]===sp.name));
  if(!kitten)return null;
  const live=(state.invocations||[]).filter(x=>x.kind==="Chaton Enragé").length;
- if(live>=3||!eligible(kitten,state,ctx.settings))return null;
+ const max=ctx.settings.ecaflipMaxSummons;
+ if(live>=max||!eligible(kitten,state,ctx.settings))return null;
  // If an earlier summon was prevented by PA or a user-edited action,
  // retry on the next legal turn; avoid silently dropping the bonus forever.
  const current=Number(state.turn);
@@ -163,7 +164,7 @@ export function planKarutaKittenMaintenance(entry){
  if(!actions?.some(a=>String(a.id)===String(kitten.id)))return null;
  return {actions:actions.map(a=>({id:a.id})),
   settings:ctx.settings,label:"Karuta · entretien des Chatons ("+
-   (live+1)+"/3 cumuls, Puissance jusqu’à leur mort)",
+   (live+1)+"/"+max+" invocations, Puissance jusqu’à leur mort)",
   kittenMaintenance:true};
 }
 function selectedBuffs(ctx,state,settings){
@@ -174,7 +175,7 @@ function selectedBuffs(ctx,state,settings){
   (spell.ecaflipCriticalRateBuff?.critical>0)
  )&&eligible(spell,state,settings)&&
   (spell.name==="Griffe Invocatrice"?
-   state.invocations.filter(x=>x.kind==="Chaton Enragé").length<3:
+   state.invocations.filter(x=>x.kind==="Chaton Enragé").length<ctx.settings.ecaflipMaxSummons:
    (!spell.nonDirect||!state.buffs.some(buff=>
     buff.until>=state.turn&&(buff.key===spell.name||buff.key.startsWith(spell.name+":"))))))
   .sort((a,b)=>amount(b)/Math.max(1,b.pa)-amount(a)/Math.max(1,a.pa)).slice(0,5);

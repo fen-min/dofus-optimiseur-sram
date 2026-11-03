@@ -245,8 +245,8 @@ function addBuff(s,key,stat,amount,duration,maxStacks,unit="",persistent=false){
  if(previous.length>=maxStacks){const replace=previous.sort((a,b)=>a.until-b.until)[0];s.buffs.splice(s.buffs.indexOf(replace),1);}
  s.buffs.push({key,stat,amount,unit,until:persistent?Number.MAX_SAFE_INTEGER:s.turn+duration-1,persistent});
 }
-// +90 Power per surviving Angry Kitten, capped at THREE buff stacks
-// independently of the SIX physical summon slots of Karuta's build.
+// +90 Power per living Angry Kitten, limited by the selected build's summon slots.
+// Six live kittens yield +540 in Karuta's model. In-game stacking cap unconfirmed.
 // No enemy attacks are simulated; summons therefore persist until explicitly
 // removed from the state. Reconciliation handles their future deaths safely.
 function syncEcaflipKittenPower(s){
@@ -254,7 +254,7 @@ function syncEcaflipKittenPower(s){
  s.buffs=s.buffs.filter(b=>b.key!=="Griffe Invocatrice");
  if(live>0)s.buffs.push({
   key:"Griffe Invocatrice",stat:"Puissance",
-  amount:90*Math.min(3,live),unit:"",
+  amount:90*live,unit:"",
   until:Number.MAX_SAFE_INTEGER,persistent:true,
   summonLinked:true,summonCount:live
  });
@@ -405,8 +405,8 @@ export function castSpell(origin,spell,input={}){
   s.invocations.push({kind:"Chaton Enragé",turn:s.turn,source:name});
   const living=syncEcaflipKittenPower(s);
   action.notes.push("Chaton Enragé : "+living+"/"+c.ecaflipMaxSummons+
-   " invocations vivantes ; +"+(90*Math.min(3,living))+
-   " Puissance (90 par Chaton, cumul max 3, jusqu’à leur mort ; IA non simulée)");
+   " invocations vivantes ; +"+(90*living)+
+   " Puissance (90 par Chaton vivant, selon les emplacements libres ; IA non simulée)");
  }
  // The Griffe power buff is managed by the living summon count above.
  // Do not add it again as a fixed-duration generic buff.
