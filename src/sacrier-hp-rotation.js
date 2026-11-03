@@ -7,9 +7,9 @@
  * wrong variants, AP, starting HP, or diverged HP/buff/cooldown histories.
  * This does not claim a mathematical global optimum.
  */
-import {INITIAL_BUILDS,normalizeBuild,CLASSES} from "./classes.js?v=3.93";
-import {prepareBuildSpells} from "./build-damage.js?v=3.93";
-import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.93";
+import {INITIAL_BUILDS,normalizeBuild,CLASSES} from "./classes.js?v=3.66";
+import {prepareBuildSpells} from "./build-damage.js?v=3.24";
+import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.56";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 const F=Object.freeze(["Furie","Furie","Assaut","Désolation"]);

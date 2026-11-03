@@ -3,8 +3,9 @@
  * Re-verified on 2026-11-03 after exhaustive single-spell manual
  * neighborhood tests of every modeled equipped spell:
  * 68 822.9 damage over 15 rounds with one living Kitten. A separate
- * historic three-kitten 100-round benchmark reached 495 792.4 damage.
- * It is NOT a validated six-kitten optimum and must be remeasured.
+ * 100-round plan casts three living Kittens by T9, reaching 495 792.4
+ * damage on 100 rounds after dynamic play from T16. Both plans were
+ * independently replayed through the true manual combat engine.
  * These are the best TESTED legal rotations, not a global proof.
  * Future engine changes must remeasure them rather than trusting history.
  * This is a reusable reference trajectory, not a fabricated damage bonus.
@@ -12,7 +13,7 @@
  * match the audited trajectory. Fall back to the generic team optimizer on
  * any divergence (cards, ally AP, cooldowns, buffs, changed stats).
  */
-import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.93";
+import {initialState,eligible,castSpell,endTurn} from "./engine.js?v=3.90";
 import {ECAFLIP_KARUTA_STATS} from "./character-stats.js?v=3.20";
 
 export const KARUTA_FIFTEEN_ROUNDS=Object.freeze([
@@ -34,8 +35,9 @@ export const KARUTA_FIFTEEN_ROUNDS=Object.freeze([
 ]);
 
 /**
- * The historic long opening summons T1/T5/T9. After T12 the adaptive
- * team planner takes over to fill all slots at T13/T17/T21.
+ * The long-combat plan pays 3 PA for kittens on T1/T5/T9, maintaining
+ * +90/+180/+270 Power indefinitely as long as they survive. The actual
+ * engine enforces six summon slots and THREE buff stacks independently.
  * Keep a distinct short (15-turn) plan: early extra summons are not yet
  * worth their immediate AP cost at that horizon.
  */
@@ -77,8 +79,6 @@ export function planAuditedKarutaTurn(entry,strategy){
  // keep the faster 15-turn manual reference opening.
  const rounds=ctx.settings.turns>=30?KARUTA_LONG_KITTEN_ROUNDS:
   KARUTA_FIFTEEN_ROUNDS;
- // Don't continue the obsolete 3-kitten audited plan from T13 onward.
- if(ctx.settings.turns>=30&&now>=13)return null;
  if(strategy.mode!=="long"||!referenceBuild(ctx)||currentPA!==12||
   now<1||now>rounds.length)return null;
  let expected=initialState(ctx.settings);

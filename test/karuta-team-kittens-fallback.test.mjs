@@ -138,25 +138,26 @@ test("All THREE characters: real team turn-by-turn with 20% resistance summons o
 });
 
 
-test("30 consecutive TEAM turns: six kittens with Sram and Sacrier", {timeout:300000},()=>{
- const t=target(20,true,30),contexts=team(t),policy={mode:"long",horizon:10,minHpPercent:50};
- const schedule=[1,5,9,13,17,21];
+test("30 consecutive TEAM rounds: exactly three +90 Power kitten stacks, no fourth automatic kitten", {timeout:300000},()=>{
+ const t=target(20,true,30),contexts=team(t);
+ const policy={mode:"long",horizon:10,minHpPercent:40};
  let previous=null;
- for(let turn=1;turn<=30;turn++){
+ const summonRounds=[];
+ for(let round=1;round<=30;round++){
   previous=optimizeTeamTurn(contexts,t,()=>{},previous,policy);
-  assert.equal(previous.turns.length,turn,"One round per click");
+  assert.equal(previous.turns.length,round,"One completed team round per click");
   const actors=previous.turns.at(-1).actors;
   assert.equal(actors.length,3);
-  assert.ok(actors.every(a=>a.spent<=a.availablePA));
+  assert.ok(actors.every(a=>a.spent<=a.availablePA&&a.spent>=0));
   const karuta=actors.find(a=>a.character==="Karuta");
-  assert.equal(karuta.actions.some(a=>a.name==="Griffe Invocatrice"),
-   schedule.includes(turn),"Wrong Griffe timing T"+turn);
+  if(karuta.actions.some(a=>a.name==="Griffe Invocatrice"))summonRounds.push(round);
   const state=previous.session.actors.find(a=>a.id==="ecaflip-karuta-eau").state;
-  const living=state.invocations.filter(x=>x.kind==="Chaton Enragé").length;
-  const expected=Math.min(6,Math.floor((turn-1)/4)+1);
-  assert.equal(living,expected,"Wrong number of kittens T"+turn);
+  const living=state.invocations.filter(s=>s.kind==="Chaton Enragé").length;
+  const expected=round<5?1:round<9?2:3;
+  assert.equal(living,expected,"Wrong kitten count T"+round);
   assert.equal(state.buffs.find(b=>b.key==="Griffe Invocatrice")?.amount,90*expected,
-   "Wrong kitten-linked Power T"+turn);
+   "Buff cannot exceed three live kittens T"+round);
  }
+ assert.deepEqual(summonRounds,[1,5,9]);
  assert.equal(previous.finished,true);
 });

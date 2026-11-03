@@ -17,7 +17,7 @@ test("Griffe : bonus linked to surviving kitten rather than four-turn duration",
  assert.equal(b.stats.summons,6);
  assert.equal(c.ecaflipMaxSummons,6);
  assert.ok(kitten.status.buff.untilRemoved);
- assert.equal(kitten.status.buff.stacks,6);
+ assert.equal(kitten.status.buff.stacks,3);
  assert.equal(kitten.status.buff.value,90);
  let s=initialState(c);
  assert.equal(cats(s),0);
@@ -43,19 +43,19 @@ test("Griffe : bonus linked to surviving kitten rather than four-turn duration",
  for(let t=9;t<=12;t++)s=endTurn(s,c);
  s=castSpell(s,kitten,c); // fourth physical kitten, capped buff
  assert.equal(cats(s),4);
- assert.deepEqual(buff(s).map(x=>x.amount),[360],"Fourth kitten yields +360");
+ assert.deepEqual(buff(s).map(x=>x.amount),[270],"No +360");
  for(let t=13;t<=16;t++)s=endTurn(s,c);
  s=castSpell(s,kitten,c); // fifth
  assert.equal(cats(s),5);
- assert.deepEqual(buff(s).map(x=>x.amount),[450]);
+ assert.deepEqual(buff(s).map(x=>x.amount),[270]);
  for(let t=17;t<=20;t++)s=endTurn(s,c);
  s=castSpell(s,kitten,c); // sixth
  assert.equal(cats(s),6);
- assert.deepEqual(buff(s).map(x=>x.amount),[540],"Six live kittens yield +540");
+ assert.deepEqual(buff(s).map(x=>x.amount),[270],"No +540");
  for(let t=21;t<=24;t++)s=endTurn(s,c);
  assert.equal(s.turn,25);
  assert.equal(eligible(kitten,s,c),false,"Cannot occupy seventh summon slot");
- assert.deepEqual(buff(s).map(x=>x.amount),[540]);
+ assert.deepEqual(buff(s).map(x=>x.amount),[270]);
  // Simulate 4 kitten deaths externally: the buff must fall to +180.
  s.invocations=s.invocations.slice(0,2);
  s=endTurn(s,c);
@@ -87,9 +87,8 @@ test("Griffe : original variant limits respected and manual tooltip is accurate"
  const draft=newManualDraft([ctx],target);
  const option=manualSpellChoices([ctx],target,draft).find(x=>x.name==="Griffe Invocatrice");
  assert.ok(option?.enabled);
- assert.match(option.reason,/6 invocations possibles/);
+ assert.match(option.reason,/cumul max 3/);
  assert.match(option.reason,/6 invocations/);
- assert.match(option.reason,/jusqu’à \+540/);
  assert.match(option.reason,/jusqu’à leur mort/);
  const modified=structuredClone(b);
  const n=modified.variants.indexOf("Griffe Invocatrice");

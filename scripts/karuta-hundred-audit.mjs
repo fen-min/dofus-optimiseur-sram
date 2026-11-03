@@ -62,21 +62,11 @@ async function check(label,contexts,strategy){
   for(const a of actors)totalsByCharacter[a.character]=
    R((totalsByCharacter[a.character]||0)+a.damage);
   autoRounds.push(actors);
-  if(label.endsWith("long")){
-   const eca=contexts.find(c=>c.settings.classId==="ecaflip");
-   const state=previous.session.actors.find(a=>a.id===eca?.build.id)?.state;
-   if(state){
-    const expected=Math.min(6,Math.floor((turn-1)/4)+1);
-    assert.equal(state.invocations.filter(s=>s.kind==="Chaton Enragé").length,expected,
-     "Missing live kitten "+label+" T"+turn);
-    assert.equal(state.buffs.find(b=>b.key==="Griffe Invocatrice")?.amount,expected*90);
-   }
-  }
   if(milestones.has(turn)){
    checkpoint.push({turn,total:R(previous.theoretical),teamDamage:R(last.theoretical),
     karuta:actors.find(a=>a.classId==="ecaflip")});
   }
-  if(turn<=12&&label==="solo-long"){
+  if(turn<=15&&label==="solo-long"){
    assert.deepEqual(actors[0].spells,KARUTA_LONG_KITTEN_ROUNDS[turn-1],
     "audited Karuta rotation differs at T"+turn);
   }

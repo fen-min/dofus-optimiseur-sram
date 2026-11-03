@@ -77,11 +77,7 @@ for(let i=1;i<=n;i++){
 assert.equal(rows.length,n);
 assert.equal(R(previous.turns.slice(0,10).reduce((s,t)=>s+t.actors.find(a=>a.character==="Matryoshka").damage,0)),34267.5);
 if(n>=15){
- // Team damage changed because the fourth Karuta kitten is now summoned T13.
- const team15=R(previous.turns.slice(0,15).reduce((s,t)=>s+t.theoretical,0));
- console.log("SRAM_TEAM_15_UPDATED_DAMAGE "+team15);
- assert.ok(Number.isFinite(team15)&&team15>150000,
-  "Team DPS through T15 dropped unexpectedly: "+team15);
+ assert.ok(Math.abs(R(previous.turns.slice(0,15).reduce((s,t)=>s+t.theoretical,0))-163658.7)<.3);
  assert.deepEqual(rows[10].rotation,["Injection Toxique","Arsenic","Épidémie"]);
  assert.equal(rows[14].cumulative,51578.1);
 }

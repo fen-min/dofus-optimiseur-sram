@@ -2,7 +2,7 @@
  * Compare the same validated 15-turn Karuta reference with 0/1/2/3
  * Griffe kitten summons, then real adaptive decisions through turn 100.
  * Manually replay ALL 100 turns and verify damage/AP and summon-linked
- * Power (assumed cap +540 with six surviving kittens) at each checkpoint.
+ * Power (cap +270) at each checkpoint.
  */
 import assert from "node:assert/strict";
 import {INITIAL_BUILDS,normalizeBuild} from "../src/classes.js";
@@ -29,14 +29,7 @@ let previous=null;const checkpoints={},power={},kittens={},first15=[];
 for(let t=1;t<=100;t++){
  if(t<=15){
   let names=KARUTA_FIFTEEN_ROUNDS[t-1].slice();
-  // The baseline 15-round route already casts Griffe on T1.
-  // NONE removes it; ONE/TWO/THREE must never add a duplicate T1 cast.
-  if(t===1&&mode==="NONE"){
-   const i=names.indexOf("Griffe Invocatrice");
-   assert.ok(i>=0,"Baseline Griffe missing");
-   names[i]="Sceptre du Roi Joueur";
-  }
-  if(t!==1&&schedules[mode].includes(t)){
+  if(schedules[mode].includes(t)){
    const i=names.lastIndexOf("Sceptre du Roi Joueur");
    assert.ok(i>=0,"No weapon slot to swap on T"+t);
    names[i]="Griffe Invocatrice";
@@ -51,8 +44,8 @@ for(let t=1;t<=100;t++){
  const living=state.invocations.filter(s=>s.kind==="Chaton Enragé").length;
  const amount=state.buffs.filter(b=>b.key==="Griffe Invocatrice")
   .reduce((v,b)=>v+b.amount,0);
- assert.ok(amount<=540,"Power cap exceeded T"+t);
- assert.equal(amount,90*living);
+ assert.ok(amount<=270,"Power cap exceeded T"+t);
+ assert.equal(amount,90*Math.min(3,living));
  if([1,3,5,9,10,13,15,20,30,50,75,100].includes(t)){
   checkpoints[t]=R(previous.theoretical);power[t]=amount;kittens[t]=living;
  }

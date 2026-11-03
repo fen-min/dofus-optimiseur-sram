@@ -12,7 +12,7 @@
  * These openings are a tested 10-round improvement, not a promise of
  * global optimality over the subsequent 90 rounds.
  */
-import {eligible,castSpell,endTurn,initialState} from "./engine.js?v=3.93";
+import {eligible,castSpell,endTurn,initialState} from "./engine.js?v=3.90";
 import {sacrierCastAboveFloor,sacrierHealthAboveFloor} from "./sacrier-safety.js?v=3.32";
 
 export const TEAM_TEN_AUDITED=Object.freeze({

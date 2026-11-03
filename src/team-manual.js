@@ -6,8 +6,8 @@
  * Drafts are ephemeral. Only after every actor ends their turn is the
  * computed round committed as the next previous result.
  */
-import {playSequentialTeam} from "./team-sequential.js?v=3.93";
-import {eligible,castSpell} from "./engine.js?v=3.93";
+import {playSequentialTeam} from "./team-sequential.js?v=3.92";
+import {eligible,castSpell} from "./engine.js?v=3.90";
 
 const sortContexts=contexts=>contexts.slice().sort((a,b)=>{
  const ia=a.build.initiative,ib=b.build.initiative;
@@ -147,11 +147,9 @@ export function manualSpellChoices(contexts,target,draft){
     ((spell.status?.buff?.duration>0||spell.status?.buff?.untilRemoved)?40:0));
    return {id:String(spell.id),name:spell.name,pa:spell.pa,
     enabled:true,reason:spell.name==="Griffe Invocatrice"?
-     "Chaton vivant : +90 Puissance chacun ; "+
+     "Chaton vivant : +90 Puissance chacun, cumul max 3 (+270) ; "+
       current.settings.ecaflipMaxSummons+
-      " invocations possibles ; cumul modélisé jusqu’à +"+
-      (90*current.settings.ecaflipMaxSummons)+
-      " ; bonus jusqu’à leur mort (ennemis/IA non simulés)":
+      " invocations possibles ; bonus jusqu’à leur mort (ennemis/IA non simulés)":
      score>=damage+50?"Buff, cartes ou effet utile":"Attaque disponible",
     damage,delayed,utility,score,icon:manualSpellIcon(spell),
     isWeapon:!!spell.isWeapon};
