@@ -99,3 +99,40 @@ test("30 turns can use kitten setup, 15-turn attack rotation is unaffected",()=>
  assert.ok(planKarutaKittenMaintenance(entry(long,initialState(long.settings))));
  assert.equal(planKarutaKittenMaintenance(entry(short,initialState(short.settings))),null);
 });
+
+test("All THREE characters: real team turn-by-turn with 20% resistance summons on T1 T5 T9", {timeout:180000},()=>{
+ const t=target(20,true),contexts=team(t),policy={
+  mode:"long",horizon:10,minHpPercent:40
+ };
+ let previous=null;
+ for(let turn=1;turn<=9;turn++){
+  previous=optimizeTeamTurn(contexts,t,()=>{},previous,policy);
+  assert.equal(previous.turns.length,turn);
+  assert.equal(previous.turns[turn-1].actors.length,3);
+  const actor=previous.turns.at(-1).actors.find(x=>x.character==="Karuta");
+  const kittens=previous.session.actors.find(x=>x.id==="ecaflip-karuta-eau")
+   .state.invocations.filter(x=>x.kind==="Chaton Enragé").length;
+  const expected=turn<5?1:turn<9?2:3;
+  assert.equal(kittens,expected,"Unexpected living kittens T"+turn);
+  assert.equal(actor.actions.some(a=>a.name==="Griffe Invocatrice"),
+   [1,5,9].includes(turn),"Unexpected Griffe at turn "+turn);
+  assert.ok(previous.turns.at(-1).actors.every(a=>a.spent<=a.availablePA));
+ }
+ // Independently replay the real automatic rotations via manualOverrides.
+ let manual=null;
+ for(const round of previous.turns){
+  const overrides=Object.fromEntries(round.actors.map(a=>{
+   const ctx=contexts.find(x=>x.build.id===a.id);
+   return [a.id,a.actions.map(action=>{
+    const spell=ctx.spells.find(s=>s.name===action.name);
+    assert.ok(spell,"Manual replay missing "+action.name);
+    return spell.id;
+   })];
+  }));
+  manual=playSequentialTeam(contexts,t,()=>{},{previous:manual,oneRound:true,
+   manualOverrides:overrides});
+ }
+ assert.ok(Math.abs(previous.theoretical-manual.theoretical)<.2);
+ assert.equal(manual.session.actors.find(x=>x.id==="ecaflip-karuta-eau").state
+  .buffs.find(x=>x.key==="Griffe Invocatrice").amount,270);
+});
