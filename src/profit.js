@@ -1,4 +1,5 @@
 import {calculateCraft, calculateListings} from "./profit-core.js";
+import {mountProfitWorkbook} from "./profit-workbook.js";
 
 const root = document.getElementById("tab-profit");
 if (root) {
@@ -96,9 +97,10 @@ if (root) {
     show("profit-listing-units", formatAmount(all.units) + " unités");
   }
   function updateMode() {
-    const mode = state.mode === "listings" ? "listings" : "craft";
+    const mode = ["craft", "listings", "sheet"].includes(state.mode) ? state.mode : "craft";
     document.getElementById("profit-view-craft").hidden = mode !== "craft";
     document.getElementById("profit-view-listings").hidden = mode !== "listings";
+    document.getElementById("profit-view-sheet").hidden = mode !== "sheet";
     root.querySelectorAll("[data-profit-mode]").forEach(button => {
       const active = button.dataset.profitMode === mode;
       button.classList.toggle("active", active);
@@ -143,4 +145,35 @@ if (root) {
   }
   updateMode();
   refresh();
+  mountProfitWorkbook({
+    root,
+    getCraft: () => JSON.parse(JSON.stringify(state)),
+    setCraft: data => {
+      if (!data || typeof data !== "object") return;
+      state = {
+        ...state, mode: "craft",
+        product: String(data.product ?? state.product).slice(0, 90),
+        quantity: data.quantity ?? state.quantity,
+        saleUnit: data.saleUnit ?? state.saleUnit,
+        taxPercent: data.taxPercent ?? state.taxPercent,
+        ingredients: Array.from({length: 8}, (_, i) =>
+          ({name: "", perCraft: 0, costUnit: "", resaleUnit: "",
+            ...(data.ingredients?.[i] && typeof data.ingredients[i] === "object"
+              ? Object.fromEntries(["name","perCraft","costUnit","resaleUnit"]
+                .filter(key => data.ingredients[i][key] !== undefined)
+                .map(key => [key, data.ingredients[i][key]]) : {})})),
+        listings: Array.from({length: 8}, (_, i) =>
+          ({name: "", lotSize: 100, lotPrice: "", units: 0, costUnit: "",
+            ...(data.listings?.[i] && typeof data.listings[i] === "object"
+              ? Object.fromEntries(["name","lotSize","lotPrice","units","costUnit"]
+                .filter(key => data.listings[i][key] !== undefined)
+                .map(key => [key, data.listings[i][key]]) : state.listings[i])}))
+      };
+      renderRows();
+      for (const [key, id] of [["product","profit-product"],["quantity","profit-quantity"],
+        ["saleUnit","profit-sale-unit"],["taxPercent","profit-tax"]])
+        document.getElementById(id).value = state[key] ?? "";
+      persist(); updateMode(); refresh();
+    }
+  });
 }
