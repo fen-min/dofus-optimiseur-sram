@@ -36,3 +36,44 @@
 @media(max-width:1250px){.profit-item-row,.profit-listing-row{grid-template-columns:27px repeat(3,minmax(0,1fr))}.profit-item-row .profit-name{grid-column:span 2}.profit-item-row .profit-row-result{grid-column:span 3;min-height:25px}}
 @media(max-width:700px){.profit-fields{grid-template-columns:1fr 1fr}.profit-panel{padding:13px 11px}.profit-item-row,.profit-listing-row{grid-template-columns:27px minmax(0,1fr) minmax(0,1fr);padding:10px 8px}.profit-item-row .profit-name{grid-column:span 2}.profit-item-row .profit-row-result{grid-column:2 / -1}.profit-result-grid{grid-template-columns:1fr 1fr}.profit-hero{padding:16px}}
 @media(max-width:440px){.profit-fields,.profit-result-grid{grid-template-columns:1fr}.profit-item-row,.profit-listing-row{grid-template-columns:27px minmax(0,1fr)}.profit-item-row .profit-name,.profit-item-row .profit-row-result{grid-column:2}.profit-item-row label:not(.profit-name){grid-column:2}.profit-section-title{align-items:flex-start;flex-direction:column}}
+
+
+/* Classeur de bénéfices : cellules éditables, fiches et exports. */
+.profit-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:15px}
+.profit-toolbar button,.profit-row-actions button{
+  padding:10px 12px;border:1px solid #65708b;border-radius:8px;
+  background:#303a54;color:#f2edff;font:inherit;font-size:12px;font-weight:750;cursor:pointer
+}
+.profit-toolbar button:hover,.profit-row-actions button:hover{background:#4c4970;border-color:#a28ccc}
+.profit-toolbar button:focus-visible,.profit-row-actions button:focus-visible{outline:3px solid #b39ceb;outline-offset:2px}
+.profit-toolbar button:disabled{opacity:.45;cursor:not-allowed}
+.profit-toolbar .profit-danger,.profit-row-actions button[data-workbook-delete]{border-color:#865461;color:#ffcad2;background:#3b2834}
+.profit-recipe-controls,.profit-sheet-filters{display:grid;grid-template-columns:minmax(180px,1fr) minmax(210px,2fr);gap:12px;margin-top:14px}
+.profit-sheet-filters{grid-template-columns:minmax(210px,2fr) minmax(125px,1fr) minmax(180px,1fr);margin:18px 0}
+.profit-table-scroll{width:100%;overflow:auto;max-height:660px;overscroll-behavior:contain;border:1px solid #52617d;border-radius:10px;background:#151e30}
+.profit-table-scroll:focus-visible{outline:2px solid #b39ceb;outline-offset:2px}
+.profit-sheet-table{border-collapse:separate;border-spacing:0;min-width:1600px;width:100%;font-size:12px;line-height:1.4}
+.profit-sheet-table th,.profit-sheet-table td{padding:8px 7px;border-bottom:1px solid #39475e;border-right:1px solid #303e56;vertical-align:middle;text-align:left;white-space:nowrap}
+.profit-sheet-table thead th{position:sticky;top:0;z-index:1;background:#2b334e;color:#f0e9ff;font-size:11px;font-weight:800}
+.profit-sheet-table tbody th{color:#a8b9d2;background:#1b2940;font-weight:650;min-width:34px;text-align:center}
+.profit-sheet-table tbody tr:nth-child(even){background:#1c273c}
+.profit-sheet-table tbody tr:hover{background:#28344b}
+.profit-sheet-table td input,.profit-sheet-table td select{padding:7px 8px;min-height:34px;min-width:0;width:100%;border-radius:5px;border:1px solid #4b5871;background:#111a2a}
+.profit-sheet-table td input:focus,.profit-sheet-table td select:focus{outline:2px solid #b4a1fa;background:#182646}
+.profit-sheet-table th:nth-child(2),.profit-sheet-table td:nth-child(2){min-width:150px}
+.profit-sheet-table th:nth-child(3),.profit-sheet-table td:nth-child(3){min-width:190px}
+.profit-sheet-table th:nth-child(4),.profit-sheet-table td:nth-child(4){min-width:95px}
+.profit-sheet-table th:nth-child(n+5):nth-child(-n+8),.profit-sheet-table td:nth-child(n+5):nth-child(-n+8){min-width:108px}
+.profit-sheet-table th:nth-child(n+9):nth-child(-n+12),.profit-sheet-table td:nth-child(n+9):nth-child(-n+12){min-width:115px;font-variant-numeric:tabular-nums}
+.profit-sheet-table td[data-workbook-result="profit"]{color:#95e5b0;font-weight:800}
+.profit-sheet-table td[data-workbook-result="profit"].is-negative{color:#ffadb5}
+.profit-sheet-table th:nth-child(13),.profit-sheet-table td:nth-child(13){min-width:220px}
+.profit-sheet-table th:nth-child(14),.profit-sheet-table td:nth-child(14){min-width:88px}
+.profit-row-actions{display:flex;align-items:center;gap:5px}
+.profit-row-actions button{padding:6px 9px}
+.profit-save-status{padding:9px 0 0;color:#b4d7c1 !important}
+@media(max-width:700px){
+ .profit-recipe-controls,.profit-sheet-filters{grid-template-columns:1fr}
+ .profit-toolbar button{flex:1 1 160px}
+ .profit-table-scroll{max-height:480px}
+}
