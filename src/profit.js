@@ -137,6 +137,10 @@ if (root) {
   root.addEventListener("input", update);
   root.addEventListener("change", update);
   renderRows();
+  for (const [key, id] of [["product","profit-product"],["quantity","profit-quantity"],
+    ["saleUnit","profit-sale-unit"],["taxPercent","profit-tax"]]) {
+    document.getElementById(id).value = state[key] ?? "";
+  }
   updateMode();
   refresh();
 }
