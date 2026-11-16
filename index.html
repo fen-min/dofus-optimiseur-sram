@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./styles.css?v=3.11">
   <link rel="stylesheet" href="./team.css?v=3.80">
   <link rel="stylesheet" href="./combat.css?v=1.8">
-  <link rel="stylesheet" href="./profit.css?v=1.0">
+  <link rel="stylesheet" href="./profit.css?v=1.1">
 </head>
 <body>
   <div class="app-shell">
@@ -287,11 +287,12 @@
           <div class="profit-hero">
             <div class="panel-eyebrow">OMBRE / ÉCONOMIE DOFUS</div>
             <h2>Simulateur de bénéfices en kamas</h2>
-            <p>Compare la rentabilité d'un craft avec jusqu'à 8 ressources, ou suis jusqu'à 8 objets en vente en HDV. Tous les prix sont saisis manuellement et conservés dans ton navigateur.</p>
+            <p>Compare les crafts et les ventes, enregistre plusieurs fiches de recettes et tiens un tableau de suivi modifiable comme dans Excel. Sauvegarde automatique locale, export CSV et sauvegarde JSON.</p>
           </div>
           <div class="profit-modes" role="group" aria-label="Mode de simulation">
             <button type="button" data-profit-mode="craft" aria-pressed="true">⚒ Rentabilité d'un craft</button>
             <button type="button" data-profit-mode="listings" aria-pressed="false">◈ 8 objets en vente</button>
+            <button type="button" data-profit-mode="sheet" aria-pressed="false">▦ Mon tableau de bénéfices</button>
           </div>
           <section class="profit-panel" aria-label="Frais de vente">
             <div class="profit-fields">
@@ -317,6 +318,20 @@
               </div>
               <p>Exemple de départ : Mijoté Récréatif. Remplace les prix et quantités par ceux du serveur Imagiro ou de ton serveur.</p>
             </section>
+            <section class="profit-panel" aria-label="Fiches de crafts sauvegardées">
+              <div class="profit-section-title"><h3>Mes fiches de crafts enregistrées</h3><small id="profit-recipe-counter">0 fiche(s) sauvegardée(s)</small></div>
+              <p>Enregistre chaque recette avec ses 8 ingrédients, quantités et prix. Recharge-la plus tard et change tous les champs sans perdre les autres fiches.</p>
+              <div class="profit-recipe-controls">
+                <label>Fiche enregistrée<select id="profit-recipe-select"><option value="">— Choisir une fiche —</option></select></label>
+                <label>Nom de la fiche<input id="profit-recipe-name" type="text" maxlength="90" placeholder="Ex. Mijoté Récréatif · serveur Imagiro"></label>
+              </div>
+              <div class="profit-toolbar">
+                <button type="button" id="profit-recipe-new">＋ Sauvegarder comme nouvelle fiche</button>
+                <button type="button" id="profit-recipe-save">✓ Mettre à jour la fiche</button>
+                <button type="button" id="profit-recipe-load">↙ Charger la fiche</button>
+                <button type="button" id="profit-recipe-delete" class="profit-danger">Supprimer la fiche</button>
+              </div>
+            </section>
             <section class="profit-panel">
               <div class="profit-section-title"><h3>8 cases de ressources et prix actuels</h3><small>Prix unitaires, quantités par craft</small></div>
               <div id="profit-ingredient-rows" class="profit-rows"></div>
@@ -334,6 +349,7 @@
                 <div class="profit-result-box major"><span>Bénéfice estimé total</span><strong id="profit-craft-result" aria-live="polite">—</strong><small id="profit-craft-unit-margin"></small></div>
               </div>
               <p id="profit-craft-raw" class="profit-note">Comparaison avec la vente des ressources…</p>
+              <div class="profit-toolbar"><button id="profit-workbook-add-craft" type="button">＋ Ajouter cet objet au tableau de bénéfices</button></div>
             </section>
           </div>
           <div class="profit-view" id="profit-view-listings" hidden>
@@ -341,6 +357,7 @@
               <div class="profit-section-title"><h3>Mes 8 objets en vente</h3><small>1 ligne par objet · prix affiché du lot et revente unitaire</small></div>
               <p>Indique le prix actuel du lot (1, 10, 100 ou 1 000), le nombre total d'unités que tu souhaites vendre et ton coût par unité. Le simulateur calcule le prix de vente à l'unité ainsi que ta marge après frais.</p>
               <div id="profit-listing-rows" class="profit-rows"></div>
+              <div class="profit-toolbar"><button id="profit-workbook-add-sales" type="button">＋ Copier les ventes renseignées dans mon tableau</button></div>
             </section>
             <section class="profit-panel" aria-label="Résultats des ventes">
               <h3>Bilan estimé des 8 objets</h3>
@@ -354,9 +371,47 @@
               <p class="profit-note">Aucun prix HDV n'est récupéré automatiquement : les résultats suivent les prix que tu indiques, avant variation du marché. Les frais sont appliqués au montant brut estimé.</p>
             </section>
           </div>
+          <div class="profit-view" id="profit-view-sheet" hidden>
+            <section class="profit-panel" aria-label="Tableau de suivi des objets">
+              <div class="profit-section-title"><h3>Tableau de suivi : mes objets et références</h3><small id="profit-workbook-count">0 ligne</small></div>
+              <p>Édite chaque cellule comme dans un tableur : nom de l'objet, référence, catégorie, quantité, coût d'achat ou de craft par unité, prix de revente et frais. Les totaux et bénéfices se recalculent automatiquement. Les modifications sont sauvegardées sur cet appareil.</p>
+              <div class="profit-toolbar">
+                <button id="profit-workbook-add" type="button">＋ Ajouter une ligne</button>
+                <button id="profit-workbook-export-csv" type="button">↓ Export Excel (CSV)</button>
+                <button id="profit-workbook-export-json" type="button">↓ Sauvegarde complète (JSON)</button>
+                <button id="profit-workbook-import-button" type="button">↑ Importer une sauvegarde</button>
+                <input id="profit-workbook-import" type="file" accept=".json,application/json" hidden>
+                <button id="profit-workbook-clear" class="profit-danger" type="button">Vider le tableau</button>
+              </div>
+              <div class="profit-sheet-filters">
+                <label>Rechercher une référence / un objet<input id="profit-workbook-search" type="search" placeholder="Nom, référence ou note…"></label>
+                <label>Catégorie<select id="profit-workbook-filter"><option value="all">Toutes</option><option value="craft">Crafts</option><option value="vente">Ventes</option><option value="autre">Autres</option></select></label>
+                <label>Trier par<select id="profit-workbook-sort"><option value="entry">Ordre de saisie</option><option value="name">Nom de l'objet</option><option value="profit-desc">Bénéfice décroissant</option><option value="profit-asc">Bénéfice croissant</option></select></label>
+              </div>
+              <div class="profit-table-scroll" role="region" aria-label="Tableau modifiable des bénéfices" tabindex="0">
+                <table class="profit-sheet-table">
+                  <thead><tr><th>N°</th><th>Référence</th><th>Objet</th><th>Catégorie</th><th>Quantité</th><th>Coût / unité (K)</th><th>Vente / unité (K)</th><th>Frais (%)</th><th>Coût total</th><th>Vente brute</th><th>Bénéfice net</th><th>Marge</th><th>Notes</th><th>Actions</th></tr></thead>
+                  <tbody id="profit-workbook-body"></tbody>
+                </table>
+              </div>
+              <p id="profit-workbook-empty" class="profit-note">Aucune ligne à afficher. Ajoute un objet ou importe tes ventes et crafts depuis les autres onglets.</p>
+              <p class="profit-note">Astuce : touche Tab pour passer à la cellule suivante. Les chiffres sont des estimations basées sur les prix saisis, pas des données HDV en direct.</p>
+            </section>
+            <section class="profit-panel" aria-label="Total du tableau">
+              <h3>Totaux de tous les objets enregistrés</h3>
+              <div class="profit-result-grid">
+                <div class="profit-result-box"><span>Unités</span><strong id="profit-workbook-sum-quantity">—</strong></div>
+                <div class="profit-result-box"><span>Coût total</span><strong id="profit-workbook-sum-cost">—</strong></div>
+                <div class="profit-result-box"><span>Ventes brutes</span><strong id="profit-workbook-sum-gross">—</strong></div>
+                <div class="profit-result-box"><span>Frais estimés</span><strong id="profit-workbook-sum-fees">—</strong></div>
+                <div class="profit-result-box major"><span>Bénéfice net estimé</span><strong id="profit-workbook-sum-profit">—</strong></div>
+              </div>
+              <p id="profit-workbook-status" role="status" aria-live="polite" class="profit-save-status"></p>
+            </section>
+          </div>
           <div class="profit-footer">
-            <p>Les chiffres restent enregistrés localement dans ton navigateur, indépendamment des builds OMBRE. Une valeur d'ingrédient manquante fausse le bénéfice à la hausse.</p>
-            <button id="profit-reset" type="button">↺ Réinitialiser les bénéfices</button>
+            <p>Les données et fiches restent dans ce navigateur, indépendamment des builds. Exporte régulièrement une sauvegarde JSON pour les récupérer sur un autre appareil. Les montants saisis sont manuels et une valeur manquante peut fausser le résultat.</p>
+            <button id="profit-reset" type="button">↺ Réinitialiser le formulaire craft / ventes</button>
           </div>
         </section>
         <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement le prototype</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; la durée choisie (jusqu'à 10 tours) est évaluée ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Les buffs dépendent de la classe et sont suivis de tour en tour. Manigance est disponible sur Sram ; Mutilation sur Sacrieur, avec une approximation explicite.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Le Sram possède notamment des poisons différés ; le Sacrieur demande en plus une modélisation des PV et de la Souffrance, encore incomplète.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges du Sram nécessitent un déclenchement hypothétique. Les déplacements du Sacrieur ne remplacent pas une vraie simulation tactique.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte réelle, d'obstacles, de ligne de vue dynamique, de propagation multi-cible ni de suivi des dégâts ennemis, boucliers ou soins alliés. Les résistances fixes sont paramétrables dans le moteur mais ne le sont pas encore dans tous les formulaires. La Souffrance du Sacrieur est estimée à partir des PV suivis, sans prise en compte des attaques ennemies. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts">DofusBook — Sacrieur Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — Sram</a> · <a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sacrieur/">Sacrieur</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
@@ -402,6 +457,6 @@
     </div>
   </aside>
   <script type="module" src="./src/app.js?v=4.05"></script>
-  <script type="module" src="./src/profit.js?v=1.0"></script>
+  <script type="module" src="./src/profit.js?v=1.1"></script>
 </body>
 </html>
