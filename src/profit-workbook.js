@@ -165,8 +165,10 @@ export function mountProfitWorkbook({root, getCraft, setCraft}) {
   }
   function refresh() {
     const summary = calculateWorkbook(book.rows);
+    const visibleRows = new Map([...$("profit-workbook-body").querySelectorAll("tr")]
+      .map(element => [element.dataset.workbookRow, element]));
     for (const row of book.rows) {
-      const tr = [...$("profit-workbook-body").querySelectorAll("tr")].find(el=>el.dataset.workbookRow===row.id);
+      const tr = visibleRows.get(row.id);
       if (!tr) continue;
       const calc = calculateWorkbookRow(row);
       for (const [property, value] of [["costs",money(calc.costs)],["gross",money(calc.gross)],
