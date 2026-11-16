@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./styles.css?v=3.11">
   <link rel="stylesheet" href="./team.css?v=3.80">
   <link rel="stylesheet" href="./combat.css?v=1.8">
+  <link rel="stylesheet" href="./profit.css?v=1.0">
 </head>
 <body>
   <div class="app-shell">
@@ -19,6 +20,7 @@
         <button class="nav-btn active" data-tab="optimize"><span>◈</span> Optimisation</button><button class="nav-btn" data-tab="builds"><span>◉</span> Personnages & builds</button>
         <button class="nav-btn" data-tab="team"><span>♜</span> DPS en équipe</button>
         <button class="nav-btn" data-tab="spells"><span>✧</span> Sorts & variantes</button>
+        <button class="nav-btn" data-tab="profit"><span>◈</span> Bénéfices / Kamas</button>
         <button class="nav-btn" data-tab="method"><span>☷</span> Méthode & limites</button>
       </nav>
       <div class="side-bottom"><div class="tiny-dot"></div> <span>Bugs multi-cibles corrigés · v2.3</span><p>Aucun compte ni connexion requis. Les calculs restent dans ton navigateur.</p></div>
@@ -281,6 +283,82 @@
             <p class="microcopy">Les dommages modifiés sont enregistrés seulement pour ce build et dans ce navigateur. La simulation de certaines mécaniques reste approximative.</p>
           </section>
         </section>
+        <section id="tab-profit" class="tab-panel hidden" aria-label="Simulateur de bénéfices et ventes DOFUS">
+          <div class="profit-hero">
+            <div class="panel-eyebrow">OMBRE / ÉCONOMIE DOFUS</div>
+            <h2>Simulateur de bénéfices en kamas</h2>
+            <p>Compare la rentabilité d'un craft avec jusqu'à 8 ressources, ou suis jusqu'à 8 objets en vente en HDV. Tous les prix sont saisis manuellement et conservés dans ton navigateur.</p>
+          </div>
+          <div class="profit-modes" role="group" aria-label="Mode de simulation">
+            <button type="button" data-profit-mode="craft" aria-pressed="true">⚒ Rentabilité d'un craft</button>
+            <button type="button" data-profit-mode="listings" aria-pressed="false">◈ 8 objets en vente</button>
+          </div>
+          <section class="profit-panel" aria-label="Frais de vente">
+            <div class="profit-fields">
+              <label>Frais HDV estimés (% du prix de vente)
+                <input id="profit-tax" type="number" min="0" max="100" step="0.1" value="2" inputmode="decimal">
+              </label>
+            </div>
+            <p>Le taux de 2 % est un exemple modifiable : utilise tes frais réels. Les résultats supposent que tous les objets se vendent au prix indiqué et ne comptent pas les frais de déplacement ou les remises en vente.</p>
+          </section>
+          <div class="profit-view" id="profit-view-craft">
+            <section class="profit-panel">
+              <h3>Objet fabriqué et prix de revente</h3>
+              <div class="profit-fields">
+                <label>Nom de l'objet fabriqué
+                  <input id="profit-product" type="text" maxlength="90" value="Mijoté Récréatif">
+                </label>
+                <label>Nombre d'objets à fabriquer
+                  <input id="profit-quantity" type="number" min="0" step="1" value="2544">
+                </label>
+                <label>Prix de vente / unité (K)
+                  <input id="profit-sale-unit" type="number" min="0" step="0.01" value="1350">
+                </label>
+              </div>
+              <p>Exemple de départ : Mijoté Récréatif. Remplace les prix et quantités par ceux du serveur Imagiro ou de ton serveur.</p>
+            </section>
+            <section class="profit-panel">
+              <div class="profit-section-title"><h3>8 cases de ressources et prix actuels</h3><small>Prix unitaires, quantités par craft</small></div>
+              <div id="profit-ingredient-rows" class="profit-rows"></div>
+              <p>« Prix HDV / unité » = prix d'achat ou valeur de la ressource récoltée. La revente brute est facultative pour comparer le craft à la vente séparée des ingrédients. Les champs laissés vides valent 0 dans le coût calculé.</p>
+            </section>
+            <section class="profit-panel" aria-label="Résultats de la fabrication">
+              <h3>Bilan estimé de la fabrication</h3>
+              <div class="profit-result-grid">
+                <div class="profit-result-box"><span>Coût des ressources / craft</span><strong id="profit-craft-unit-cost">—</strong></div>
+                <div class="profit-result-box"><span>Chiffre d'affaires brut</span><strong id="profit-craft-revenue">—</strong></div>
+                <div class="profit-result-box"><span>Frais HDV estimés</span><strong id="profit-craft-fees">—</strong></div>
+                <div class="profit-result-box"><span>Coût total des ingrédients</span><strong id="profit-craft-total-cost">—</strong></div>
+                <div class="profit-result-box"><span>Recettes après frais</span><strong id="profit-craft-net">—</strong></div>
+                <div class="profit-result-box"><span>Prix de vente minimum / unité</span><strong id="profit-craft-break-even">—</strong></div>
+                <div class="profit-result-box major"><span>Bénéfice estimé total</span><strong id="profit-craft-result" aria-live="polite">—</strong><small id="profit-craft-unit-margin"></small></div>
+              </div>
+              <p id="profit-craft-raw" class="profit-note">Comparaison avec la vente des ressources…</p>
+            </section>
+          </div>
+          <div class="profit-view" id="profit-view-listings" hidden>
+            <section class="profit-panel">
+              <div class="profit-section-title"><h3>Mes 8 objets en vente</h3><small>1 ligne par objet · prix affiché du lot et revente unitaire</small></div>
+              <p>Indique le prix actuel du lot (1, 10, 100 ou 1 000), le nombre total d'unités que tu souhaites vendre et ton coût par unité. Le simulateur calcule le prix de vente à l'unité ainsi que ta marge après frais.</p>
+              <div id="profit-listing-rows" class="profit-rows"></div>
+            </section>
+            <section class="profit-panel" aria-label="Résultats des ventes">
+              <h3>Bilan estimé des 8 objets</h3>
+              <div class="profit-result-grid">
+                <div class="profit-result-box"><span>Unités mises en vente</span><strong id="profit-listing-units">—</strong></div>
+                <div class="profit-result-box"><span>Ventes brutes</span><strong id="profit-listing-gross">—</strong></div>
+                <div class="profit-result-box"><span>Frais HDV estimés</span><strong id="profit-listing-fees">—</strong></div>
+                <div class="profit-result-box"><span>Coût total des objets</span><strong id="profit-listing-cost">—</strong></div>
+                <div class="profit-result-box major"><span>Bénéfice estimé total</span><strong id="profit-listing-result" aria-live="polite">—</strong></div>
+              </div>
+              <p class="profit-note">Aucun prix HDV n'est récupéré automatiquement : les résultats suivent les prix que tu indiques, avant variation du marché. Les frais sont appliqués au montant brut estimé.</p>
+            </section>
+          </div>
+          <div class="profit-footer">
+            <p>Les chiffres restent enregistrés localement dans ton navigateur, indépendamment des builds OMBRE. Une valeur d'ingrédient manquante fausse le bénéfice à la hausse.</p>
+            <button id="profit-reset" type="button">↺ Réinitialiser les bénéfices</button>
+          </div>
+        </section>
         <section id="tab-method" class="tab-panel hidden"><section class="panel wide-panel method"><div class="panel-eyebrow">TRANSPARENCE / CONFIANCE</div><h2>Ce que calcule réellement le prototype</h2><div class="method-grid"><article><span>01</span><h3>Exploration sur plusieurs tours</h3><p>Recherche par faisceaux (« beam search ») avec essais de plusieurs ordres de sorts. Les PA non utilisés restent permis ; la durée choisie (jusqu'à 10 tours) est évaluée ensemble.</p></article><article><span>02</span><h3>Buffs et PA</h3><p>Les buffs dépendent de la classe et sont suivis de tour en tour. Manigance est disponible sur Sram ; Mutilation sur Sacrieur, avec une approximation explicite.</p></article><article><span>03</span><h3>Poison & relance</h3><p>Le Sram possède notamment des poisons différés ; le Sacrieur demande en plus une modélisation des PV et de la Souffrance, encore incomplète.</p></article><article><span>04</span><h3>Pièges expérimentaux</h3><p>Les pièges du Sram nécessitent un déclenchement hypothétique. Les déplacements du Sacrieur ne remplacent pas une vraie simulation tactique.</p></article></div><div class="warning-block"><strong>Limites connues : ne pas confondre estimation et vérité du jeu.</strong><p>Pas de carte réelle, d'obstacles, de ligne de vue dynamique, de propagation multi-cible ni de suivi des dégâts ennemis, boucliers ou soins alliés. Les résistances fixes sont paramétrables dans le moteur mais ne le sont pas encore dans tous les formulaires. La Souffrance du Sacrieur est estimée à partir des PV suivis, sans prise en compte des attaques ennemies. Les effets exacts, la durée des buffs, les interactions et les variantes doivent être vérifiés. Les dommages initiaux proviennent d'une page DofusBook avec un contexte d'affichage potentiellement différent de celui en jeu. Les chemins sont échantillonnés par une heuristique : l'optimum global n'est pas garanti.</p></div><h3>Sources</h3><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/16093814-db/sorts">DofusBook — stuff Sram Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofusbook.net/desktop/fr/equipement/20072789-db/sorts">DofusBook — Sacrieur Air PvM 200</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sram/">Dofus Grimoire — Sram</a> · <a target="_blank" rel="noopener noreferrer" href="https://dofus-grimoire.fr/classes/sacrieur/">Sacrieur</a></p><p><a target="_blank" rel="noopener noreferrer" href="https://www.dofuspourlesnoobs.com/mise-a-jour-307.html">Dofus pour les Noobs — mise à jour 3.7</a></p></section></section>
         <footer class="footer"><span>OMBRE v1.8 · Projet de fan non affilié à Ankama</span><span>Simulation locale et modifiable · 2026</span></footer>
       </div>
@@ -324,5 +402,6 @@
     </div>
   </aside>
   <script type="module" src="./src/app.js?v=4.05"></script>
+  <script type="module" src="./src/profit.js?v=1.0"></script>
 </body>
 </html>
