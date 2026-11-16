@@ -77,3 +77,39 @@
  .profit-toolbar button{flex:1 1 160px}
  .profit-table-scroll{max-height:480px}
 }
+
+
+/* Éditeur des huit ingrédients associé à chaque objet du tableau. */
+.profit-sheet-table td input[readonly]{
+  color:#afebc1;background:#1b3331;border-color:#466956;font-weight:800;cursor:default
+}
+.profit-recipe-detail>td{padding:0 !important;border-bottom:2px solid #7468a1 !important;background:#1b2336;white-space:normal}
+.profit-recipe-editor{padding:20px 24px;min-width:880px;background:linear-gradient(140deg,#1a2538,#22243c)}
+.profit-recipe-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin:0 0 15px}
+.profit-recipe-heading strong{display:block;font-size:17px;color:#eadcfb;margin-bottom:4px}
+.profit-recipe-heading p{font-size:12px;line-height:1.5;max-width:670px;color:#b6c6dd;margin:0}
+.profit-recipe-toggle{display:flex;flex-direction:row !important;align-items:center;gap:9px;color:#c9e8d2 !important;font-size:12px !important}
+.profit-recipe-toggle input{width:17px !important;height:17px;accent-color:#7fd5a6;cursor:pointer}
+.profit-recipe-headings,.profit-recipe-ingredient{
+  display:grid;grid-template-columns:30px minmax(180px,2fr) minmax(110px,1fr) minmax(135px,1fr) minmax(120px,1fr);
+  align-items:center;gap:12px
+}
+.profit-recipe-headings{padding:0 12px 9px;font-size:11px;font-weight:800;color:#d2c4eb}
+.profit-recipe-ingredients{display:flex;flex-direction:column;gap:7px}
+.profit-recipe-ingredient{padding:7px 12px;border-radius:8px;background:#25324a;border:1px solid #3e4964}
+.profit-recipe-ingredient label{display:block;color:#cbd6ea}
+.profit-recipe-ingredient label input{margin:0;height:39px}
+.profit-recipe-ingredient label input:focus{outline:2px solid #b39aee}
+.profit-recipe-ingredient label:not(:focus-within)>input:not(:placeholder-shown){border-color:#5b638a}
+.profit-recipe-number{font-size:12px;font-weight:800;text-align:center;color:#c9b9ec}
+.profit-recipe-ingredient output{font-variant-numeric:tabular-nums;color:#b4e9bf;font-weight:800}
+.profit-recipe-footer{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-top:14px;padding:13px 15px;background:#13283a;border-radius:9px;border:1px solid #415f6b;font-size:13px}
+.profit-recipe-footer output{color:#aaf3c0}
+.profit-recipe-footer [data-recipe-missing]{color:#f1c27b}
+.profit-row-actions button[data-workbook-recipe]{min-width:85px;white-space:nowrap;border-color:#796a9d}
+.profit-row-actions button[data-workbook-recipe][aria-expanded="true"]{background:#54446e;border-color:#aa8edf}
+.profit-row-actions{white-space:nowrap}
+.profit-sheet-table th:nth-child(14),.profit-sheet-table td:nth-child(14){min-width:200px}
+@media(max-width:700px){
+  .profit-recipe-editor{padding:16px 12px}
+}
