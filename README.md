@@ -16,6 +16,18 @@ Un nouvel onglet **Bénéfices / Kamas** fonctionne sans compte ni connexion à 
 
 Vérifications : `test/profit.test.mjs` couvre les 8 objets, les lots, les frais, le calcul des ressources et la comparaison craft/revente brute.
 
+### Tableau de bénéfices / classeur de références
+
+Dans le même onglet, le bouton **Mon tableau de bénéfices** ouvre un tableau éditable ligne par ligne : référence, objet, catégorie (craft / vente / autre), quantité, coût unitaire, prix de vente unitaire, frais HDV et notes. Les totaux (coûts, vente brute, frais, bénéfice net, marge) se calculent directement. Jusqu'à 500 lignes peuvent être conservées, avec recherche, tri, duplication et suppression.
+
+- **Fiches de craft** : sauvegarder jusqu'à 150 recettes distinctes avec leurs huit ingrédients et leurs prix, puis charger ou mettre à jour une fiche sans effacer les autres.
+- **Passage au tableau** : importer le craft actif ou les huit ventes déjà renseignées, sans changer la saisie existante.
+- **Sauvegarde automatique locale** : le classeur utilise la clé `ombre-profit-workbook-v1` de `localStorage`, en complément de la clé historique `ombre-profit-v1`. Les anciennes données de craft/vente sont conservées.
+- **Export Excel (CSV)** : export du tableau de suivi pour consultation ou édition dans un tableur. **Export JSON** : sauvegarde complète du tableau, des fiches de craft et du formulaire actif. **Import JSON** : restaure cette sauvegarde en remplaçant le classeur courant après confirmation.
+- Les données **ne sont pas synchronisées automatiquement entre appareils** et ne sont pas déposées sur GitHub : exporter un JSON pour faire une copie ou changer de navigateur. Aucun prix n'est récupéré automatiquement en jeu.
+
+Les calculs du classeur sont couverts par `test/profit-workbook.test.mjs`.
+
 ## Personnages intégrés
 
 | Personnage | Build de départ | Référence DofusBook | Sorts | Variantes |
