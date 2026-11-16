@@ -23,7 +23,8 @@ export function calculateCraft({quantity = 0, saleUnit = 0, taxPercent = 2, ingr
   const costs = costPerCraft * count;
   const netRevenue = gross - fees;
   const profit = netRevenue - costs;
-  const rawSaleComplete = rows.filter(row => row.perCraft > 0).every((row, index) => {
+  const rawSaleComplete = rows.every((row, index) => {
+    if (row.perCraft === 0) return true;
     const original = ingredients[index];
     return original?.resaleUnit !== "" && original?.resaleUnit !== undefined && original?.resaleUnit !== null;
   });
