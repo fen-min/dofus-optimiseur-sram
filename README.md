@@ -5,6 +5,17 @@ Application web expérimentale, gratuite et sans serveur, pour organiser ses per
 **Site** : https://fen-min.github.io/dofus-optimiseur-sram/
 **Dépôt** : https://github.com/fen-min/dofus-optimiseur-sram
 
+## Bénéfices / Kamas — simulateur de craft et 8 ventes
+
+Un nouvel onglet **Bénéfices / Kamas** fonctionne sans compte ni connexion à une API de prix. Les données sont saisies manuellement et enregistrées dans `localStorage` (clé `ombre-profit-v1`), sans modifier les builds ni les rotations de combat.
+
+- **Rentabilité d'un craft** : objet, quantité fabriquée, prix de vente à l'unité, frais HDV estimés en %, jusqu'à **8 ingrédients** (nom, quantité/craft, prix d'achat ou valeur à l'unité, revente brute facultative). Affiche CA brut, frais, coût des ingrédients, bénéfice global et unitaire, prix de vente minimum, comparaison à la vente séparée des ressources si toutes les reventes sont renseignées.
+- **8 objets en vente** : huit lignes indépendantes avec nom de l'objet, prix affiché du lot, taille du lot (1/10/100/1 000), unités à vendre et coût par unité. Le prix de vente unitaire est calculé automatiquement, ainsi que la marge unitaire, le bénéfice par ligne et le bilan cumulé.
+- **Exemple modifiable** : Mijoté Récréatif (Viande Fraîche, Chanvre, Eau Potable), 2 544 unités et prix indicatifs issus d'une ancienne simulation. Les prix affichés ne constituent pas une cotation actualisée d'Imagiro.
+- Le pourcentage de frais HDV est **une hypothèse modifiable**, initialement réglée sur 2 %. Les calculs supposent la vente complète des lots au prix demandé, sans compter les trajets, les remises en vente ni les autres coûts cachés. Un prix d'ingrédient non renseigné compte comme 0 et surestime donc potentiellement le bénéfice.
+
+Vérifications : `test/profit.test.mjs` couvre les 8 objets, les lots, les frais, le calcul des ressources et la comparaison craft/revente brute.
+
 ## Personnages intégrés
 
 | Personnage | Build de départ | Référence DofusBook | Sorts | Variantes |
