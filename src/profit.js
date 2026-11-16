@@ -161,13 +161,13 @@ if (root) {
             ...(data.ingredients?.[i] && typeof data.ingredients[i] === "object"
               ? Object.fromEntries(["name","perCraft","costUnit","resaleUnit"]
                 .filter(key => data.ingredients[i][key] !== undefined)
-                .map(key => [key, data.ingredients[i][key]]) : {})})),
+                .map(key => [key, data.ingredients[i][key]])) : {})})),
         listings: Array.from({length: 8}, (_, i) =>
           ({name: "", lotSize: 100, lotPrice: "", units: 0, costUnit: "",
             ...(data.listings?.[i] && typeof data.listings[i] === "object"
               ? Object.fromEntries(["name","lotSize","lotPrice","units","costUnit"]
                 .filter(key => data.listings[i][key] !== undefined)
-                .map(key => [key, data.listings[i][key]]) : state.listings[i])}))
+                .map(key => [key, data.listings[i][key]])) : state.listings[i])}))
       };
       renderRows();
       for (const [key, id] of [["product","profit-product"],["quantity","profit-quantity"],
