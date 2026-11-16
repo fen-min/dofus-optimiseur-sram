@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./styles.css?v=3.11">
   <link rel="stylesheet" href="./team.css?v=3.80">
   <link rel="stylesheet" href="./combat.css?v=1.8">
-  <link rel="stylesheet" href="./profit.css?v=1.1">
+  <link rel="stylesheet" href="./profit.css?v=1.2">
 </head>
 <body>
   <div class="app-shell">
@@ -374,7 +374,7 @@
           <div class="profit-view" id="profit-view-sheet" hidden>
             <section class="profit-panel" aria-label="Tableau de suivi des objets">
               <div class="profit-section-title"><h3>Tableau de suivi : mes objets et références</h3><small id="profit-workbook-count">0 ligne</small></div>
-              <p>Édite chaque cellule comme dans un tableur : nom de l'objet, référence, catégorie, quantité, coût d'achat ou de craft par unité, prix de revente et frais. Les totaux et bénéfices se recalculent automatiquement. Les modifications sont sauvegardées sur cet appareil.</p>
+              <p>Ajoute un objet puis ouvre <strong>▸ Recette</strong> sur sa ligne : 8 cases permettent de saisir les ingrédients, leurs quantités par craft et les prix achetés à l'unité. Le coût de fabrication par objet, le coût total et le bénéfice sont recalculés automatiquement. Chaque recette reste liée à son objet et est sauvegardée dans ton navigateur. Pour une simple revente, tu peux toujours saisir le coût manuellement.</p>
               <div class="profit-toolbar">
                 <button id="profit-workbook-add" type="button">＋ Ajouter une ligne</button>
                 <button id="profit-workbook-export-csv" type="button">↓ Export Excel (CSV)</button>
@@ -395,7 +395,7 @@
                 </table>
               </div>
               <p id="profit-workbook-empty" class="profit-note">Aucune ligne à afficher. Ajoute un objet ou importe tes ventes et crafts depuis les autres onglets.</p>
-              <p class="profit-note">Astuce : touche Tab pour passer à la cellule suivante. Les chiffres sont des estimations basées sur les prix saisis, pas des données HDV en direct.</p>
+              <p class="profit-note">Astuce : ouvre « Recette » sur une ligne pour retrouver ses 8 ingrédients. Le bouton « Calculer le coût / unité depuis cette recette » permet de revenir au prix de revient manuel si nécessaire. Les prix HDV ne sont pas récupérés automatiquement.</p>
             </section>
             <section class="profit-panel" aria-label="Total du tableau">
               <h3>Totaux de tous les objets enregistrés</h3>
@@ -457,6 +457,6 @@
     </div>
   </aside>
   <script type="module" src="./src/app.js?v=4.05"></script>
-  <script type="module" src="./src/profit.js?v=1.1"></script>
+  <script type="module" src="./src/profit.js?v=1.2"></script>
 </body>
 </html>
