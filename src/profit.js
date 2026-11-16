@@ -1,5 +1,5 @@
 import {calculateCraft, calculateListings} from "./profit-core.js";
-import {mountProfitWorkbook} from "./profit-workbook.js";
+import {mountProfitWorkbook} from "./profit-workbook.js?v=1.2";
 
 const root = document.getElementById("tab-profit");
 if (root) {
