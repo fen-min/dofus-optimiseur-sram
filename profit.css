@@ -1,0 +1,38 @@
+/* OMBRE / Bénéfices en kamas — module autonome et responsive. */
+#tab-profit{color:#f2edf9}
+.profit-view[hidden]{display:none !important}
+.profit-hero{padding:22px 24px;border:1px solid #424a65;border-radius:16px;background:linear-gradient(120deg,#1d2639,#241d36)}
+.profit-hero h2{margin:5px 0 8px;font-size:clamp(23px,3vw,31px);color:#f8f2ff}
+.profit-hero p{margin:0;color:#b8c5d7;line-height:1.6}
+.profit-hero .panel-eyebrow{color:#c2adeb;font-weight:800;letter-spacing:.09em;font-size:11px}
+.profit-modes{display:flex;gap:8px;flex-wrap:wrap;margin:17px 0}
+.profit-modes button,#profit-reset{cursor:pointer;color:#dae1f1;background:#242b3c;border:1px solid #4d5368;border-radius:9px;padding:11px 14px;font:inherit;font-size:13px;font-weight:700}
+.profit-modes button.active{background:#6c5396;color:white;border-color:#ae89dd}
+.profit-modes button:focus-visible,#profit-reset:focus-visible{outline:3px solid #ddbefb;outline-offset:3px}
+.profit-panel{padding:20px 22px;border:1px solid #434a60;border-radius:14px;background:#1b2232;margin-bottom:17px}
+.profit-panel h3{font-size:17px;margin:0 0 9px;color:#e9defa}
+.profit-panel p{color:#b9c5d8;line-height:1.55;font-size:12px}
+.profit-fields{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px}
+.profit-panel label{display:flex;flex-direction:column;gap:7px;min-width:0;color:#bac6dc;font-weight:700;font-size:11px}
+.profit-panel input,.profit-panel select{min-width:0;width:100%;padding:10px 11px;background:#11192a;color:#fff;border:1px solid #59647c;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box}
+.profit-panel input:focus,.profit-panel select:focus{outline:2px solid #a68bd7;outline-offset:1px;border-color:#a68bd7}
+.profit-section-title{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:0 0 12px}
+.profit-section-title small{font-size:11px;color:#9ba8c3}
+.profit-rows{display:flex;flex-direction:column;gap:9px}
+.profit-item-row{display:grid;grid-template-columns:27px minmax(140px,1.4fr) minmax(85px,.72fr) minmax(125px,1fr) minmax(130px,1fr) minmax(130px,1fr);gap:9px;align-items:end;background:#222c41;border:1px solid #37445f;border-radius:10px;padding:11px}
+.profit-item-row .profit-index{align-self:center;display:grid;place-items:center;width:26px;height:26px;border:1px solid #696184;border-radius:50%;color:#e9d9ff;font-weight:800;font-size:12px}
+.profit-row-result{display:flex;align-items:center;min-height:40px;color:#a9e8ba;font-weight:750;font-size:12px;font-variant-numeric:tabular-nums;line-height:1.3;overflow-wrap:anywhere}
+.profit-listing-row{grid-template-columns:27px minmax(130px,1.4fr) minmax(115px,1fr) minmax(90px,.65fr) minmax(95px,.75fr) minmax(110px,.8fr) minmax(175px,1.4fr)}
+.profit-result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.profit-result-box{padding:13px;border-radius:10px;background:#11192b;border:1px solid #414a62;min-width:0}
+.profit-result-box span{display:block;color:#9dacbf;font-size:11px;margin-bottom:7px}
+.profit-result-box strong{display:block;font-size:clamp(14px,1.7vw,20px);color:#f7f7fa;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.profit-result-box.major{background:linear-gradient(140deg,#153529,#1c2843);border-color:#44785c}
+.profit-result-box.major strong{color:#8fe2aa}
+.profit-result-box strong.is-negative,.profit-row-result.is-negative{color:#ffacb3}
+.profit-note{margin:14px 0 0;border-left:3px solid #8b7bbc;padding:9px 12px;color:#c1cddd;background:#26273d;font-size:12px;line-height:1.55}
+.profit-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;color:#a6b7d2;font-size:12px;padding:8px 1px 22px}
+.profit-footer p{margin:0;max-width:760px;line-height:1.5}
+@media(max-width:1250px){.profit-item-row,.profit-listing-row{grid-template-columns:27px repeat(3,minmax(0,1fr))}.profit-item-row .profit-name{grid-column:span 2}.profit-item-row .profit-row-result{grid-column:span 3;min-height:25px}}
+@media(max-width:700px){.profit-fields{grid-template-columns:1fr 1fr}.profit-panel{padding:13px 11px}.profit-item-row,.profit-listing-row{grid-template-columns:27px minmax(0,1fr) minmax(0,1fr);padding:10px 8px}.profit-item-row .profit-name{grid-column:span 2}.profit-item-row .profit-row-result{grid-column:2 / -1}.profit-result-grid{grid-template-columns:1fr 1fr}.profit-hero{padding:16px}}
+@media(max-width:440px){.profit-fields,.profit-result-grid{grid-template-columns:1fr}.profit-item-row,.profit-listing-row{grid-template-columns:27px minmax(0,1fr)}.profit-item-row .profit-name,.profit-item-row .profit-row-result{grid-column:2}.profit-item-row label:not(.profit-name){grid-column:2}.profit-section-title{align-items:flex-start;flex-direction:column}}
